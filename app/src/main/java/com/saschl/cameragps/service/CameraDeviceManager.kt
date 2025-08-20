@@ -521,9 +521,11 @@ private fun AssociatedDevicesList(
                         .clickable(
                             true,
                             onClick = {
-                                if (isPaired) onConnect(device) else onSetPendingPairingDevice(
+                                /* FIXME restore once properly implemented
+                                 if (isPaired) onConnect(device) else onSetPendingPairingDevice(
                                     device
-                                )
+                                ) */
+                                onConnect(device)
                             }),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
@@ -546,7 +548,8 @@ private fun AssociatedDevicesList(
                     ) {
                         Text(fontWeight = FontWeight.Bold, text = device.name)
 
-                        if (!isPaired) {
+                        /* FIXME restore once properly implemented
+                         if (!isPaired) {
                             Text(
                                 color = MaterialTheme.colorScheme.error,
                                 style = MaterialTheme.typography.bodySmall,
@@ -572,7 +575,7 @@ private fun AssociatedDevicesList(
                                 @Suppress("DEPRECATION")
                                 deviceManager.stopObservingDevicePresence(device.address)
                             }
-                        }
+                        } */
 
                     }
                     Column(
