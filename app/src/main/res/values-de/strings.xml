@@ -140,4 +140,12 @@
 
     <string name="app_standby_title">Standby</string>
     <string name="app_standby_content">Warten auf Kameraverbindung</string>
+    
+    <!-- Language settings -->
+    <string name="language_settings">Spracheinstellungen</string>
+    <string name="language_selection">Sprache auswählen</string>
+    <string name="language_system">System</string>
+    <string name="language_english">English</string>
+    <string name="language_german">Deutsch</string>
+    <string name="language_chinese">简体中文</string>
 </resources>

@@ -9,6 +9,10 @@ android {
     namespace = "com.saschl.cameragps"
     compileSdk = 36
 
+    androidResources {
+        generateLocaleConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.saschl.cameragps"
         minSdk = 29

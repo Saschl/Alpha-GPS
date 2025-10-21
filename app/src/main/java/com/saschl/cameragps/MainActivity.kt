@@ -2,9 +2,9 @@ package com.saschl.cameragps
 
 import android.os.Bundle
 import android.os.PowerManager
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -27,7 +27,12 @@ import com.saschl.cameragps.ui.theme.CameraGpsTheme
 import com.saschl.cameragps.utils.PreferencesManager
 import timber.log.Timber
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
+
+    /*  override fun attachBaseContext(newBase: Context?) {
+          super.attachBaseContext(LanguageContextWrapper.wrap(newBase ?: return))
+      }
+      */
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         enableEdgeToEdge()

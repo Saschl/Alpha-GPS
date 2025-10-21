@@ -12,6 +12,7 @@ object PreferencesManager {
 
     private const val KEY_DEVICE_KEEPALIVE_PREFIX = "device_keepalive_"
     private const val KEY_BATTERY_OPTIMIZATION_DIALOG_DISMISSED = "battery_optimization_dialog_dismissed"
+    private const val KEY_LANGUAGE_CODE = "language_code"
 
     private fun getPreferences(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -69,6 +70,23 @@ object PreferencesManager {
     fun setKeepAliveEnabled(context: Context, deviceAddress: String, enabled: Boolean) {
         getPreferences(context).edit {
             putBoolean(KEY_DEVICE_KEEPALIVE_PREFIX + deviceAddress, enabled)
+        }
+    }
+
+    /**
+     * Gets the saved language code. Returns null if system default should be used.
+     */
+    fun getLanguageCode(context: Context): String? {
+        val code = getPreferences(context).getString(KEY_LANGUAGE_CODE, null)
+        return if (code == "system") null else code
+    }
+
+    /**
+     * Sets the language code. Pass null or "system" to use system default.
+     */
+    fun setLanguageCode(context: Context, languageCode: String?) {
+        getPreferences(context).edit {
+            putString(KEY_LANGUAGE_CODE, languageCode ?: "system")
         }
     }
 }

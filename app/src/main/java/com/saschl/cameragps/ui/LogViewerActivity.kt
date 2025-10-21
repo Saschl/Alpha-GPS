@@ -44,8 +44,6 @@ import com.saschl.cameragps.service.FileTree
 import com.saschl.cameragps.ui.theme.CameraGpsTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.collections.isNotEmpty
-import kotlin.collections.joinToString
 
 class LogViewerActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
