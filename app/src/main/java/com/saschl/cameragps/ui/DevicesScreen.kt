@@ -11,9 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -77,7 +74,7 @@ fun DevicesScreen(
                         }
                     ) {
                         Icon(
-                            Icons.Default.Info,
+                            painterResource(R.drawable.info_24px),
                             contentDescription = stringResource(R.string.help_menu_item),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
@@ -97,7 +94,7 @@ fun DevicesScreen(
                     }
                     IconButton(onClick = { onSettingsClick() }) {
                         Icon(
-                            Icons.Default.Settings,
+                            painterResource(R.drawable.settings_24px),
                             contentDescription = "Settings",
                             tint = MaterialTheme.colorScheme.onSurface
                         )
@@ -145,7 +142,7 @@ fun DevicesScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            Icons.Default.Info,
+                            painterResource(R.drawable.info_24px),
                             contentDescription = null,
                             modifier = Modifier.size(20.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant

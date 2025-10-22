@@ -7,20 +7,17 @@ junitVersion = "1.3.0"
 espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.9.4"
 activityCompose = "1.11.0"
-composeBom = "2025.10.00"
+composeBom = "2025.10.01"
 googlePlayServicesLocation = "21.3.0"
 accompanist = "0.37.3"
 material = "1.13.0"
-materialIconsCore = "1.7.8"
-room = "2.8.2"
+room = "2.8.3"
 swiperefreshlayout= "1.2.0-beta01"
 coreSplashscreen = "1.2.0-rc01"
 
 
 [libraries]
 
-# FIXME remove icons and replace with xmls
-androidx-compose-material-icons-core = { module = "androidx.compose.material:material-icons-core", version.ref = "materialIconsCore" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
