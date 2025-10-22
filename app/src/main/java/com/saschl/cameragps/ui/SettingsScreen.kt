@@ -289,7 +289,7 @@ private fun LanguageSelectionDialog(
                             onClick = onLanguageUnset
                         )
                         Text(
-                            text = "System Default (${Locale.getDefault().displayName})",
+                            text = "System Default",
                             modifier = Modifier.padding(start = 8.dp),
                             style = MaterialTheme.typography.bodyLarge
                         )
