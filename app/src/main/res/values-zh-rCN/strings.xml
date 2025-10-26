@@ -65,7 +65,6 @@
     <string name="welcome_feature_gps_sync_title">实时GPS同步</string>
     <string name="welcome_feature_gps_sync_description">自动将手机的GPS坐标同步到相机，以实现准确的地理标记</string>
     <string name="welcome_feature_device_management_title">设备管理</string>
-    <string name="welcome_feature_device_management_description">轻松管理多个相机设备并控制GPS同步设置</string>
     <string name="welcome_get_started_button">开始使用</string>
     <string name="welcome_settings_note">您可以稍后从主菜单访问这些设置</string>
     <string name="welcome_app_icon_description">相机GPS应用图标</string>

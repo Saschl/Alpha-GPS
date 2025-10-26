@@ -116,14 +116,6 @@ fun WelcomeScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            FeatureCard(
-                title = stringResource(R.string.welcome_feature_device_management_title),
-                description = stringResource(R.string.welcome_feature_device_management_description),
-                icon = R.drawable.baseline_photo_camera_24
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
             Button(
                 onClick = { step1 = false },
                 modifier = Modifier

@@ -78,6 +78,10 @@ fun HelpScreen(
             containsLink = true
         ),
         FaqItem(
+            questionRes = R.string.how_about_privacy,
+            answerRes = R.string.how_about_privacy_answer,
+        ),
+        FaqItem(
             questionRes = R.string.faq_connect_camera_question,
             answerRes = R.string.faq_connect_camera_answer
         ),

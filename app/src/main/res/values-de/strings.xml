@@ -53,7 +53,10 @@
     <string name="location_bluetooth_benefit_1">• Verbinde dich mit Bluetooth zur Sony Kamera</string>
     <string name="location_bluetooth_benefit_2">• Zugriff auf Standortdaten zur Übermittlung an die Kamera</string>
 
+    <string name="enable_app_description">Aktiviert die Funktionalität zur Übertragung des Standorts</string>
     <string name="unknown_error">Unbekannter Fehler</string>
+    <string name="welcome_get_started_button">Los geht\'s</string>
+    <string name="welcome_settings_note">Diese Einstellungen können jederzeit angepasst werden</string>
     <string name="welcome_app_icon_description">Kamera-GPS-App-Symbol</string>
 
     <string name="welcome_title">Willkommen bei Alpha GPS</string>
@@ -136,7 +139,7 @@
     <string name="reset_welcome">Willkommensbildschirm beim nächsten Start anzeigen</string>
     <string name="will_show_welcome">Willkommensbildschirm wird beim nächsten Start angezeigt!</string>
     <string name="is_there_documenation">Gibt es irgendwo eine Dokumentation?</string>
-    <string name="is_there_documenation_answer">Ja! Bitte besuchen sie die GitHub Seite. \nDort können sie auch Probleme/Bugs mit der Anwendung melden:\n</string>
+    <string name="is_there_documenation_answer">Ja! Bitte besuchen Sie die GitHub Seite. \nDort können sie auch Probleme/Bugs mit der Anwendung melden:\n</string>
 
     <string name="app_standby_title">Standby</string>
     <string name="app_standby_content">Warten auf Kameraverbindung</string>
@@ -148,4 +151,14 @@
     <string name="language_english">English</string>
     <string name="language_german">Deutsch</string>
     <string name="language_chinese">简体中文</string>
+    <string name="settings">Einstellungen</string>
+    <string name="app_controls">App Einstellungen</string>
+    <string name="enable_app">App aktivieren</string>
+    <string name="welcome_feature_gps_sync_description">Automatische Übertragung der Standortdaten zu deiner Sony Kamera</string>
+    <string name="welcome_feature_device_management_title">Geräteverwaltung</string>
+    <string name="welcome_feature_connect_description">Kopple deine Sony Kamera via Bluetooth für nahtlose Standortübertragung</string>
+    <string name="welcome_feature_gps_sync_title">Echtzeit Standortübertragung</string>
+    <string name="welcome_feature_connect_title">Verbinde die Kamera</string>
+    <string name="how_about_privacy">Wie sieht es mit dem Datenschutz aus?</string>
+    <string name="how_about_privacy_answer">Die App überträgt keine Daten in Richtung Entwickler und/oder Drittparteien. Sämtliche erhobene Infomrationen (Standortdaten) werden nur für die Übertragung der Standortdaten zu der verbundenen Kamera verwendet. Es werden keine Daten permanent gespeichert. Die Standorterfassung wird beendet, sobald die Verbindung zur Kamera getrennt ist.</string>
 </resources>

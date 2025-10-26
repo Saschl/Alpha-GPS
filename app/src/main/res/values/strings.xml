@@ -66,7 +66,6 @@
     <string name="welcome_feature_gps_sync_title">Real-time GPS Sync</string>
     <string name="welcome_feature_gps_sync_description">Automatically sync your phone\'s GPS coordinates to your camera for accurate geotagging</string>
     <string name="welcome_feature_device_management_title">Device Management</string>
-    <string name="welcome_feature_device_management_description">Manage multiple camera devices and control GPS sync settings easily</string>
     <string name="welcome_get_started_button">Get Started</string>
     <string name="welcome_settings_note">You can access these settings later from the main menu</string>
     <string name="welcome_app_icon_description">Camera GPS App Icon</string>
@@ -131,7 +130,7 @@
     <!-- Device detail screen strings -->
     <string name="back">Back</string>
     <string name="enable_device">Enable device</string>
-    <string name="enableConstantly">Keep alive (always on)</string>
+    <string name="enableConstantly">Keep alive (always On)</string>
 
     <!-- Device limitation hint -->
     <string name="single_device_limitation_hint">Currently only one camera device is supported. Multiple device support will be added in a future update.</string>
@@ -160,7 +159,7 @@
     <string name="always_on_description">Runs the app in the foreground. Useful if the connection cannot be established reliably on devices with aggressive battery saving measures (e.g. Xiaomi and probably more)</string>
     <string name="quick_start_feature_title">Quickstart</string>
     <string name="quick_start_feature_description">On the next screen, follow the instructions to pair your camera. Once pairing is complete, the app will automatically connect to your camera and start transmitting location data. If it does not start immediately, try restarting your camera.</string>
-    <string name="always_on_quickstart">Always on mode</string>
+    <string name="always_on_quickstart">Always On mode</string>
     <string name="always_on_quickstart_description">If the default connection mode does not work, you can enable Always On mode after pairing your device. Tap the device entry on the main screen and turn on the toggle. This mode may use more battery, but only transmits location data when connected to the camera.</string>
     <string name="reset_welcome">Show welcome screen on next launch</string>
     <string name="will_show_welcome">Will show welcome screen on next launch!</string>
@@ -177,4 +176,6 @@
     <string name="language_english">English</string>
     <string name="language_german">Deutsch</string>
     <string name="language_chinese">简体中文</string>
+    <string name="how_about_privacy">How about privacy?</string>
+    <string name="how_about_privacy_answer">The app does not transmit any data to the developer or third party. All the information (location data) collected is only used for the transmission to the camera. It will not be stored or sent elsewhere. When the device is disconnected, location will not be tracked anymore.</string>
 </resources>
