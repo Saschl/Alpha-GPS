@@ -160,5 +160,5 @@
     <string name="welcome_feature_gps_sync_title">Echtzeit Standortübertragung</string>
     <string name="welcome_feature_connect_title">Verbinde die Kamera</string>
     <string name="how_about_privacy">Wie sieht es mit dem Datenschutz aus?</string>
-    <string name="how_about_privacy_answer">Die App überträgt keine Daten in Richtung Entwickler und/oder Drittparteien. Sämtliche erhobene Infomrationen (Standortdaten) werden nur für die Übertragung der Standortdaten zu der verbundenen Kamera verwendet. Es werden keine Daten permanent gespeichert. Die Standorterfassung wird beendet, sobald die Verbindung zur Kamera getrennt ist.</string>
+    <string name="how_about_privacy_answer">Die App überträgt keine Daten in Richtung Entwickler und/oder Drittparteien. Sämtliche erhobene Informationen (Standortdaten) werden nur für die Übertragung der Standortdaten zu der verbundenen Kamera verwendet. Es werden keine Daten permanent gespeichert. Die Standorterfassung wird beendet, sobald die Verbindung zur Kamera getrennt wird.</string>
 </resources>
