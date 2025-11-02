@@ -109,7 +109,7 @@
     <string name="faq_permissions_answer">应用需要：\n• 位置权限（用于GPS数据）\n• 蓝牙权限（连接相机）\n• 电池优化豁免（用于持续服务）\n• 附近设备权限（用于设备发现）</string>
     
     <string name="faq_gps_accuracy_question">GPS数据的准确性如何？</string>
-    <string name="faq_gps_accuracy_answer">GPS准确性取决于：\n• 卫星可见性（室外更佳）\n• 天气条件\n• 您手机的GPS能力\n• 良好条件下的典型精度为3-5米</string>
+    <string name="faq_gps_accuracy_answer">GPS准确性取决于：\n• 卫星可见性（室外更佳）\n• 天气条件\n• 您手机的GPS能力\n• 良好条件下的典型精度为3–5米</string>
     
     <string name="faq_background_work_question">应用在后台工作吗？</string>
     <string name="faq_background_work_answer">是的，正确配置后：\n• 服务在后台运行以维持GPS同步\n• 确保禁用电池优化\n• 应用活动时会显示持续通知\n• GPS数据持续发送到已连接的相机</string>
@@ -167,8 +167,11 @@
     <string name="reset_welcome">下次启动时显示欢迎屏幕</string>
     <string name="will_show_welcome">下次启动时将显示欢迎屏幕！</string>
     <string name="is_there_documenation">有文档说明吗？</string>
-    <string name="is_there_documenation_answer">有的！请访问GitHub页面\n您也可以在那里报告应用问题：\n</string>
-    
+    <string name="is_there_documenation_answer">有的！请访问GitHub页面\n您也可以在那里报告应用问题或通过邮件联系我们：</string>
+
+    <string name="how_about_privacy">隐私保护如何？</string>
+    <string name="how_about_privacy_answer">该应用不会向开发者或第三方传输任何数据。收集的所有信息（位置数据）仅用于传输到相机。数据不会被存储或发送到其他地方。设备断开连接后，将不再跟踪位置。</string>
+
     <string name="app_standby_title">待机</string>
     <string name="app_standby_content">等待相机连接</string>
 </resources>

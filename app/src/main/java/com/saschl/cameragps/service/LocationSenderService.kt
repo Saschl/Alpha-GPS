@@ -75,14 +75,10 @@ class LocationSenderService : Service() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
     private var cameraGatt: BluetoothGatt? = null
-
     private var writeLocationCharacteristic: BluetoothGattCharacteristic? = null
     private var locationResult: Location = Location("")
     private var isShutdownRequested = false
 
-    private var pendingShutdownStartId: Int = 0
-
-    private var isServiceInitialized = false
 
     private val bluetoothManager: BluetoothManager by lazy {
         applicationContext.getSystemService()!!
@@ -96,6 +92,10 @@ class LocationSenderService : Service() {
 
     private fun hasTimeZoneDstFlag(value: ByteArray): Boolean {
         return value.size >= 5 && (value[4].toInt() and 0x02) != 0
+    }
+
+    companion object {
+        var isRunning = false
     }
 
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
@@ -132,13 +132,12 @@ class LocationSenderService : Service() {
             // Cancel any pending shutdown since we're starting normally
             cancelShutdown()
 
-            if (!isServiceInitialized) {
-                isServiceInitialized = true
+            if (!isRunning) {
                 Timber.i("Service initialized")
                 startAsForegroundService()
+                isRunning = true
             }
 
-            this.pendingShutdownStartId = startId
             address = intent?.getStringExtra("address")
 
             val device: BluetoothDevice = bluetoothManager.adapter.getRemoteDevice(address)
@@ -166,6 +165,7 @@ class LocationSenderService : Service() {
         if (::locationCallback.isInitialized) {
             fusedLocationClient.removeLocationUpdates(locationCallback)
         }
+        isRunning = false
         Timber.i("Destroyed service")
     }
 

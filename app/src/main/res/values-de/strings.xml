@@ -84,7 +84,7 @@
     <string name="faq_permissions_answer">Die App benötigt:\n• Standortberechtigungen (für GPS-Daten)\n• Bluetooth-Berechtigungen (zur Verbindung mit der Kamera)\n• Ausnahme von der Akkuoptimierung (für kontinuierlichen Service)\n• Berechtigung für Geräte in der Nähe (für Geräteerkennung)</string>
 
     <string name="faq_gps_accuracy_question">Wie genau sind die GPS-Daten?</string>
-    <string name="faq_gps_accuracy_answer">Die GPS-Genauigkeit hängt ab von:\n• Satellitensichtbarkeit (besser im Freien)\n• Wetterbedingungen\n• Den GPS-Fähigkeiten Ihres Telefons\n• Typische Genauigkeit beträgt 3-5 Meter unter guten Bedingungen</string>
+    <string name="faq_gps_accuracy_answer">Die GPS–Genauigkeit hängt ab von:\n• Satellitensichtbarkeit (besser im Freien)\n• Wetterbedingungen\n• Den GPS-Fähigkeiten Ihres Telefons\n• Typische Genauigkeit beträgt 3-5 Meter unter guten Bedingungen</string>
 
     <string name="faq_background_work_question">Funktioniert die App im Hintergrund?</string>
     <string name="faq_background_work_answer">Ja, einmal richtig konfiguriert:\n• Der Service läuft im Hintergrund, um die GPS-Synchronisation aufrechtzuerhalten\n• Stellen Sie sicher, dass die Akkuoptimierung deaktiviert ist\n• Die App zeigt eine dauerhafte Benachrichtigung, wenn sie aktiv ist\n• GPS-Daten werden kontinuierlich an Ihre verbundene Kamera gesendet</string>
@@ -139,7 +139,7 @@
     <string name="reset_welcome">Willkommensbildschirm beim nächsten Start anzeigen</string>
     <string name="will_show_welcome">Willkommensbildschirm wird beim nächsten Start angezeigt!</string>
     <string name="is_there_documenation">Gibt es irgendwo eine Dokumentation?</string>
-    <string name="is_there_documenation_answer">Ja! Bitte besuchen Sie die GitHub Seite. \nDort können sie auch Probleme/Bugs mit der Anwendung melden:\n</string>
+    <string name="is_there_documenation_answer">Ja! Bitte besuchen Sie die GitHub Seite. \nDort können sie auch Probleme/Bugs mit der Anwendung melden oder kontaktieren Sie uns per E-Mail:</string>
 
     <string name="app_standby_title">Standby</string>
     <string name="app_standby_content">Warten auf Kameraverbindung</string>

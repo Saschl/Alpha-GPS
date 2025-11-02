@@ -2,12 +2,10 @@ package com.saschl.cameragps.service
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.ActivityManager
 import android.companion.AssociationInfo
 import android.companion.CompanionDeviceManager
 import android.companion.CompanionDeviceService
 import android.companion.DevicePresenceEvent
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -22,10 +20,11 @@ import java.util.Locale
 @RequiresApi(Build.VERSION_CODES.S)
 class CameraDeviceCompanionService : CompanionDeviceService() {
 
+
     private fun startLocationSenderService(address: String?) {
         if (PreferencesManager.isAppEnabled(this)) {
 
-            if(!isLocationServiceRunning()) {
+            if (!LocationSenderService.isRunning) {
                 val serviceIntent = Intent(this, LocationSenderService::class.java)
                 serviceIntent.putExtra("address", address?.uppercase(Locale.getDefault()))
                 Timber.i("Starting LocationSenderService for address: $address")
@@ -34,7 +33,6 @@ class CameraDeviceCompanionService : CompanionDeviceService() {
             } else {
                 Timber.i("LocationSenderService already running, will cancel pending shutdowns")
             }
-
         }
     }
 
@@ -62,7 +60,6 @@ class CameraDeviceCompanionService : CompanionDeviceService() {
             startLocationSenderService(address)
         }
     }
-
 
     @RequiresApi(Build.VERSION_CODES.BAKLAVA)
     @SuppressLint("MissingPermission")
@@ -127,15 +124,6 @@ class CameraDeviceCompanionService : CompanionDeviceService() {
         Timber.i("CDM started")
     }
 
-    private fun isLocationServiceRunning(): Boolean {
-        val manager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        for (service in manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (LocationSenderService::class.java.name == service.service.className) {
-                return true
-            }
-        }
-        return false
-    }
 
     @SuppressLint("MissingPermission")
     override fun onDestroy() {
