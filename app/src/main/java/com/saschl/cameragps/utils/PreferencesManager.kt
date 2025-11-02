@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import java.time.Duration
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 object PreferencesManager {
     private const val PREFS_NAME = "camera_gps_prefs"
@@ -76,8 +77,20 @@ object PreferencesManager {
     }
 
     fun reviewHintLastShownDaysAgo(context: Context): Long {
-        val lastShown = Instant.ofEpochSecond(getPreferences(context).getLong("review_hint_last_shown", 0))
-        val daysAgo = Duration.between(lastShown, Instant.now()).toDays()
+        val lastShown = getPreferences(context).getLong("review_hint_last_shown", 0L)
+
+        var lastShownInstant: Instant
+        if (lastShown == 0L) {
+            // give the user one day breathing room before showing the hint after setting up the first device
+            lastShownInstant = Instant.now().minus(29, ChronoUnit.DAYS)
+            getPreferences(context).edit {
+                putLong("review_hint_last_shown", lastShownInstant.epochSecond)
+            }
+        } else {
+            lastShownInstant = Instant.ofEpochSecond(lastShown)
+
+        }
+        val daysAgo = Duration.between(lastShownInstant, Instant.now()).toDays()
         return daysAgo
     }
 
