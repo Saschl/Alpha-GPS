@@ -3,6 +3,8 @@ package com.saschl.cameragps.utils
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import java.time.Duration
+import java.time.Instant
 
 object PreferencesManager {
     private const val PREFS_NAME = "camera_gps_prefs"
@@ -73,20 +75,39 @@ object PreferencesManager {
         }
     }
 
-    /**
-     * Gets the saved language code. Returns null if system default should be used.
-     */
-    fun getLanguageCode(context: Context): String? {
-        val code = getPreferences(context).getString(KEY_LANGUAGE_CODE, null)
-        return if (code == "system") null else code
+    fun reviewHintLastShownDaysAgo(context: Context): Long {
+        val lastShown = Instant.ofEpochSecond(getPreferences(context).getLong("review_hint_last_shown", 0))
+        val daysAgo = Duration.between(lastShown, Instant.now()).toDays()
+        return daysAgo
     }
 
-    /**
-     * Sets the language code. Pass null or "system" to use system default.
-     */
-    fun setLanguageCode(context: Context, languageCode: String?) {
+    fun setReviewHintShownNow(context: Context) {
         getPreferences(context).edit {
-            putString(KEY_LANGUAGE_CODE, languageCode ?: "system")
+            putLong("review_hint_last_shown", Instant.now().epochSecond)
+        }
+    }
+
+    fun resetReviewHintShown(context: Context) {
+        getPreferences(context).edit {
+            putLong("review_hint_last_shown", 0L)
+        }
+    }
+
+    fun reviewHintShownTimes(applicationContext: Context): Int {
+        return getPreferences(applicationContext).getInt("review_hint_shown_times", 0)
+    }
+
+    fun increaseReviewHintShownTimes(applicationContext: Context) {
+        val currentTimes = reviewHintShownTimes(applicationContext)
+        getPreferences(applicationContext).edit {
+            putInt("review_hint_shown_times", currentTimes + 1)
+        }
+    }
+
+    fun decreaseReviewHintShownTimes(applicationContext: Context) {
+        val currentTimes = reviewHintShownTimes(applicationContext)
+        getPreferences(applicationContext).edit {
+            putInt("review_hint_shown_times", currentTimes - 1)
         }
     }
 }
