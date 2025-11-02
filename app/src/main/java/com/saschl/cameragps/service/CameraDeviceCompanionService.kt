@@ -24,15 +24,11 @@ class CameraDeviceCompanionService : CompanionDeviceService() {
     private fun startLocationSenderService(address: String?) {
         if (PreferencesManager.isAppEnabled(this)) {
 
-            if (!LocationSenderService.isRunning) {
-                val serviceIntent = Intent(this, LocationSenderService::class.java)
-                serviceIntent.putExtra("address", address?.uppercase(Locale.getDefault()))
-                Timber.i("Starting LocationSenderService for address: $address")
+            val serviceIntent = Intent(this, LocationSenderService::class.java)
+            serviceIntent.putExtra("address", address?.uppercase(Locale.getDefault()))
+            Timber.i("Starting LocationSenderService for address: $address")
 
-                startForegroundService(serviceIntent)
-            } else {
-                Timber.i("LocationSenderService already running, will cancel pending shutdowns")
-            }
+            startForegroundService(serviceIntent)
         }
     }
 
@@ -86,10 +82,10 @@ class CameraDeviceCompanionService : CompanionDeviceService() {
             Timber.i("Device disappeared new API: ${event.associationId}")
 
             // Request graceful shutdown instead of immediate termination
-           /* val shutdownIntent = Intent(this, LocationSenderService::class.java).apply {
-                action = LocationSenderService.ACTION_REQUEST_SHUTDOWN
-            }
-            startService(shutdownIntent)*/
+            /* val shutdownIntent = Intent(this, LocationSenderService::class.java).apply {
+                 action = LocationSenderService.ACTION_REQUEST_SHUTDOWN
+             }
+             startService(shutdownIntent)*/
         }
     }
 

@@ -65,7 +65,7 @@ fun DevicesScreen(
 
     LaunchedEffect(lifecycleState) {
         when (lifecycleState) {
-            Lifecycle.State.CREATED, Lifecycle.State.RESUMED -> {
+            Lifecycle.State.RESUMED -> {
                 Timber.i("App started, will resume transmission for configured devices")
                 associatedDevices.forEach {
                     val shouldTransmissionStart =
@@ -73,9 +73,8 @@ fun DevicesScreen(
                                 && PreferencesManager.isKeepAliveEnabled(
                             context.applicationContext,
                             it.address
-                        )
-                                && PreferencesManager.isAppEnabled(context.applicationContext)
-                    if (shouldTransmissionStart && !LocationSenderService.isRunning) {
+                        ) && PreferencesManager.isAppEnabled(context.applicationContext)
+                    if (shouldTransmissionStart) {
                         Timber.d("Resuming location transmission for device ${it.address}")
                         val intent = Intent(context, LocationSenderService::class.java)
                         intent.putExtra("address", it.address.uppercase())
@@ -134,7 +133,7 @@ fun DevicesScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
                 )

@@ -27,6 +27,9 @@ import com.saschl.cameragps.R
 import com.saschl.cameragps.notification.NotificationsHelper
 import com.saschl.cameragps.service.SonyBluetoothConstants.locationTransmissionNotificationId
 import com.saschl.cameragps.utils.PreferencesManager
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import timber.log.Timber
 import java.util.UUID
 
@@ -94,10 +97,6 @@ class LocationSenderService : Service() {
         return value.size >= 5 && (value[4].toInt() and 0x02) != 0
     }
 
-    companion object {
-        var isRunning = false
-    }
-
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     private fun startLocationTransmission() {
         fusedLocationClient.lastLocation.addOnSuccessListener {
@@ -131,14 +130,16 @@ class LocationSenderService : Service() {
         } else {
             // Cancel any pending shutdown since we're starting normally
             cancelShutdown()
+            address = intent?.getStringExtra("address")
 
-            if (!isRunning) {
-                Timber.i("Service initialized")
-                startAsForegroundService()
-                isRunning = true
+            if (address != null && address.equals(this.address)) {
+                return START_STICKY
             }
 
-            address = intent?.getStringExtra("address")
+
+            Timber.i("Service initialized")
+            startAsForegroundService()
+
 
             val device: BluetoothDevice = bluetoothManager.adapter.getRemoteDevice(address)
 
@@ -165,7 +166,6 @@ class LocationSenderService : Service() {
         if (::locationCallback.isInitialized) {
             fusedLocationClient.removeLocationUpdates(locationCallback)
         }
-        isRunning = false
         Timber.i("Destroyed service")
     }
 
