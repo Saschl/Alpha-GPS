@@ -105,7 +105,7 @@
     <string name="faq_permissions_answer">The app requires:\n• Location permissions (for GPS data)\n• Bluetooth permissions (to connect to camera)\n• Battery optimization exemption (for continuous service)\n• Nearby devices permission (for device discovery)</string>
 
     <string name="faq_gps_accuracy_question">How accurate is the GPS data?</string>
-    <string name="faq_gps_accuracy_answer">GPS accuracy depends on:\n• Satellite visibility (better outdoors)\n• Weather conditions\n• Your phone\'s GPS capabilities\n• Typical accuracy is 3-5 meters under good conditions</string>
+    <string name="faq_gps_accuracy_answer">GPS accuracy depends on:\n• Satellite visibility (better outdoors)\n• Weather conditions\n• Your phone\'s GPS capabilities\n• Typical accuracy is 3–5 meters under good conditions</string>
 
     <string name="faq_background_work_question">Does the app work in the background?</string>
     <string name="faq_background_work_answer">Yes, once properly configured:\n• The service runs in the background to maintain GPS sync\n• Make sure to disable battery optimization\n• The app will show a persistent notification when active\n• GPS data is continuously sent to your connected camera</string>
@@ -164,7 +164,7 @@
     <string name="reset_welcome">Show welcome screen on next launch</string>
     <string name="will_show_welcome">Will show welcome screen on next launch!</string>
     <string name="is_there_documenation">Is there any documentation?</string>
-    <string name="is_there_documenation_answer">Yes! Please visit the Github page \nYou can also report issues with the App there:\n</string>
+    <string name="is_there_documenation_answer">Yes! Please visit the Github page \nYou can also report issues with the App there or contact us via email:</string>
 
     <string name="app_standby_title">Standby</string>
     <string name="app_standby_content">Waiting for camera to connect</string>

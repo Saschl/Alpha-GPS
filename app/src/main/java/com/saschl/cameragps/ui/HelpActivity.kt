@@ -201,18 +201,33 @@ fun HelpScreen(
                                 Text(
                                     buildAnnotatedString {
                                         append(stringResource(faq.answerRes))
+                                        append("\n")
                                         withLink(
                                             LinkAnnotation.Url(
                                                 "https://github.com/Saschl/camera-gps/blob/main/README.md",
                                                 TextLinkStyles(
                                                     style = SpanStyle(
-                                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        color = MaterialTheme.colorScheme.primary,
                                                         textDecoration = TextDecoration.Underline
                                                     )
                                                 )
                                             )
                                         ) {
-                                            append("https://github.com/Saschl/camera-gps/blob/main/README.md")
+                                            append("https://github.com/Saschl/camera-gps")
+                                        }
+                                        append("\n")
+                                        withLink(
+                                            LinkAnnotation.Url(
+                                                "mailto:saschl.ra@web.de",
+                                                TextLinkStyles(
+                                                    style = SpanStyle(
+                                                        color = MaterialTheme.colorScheme.primary,
+                                                        textDecoration = TextDecoration.Underline
+                                                    )
+                                                )
+                                            )
+                                        ) {
+                                            append("saschl.ra@web.de")
                                         }
                                     }
                                 )
@@ -223,7 +238,6 @@ fun HelpScreen(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-
                         }
                     }
                 }
