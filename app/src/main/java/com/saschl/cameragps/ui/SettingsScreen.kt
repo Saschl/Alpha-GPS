@@ -33,6 +33,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -62,6 +63,9 @@ fun SettingsScreen(
     
     val currentLanguage = LanguageManager.getCurrentLanguage(context)
     var showLanguageDialog by remember { mutableStateOf(false) }
+    var debugPanelCounter by remember {
+        mutableIntStateOf(0)
+    }
 
     Scaffold(
 
@@ -69,6 +73,9 @@ fun SettingsScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
+                        modifier = Modifier.clickable {
+                            debugPanelCounter++
+                        },
                         text = stringResource(R.string.settings),
                         fontWeight = FontWeight.SemiBold
                     )
@@ -91,127 +98,35 @@ fun SettingsScreen(
         BackHandler {
             onBackClick()
         }
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
-                    Text(
-                        text = stringResource(R.string.app_controls),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-
-                    HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 8.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Column(
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(
-                                text = stringResource(R.string.enable_app),
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium
-                            )
-                            Text(
-                                text = stringResource(R.string.enable_app_description),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-
-                        Switch(
-                            checked = isAppEnabled,
-                            onCheckedChange = { enabled ->
-                                isAppEnabled = enabled
-                                PreferencesManager.setAppEnabled(context, enabled)
-                                context.stopService(Intent(context.applicationContext, LocationSenderService::class.java))
-                            }
+                        Text(
+                            text = stringResource(R.string.app_controls),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium
                         )
 
-                    }
-                    HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 8.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(
-                            modifier = Modifier.weight(0.6f),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant
+                        )
 
-                        ) {
-
-                            Button(
-                                onClick = {
-                                    val toast = Toast.makeText(
-                                        context, R.string.will_show_welcome,
-                                        Toast.LENGTH_SHORT
-                                    )
-                                    toast.show()
-                                    PreferencesManager.showFirstLaunch(context)
-                                },
-                            ) {
-                                Text(text = stringResource(R.string.reset_welcome))
-                            }
-                        }
-
-
-                    }
-                }
-            }
-            
-            // Language Settings Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.language_settings),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                    
-                    HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 8.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant
-                    )
-                    
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { showLanguageDialog = true },
-                        shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant
-                    ) {
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
+                            modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -219,19 +134,126 @@ fun SettingsScreen(
                                 modifier = Modifier.weight(1f)
                             ) {
                                 Text(
-                                    text = stringResource(R.string.language_selection),
+                                    text = stringResource(R.string.enable_app),
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.Medium
                                 )
                                 Text(
-                                    text = currentLanguage?.displayName
-                                        ?: "System Default (${Locale.getDefault().displayName})",
+                                    text = stringResource(R.string.enable_app_description),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+
+                            Switch(
+                                checked = isAppEnabled,
+                                onCheckedChange = { enabled ->
+                                    isAppEnabled = enabled
+                                    PreferencesManager.setAppEnabled(context, enabled)
+                                    context.stopService(
+                                        Intent(
+                                            context.applicationContext,
+                                            LocationSenderService::class.java
+                                        )
+                                    )
+                                }
+                            )
+
+                        }
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(
+                                modifier = Modifier.weight(0.6f),
+                                horizontalAlignment = Alignment.CenterHorizontally
+
+                            ) {
+
+                                Button(
+                                    onClick = {
+                                        val toast = Toast.makeText(
+                                            context, R.string.will_show_welcome,
+                                            Toast.LENGTH_SHORT
+                                        )
+                                        toast.show()
+                                        PreferencesManager.showFirstLaunch(context)
+                                    },
+                                ) {
+                                    Text(text = stringResource(R.string.reset_welcome))
+                                }
+                            }
+
+
                         }
                     }
+                }
+            }
+
+            item {
+                // Language Settings Card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.language_settings),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant
+                        )
+
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showLanguageDialog = true },
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.language_selection),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Text(
+                                        text = currentLanguage?.displayName
+                                            ?: "System Default (${Locale.getDefault().displayName})",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (debugPanelCounter >= 5) {
+                item {
+                    // Debug Panel
+                    ReviewHintDebugPanel()
                 }
             }
         }

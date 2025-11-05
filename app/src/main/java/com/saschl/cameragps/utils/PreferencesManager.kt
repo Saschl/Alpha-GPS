@@ -3,6 +3,9 @@ package com.saschl.cameragps.utils
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import java.time.Duration
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 object PreferencesManager {
     private const val PREFS_NAME = "camera_gps_prefs"
@@ -73,20 +76,62 @@ object PreferencesManager {
         }
     }
 
-    /**
-     * Gets the saved language code. Returns null if system default should be used.
-     */
-    fun getLanguageCode(context: Context): String? {
-        val code = getPreferences(context).getString(KEY_LANGUAGE_CODE, null)
-        return if (code == "system") null else code
+    fun reviewHintLastShownDaysAgo(context: Context, initialize: Boolean = false): Long {
+        val lastShown = getPreferences(context).getLong("review_hint_last_shown", 0L)
+
+        var lastShownInstant: Instant
+        if (lastShown == 0L && initialize) {
+            // give the user one day breathing room before showing the hint after setting up the first device
+            lastShownInstant = Instant.now().minus(29, ChronoUnit.DAYS)
+            getPreferences(context).edit {
+                putLong("review_hint_last_shown", lastShownInstant.epochSecond)
+            }
+        } else {
+            lastShownInstant = Instant.ofEpochSecond(lastShown)
+
+        }
+        val daysAgo = Duration.between(lastShownInstant, Instant.now()).toDays()
+        return daysAgo
     }
 
-    /**
-     * Sets the language code. Pass null or "system" to use system default.
-     */
-    fun setLanguageCode(context: Context, languageCode: String?) {
+    fun setReviewHintShownNow(context: Context) {
         getPreferences(context).edit {
-            putString(KEY_LANGUAGE_CODE, languageCode ?: "system")
+            putLong("review_hint_last_shown", Instant.now().epochSecond)
+        }
+    }
+
+    fun resetReviewHintShown(context: Context) {
+        getPreferences(context).edit {
+            putLong("review_hint_last_shown", 0L)
+        }
+    }
+
+    fun reviewHintShownTimes(applicationContext: Context): Int {
+        return getPreferences(applicationContext).getInt("review_hint_shown_times", 0)
+    }
+
+    fun increaseReviewHintShownTimes(applicationContext: Context) {
+        val currentTimes = reviewHintShownTimes(applicationContext)
+        getPreferences(applicationContext).edit {
+            putInt("review_hint_shown_times", currentTimes + 1)
+        }
+    }
+
+    fun decreaseReviewHintShownTimes(applicationContext: Context) {
+        val currentTimes = reviewHintShownTimes(applicationContext)
+        getPreferences(applicationContext).edit {
+            putInt("review_hint_shown_times", currentTimes - 1)
+        }
+    }
+
+    fun reviewHintLastShownInstant(context: Context): Instant {
+        return Instant.ofEpochSecond(getPreferences(context).getLong("review_hint_last_shown", 0))
+    }
+
+    fun resetReviewHintData(context: Context) {
+        getPreferences(context).edit {
+            putLong("review_hint_last_shown", 0L)
+            putInt("review_hint_shown_times", 0)
         }
     }
 }

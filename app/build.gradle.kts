@@ -80,6 +80,10 @@ dependencies {
     implementation(libs.google.play.services.location)
     implementation(libs.accompanist.permissions)
 
+    implementation(libs.review)
+
+    implementation(libs.review.ktx)
+
     implementation(libs.material)
 
 

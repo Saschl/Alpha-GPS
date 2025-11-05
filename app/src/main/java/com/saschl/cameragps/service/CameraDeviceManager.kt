@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.location.LocationManager
 import android.os.Build
+import androidx.activity.compose.LocalActivity
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -24,6 +25,9 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.google.android.play.core.review.ReviewException
+import com.google.android.play.core.review.ReviewManagerFactory
+import com.google.android.play.core.review.model.ReviewErrorCode
 import com.saschl.cameragps.service.pairing.startDevicePresenceObservation
 import com.saschl.cameragps.ui.DevicesScreen
 import com.saschl.cameragps.ui.EnhancedLocationPermissionBox
@@ -46,6 +50,11 @@ fun CameraDeviceManager(
         mutableStateOf<AssociatedDeviceCompat?>(null)
     }
 
+    val manager = ReviewManagerFactory.create(context)
+
+    val activity = LocalActivity.current
+
+
     val lifecycleOwner = LocalLifecycleOwner.current
     val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
 
@@ -60,6 +69,35 @@ fun CameraDeviceManager(
     var isLocationEnabled by remember {
         mutableStateOf(locationManager?.isProviderEnabled(LocationManager.GPS_PROVIDER) == true ||
                       locationManager?.isProviderEnabled(LocationManager.NETWORK_PROVIDER) == true)
+    }
+
+    LaunchedEffect(associatedDevices, lifecycleState) {
+        if (associatedDevices.isNotEmpty() && PreferencesManager.reviewHintLastShownDaysAgo(
+                context.applicationContext,
+                true
+            ) >= 30
+            && lifecycleState.isAtLeast(Lifecycle.State.STARTED) && PreferencesManager.reviewHintShownTimes(context.applicationContext) < 3
+        ) {
+            val request = manager.requestReviewFlow()
+            PreferencesManager.setReviewHintShownNow(context.applicationContext)
+            PreferencesManager.increaseReviewHintShownTimes(context.applicationContext)
+            request.addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    // We got the ReviewInfo object
+                    val reviewInfo = task.result
+                    val flow = manager.launchReviewFlow(activity!! , reviewInfo)
+                    flow.addOnCompleteListener { _ ->
+                        Timber.i("Review done!")
+                    }
+                } else {
+                    // There was some problem, log or handle the error code.
+                    @ReviewErrorCode val reviewErrorCode = (task.exception as ReviewException).errorCode
+                    Timber.e("Review flow failed with error code: $reviewErrorCode")
+                    PreferencesManager.resetReviewHintShown(context.applicationContext)
+                    PreferencesManager.decreaseReviewHintShownTimes(context.applicationContext)
+                }
+            }
+        }
     }
 
     DisposableEffect(context) {
