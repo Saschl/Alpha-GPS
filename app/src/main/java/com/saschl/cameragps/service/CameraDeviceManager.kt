@@ -118,7 +118,6 @@ fun CameraDeviceManager(
         }
     }
 
-
     LaunchedEffect(lifecycleState) {
         when (lifecycleState) {
             Lifecycle.State.RESUMED -> {

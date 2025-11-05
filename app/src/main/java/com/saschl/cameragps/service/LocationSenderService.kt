@@ -27,6 +27,9 @@ import com.saschl.cameragps.R
 import com.saschl.cameragps.notification.NotificationsHelper
 import com.saschl.cameragps.service.SonyBluetoothConstants.locationTransmissionNotificationId
 import com.saschl.cameragps.utils.PreferencesManager
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import timber.log.Timber
 import java.util.UUID
 
@@ -75,14 +78,10 @@ class LocationSenderService : Service() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
     private var cameraGatt: BluetoothGatt? = null
-
     private var writeLocationCharacteristic: BluetoothGattCharacteristic? = null
     private var locationResult: Location = Location("")
     private var isShutdownRequested = false
 
-    private var pendingShutdownStartId: Int = 0
-
-    private var isServiceInitialized = false
 
     private val bluetoothManager: BluetoothManager by lazy {
         applicationContext.getSystemService()!!
@@ -131,15 +130,16 @@ class LocationSenderService : Service() {
         } else {
             // Cancel any pending shutdown since we're starting normally
             cancelShutdown()
+            address = intent?.getStringExtra("address")
 
-            if (!isServiceInitialized) {
-                isServiceInitialized = true
-                Timber.i("Service initialized")
-                startAsForegroundService()
+            if (address != null && address.equals(this.address)) {
+                return START_STICKY
             }
 
-            this.pendingShutdownStartId = startId
-            address = intent?.getStringExtra("address")
+
+            Timber.i("Service initialized")
+            startAsForegroundService()
+
 
             val device: BluetoothDevice = bluetoothManager.adapter.getRemoteDevice(address)
 

@@ -29,15 +29,10 @@ import timber.log.Timber
 
 class MainActivity : AppCompatActivity() {
 
-    /*  override fun attachBaseContext(newBase: Context?) {
-          super.attachBaseContext(LanguageContextWrapper.wrap(newBase ?: return))
-      }
-      */
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-
 
         if (Timber.treeCount == 0) {
             FileTree.initialize(this)
@@ -72,12 +67,10 @@ class MainActivity : AppCompatActivity() {
                         showSettings = false
                     }
                 }
-
                 else -> { /* No action needed */
                 }
             }
         }
-
 
         // Check if battery optimization dialog should be shown
         val powerManager = context.getSystemService<PowerManager>()
@@ -115,7 +108,6 @@ class MainActivity : AppCompatActivity() {
                 LaunchedEffect(Unit) {
                     val currentBatteryStatus =
                         powerManager?.isIgnoringBatteryOptimizations(context.packageName) == true
-
 
                     // Update dialog visibility based on current status
                     showBatteryOptimizationDialog =
