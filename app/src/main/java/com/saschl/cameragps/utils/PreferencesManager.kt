@@ -76,11 +76,11 @@ object PreferencesManager {
         }
     }
 
-    fun reviewHintLastShownDaysAgo(context: Context): Long {
+    fun reviewHintLastShownDaysAgo(context: Context, initialize: Boolean = false): Long {
         val lastShown = getPreferences(context).getLong("review_hint_last_shown", 0L)
 
         var lastShownInstant: Instant
-        if (lastShown == 0L) {
+        if (lastShown == 0L && initialize) {
             // give the user one day breathing room before showing the hint after setting up the first device
             lastShownInstant = Instant.now().minus(29, ChronoUnit.DAYS)
             getPreferences(context).edit {
@@ -121,6 +121,17 @@ object PreferencesManager {
         val currentTimes = reviewHintShownTimes(applicationContext)
         getPreferences(applicationContext).edit {
             putInt("review_hint_shown_times", currentTimes - 1)
+        }
+    }
+
+    fun reviewHintLastShownInstant(context: Context): Instant {
+        return Instant.ofEpochSecond(getPreferences(context).getLong("review_hint_last_shown", 0))
+    }
+
+    fun resetReviewHintData(context: Context) {
+        getPreferences(context).edit {
+            putLong("review_hint_last_shown", 0L)
+            putInt("review_hint_shown_times", 0)
         }
     }
 }

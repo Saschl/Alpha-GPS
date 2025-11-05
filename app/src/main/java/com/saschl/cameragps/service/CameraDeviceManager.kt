@@ -72,7 +72,10 @@ fun CameraDeviceManager(
     }
 
     LaunchedEffect(associatedDevices, lifecycleState) {
-        if(associatedDevices.isNotEmpty() && PreferencesManager.reviewHintLastShownDaysAgo(context.applicationContext) >= 30
+        if (associatedDevices.isNotEmpty() && PreferencesManager.reviewHintLastShownDaysAgo(
+                context.applicationContext,
+                true
+            ) >= 30
             && lifecycleState.isAtLeast(Lifecycle.State.STARTED) && PreferencesManager.reviewHintShownTimes(context.applicationContext) < 3
         ) {
             val request = manager.requestReviewFlow()
