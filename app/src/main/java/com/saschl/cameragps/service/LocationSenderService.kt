@@ -27,9 +27,6 @@ import com.saschl.cameragps.R
 import com.saschl.cameragps.notification.NotificationsHelper
 import com.saschl.cameragps.service.SonyBluetoothConstants.locationTransmissionNotificationId
 import com.saschl.cameragps.utils.PreferencesManager
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import timber.log.Timber
 import java.util.UUID
 
@@ -132,7 +129,7 @@ class LocationSenderService : Service() {
             cancelShutdown()
             address = intent?.getStringExtra("address")
 
-            if (address != null && address.equals(this.address)) {
+            if (address != null && address.equals(currentAddress)) {
                 return START_STICKY
             }
 
