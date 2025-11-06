@@ -152,6 +152,7 @@ class LocationSenderService : Service() {
 
         cameraGatt?.close()
         cameraGatt = null
+        address = null
 
         if (::locationCallback.isInitialized) {
             fusedLocationClient.removeLocationUpdates(locationCallback)
