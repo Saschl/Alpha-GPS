@@ -66,7 +66,7 @@ fun DevicesScreen(
     LaunchedEffect(lifecycleState) {
         when (lifecycleState) {
             Lifecycle.State.RESUMED -> {
-                Timber.i("App started, will resume transmission for configured devices")
+                Timber.d("App started, will resume transmission for configured devices")
                 associatedDevices.forEach {
                     val shouldTransmissionStart =
                         PreferencesManager.isDeviceEnabled(context.applicationContext, it.address)

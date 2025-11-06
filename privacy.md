@@ -1,6 +1,8 @@
 **Privacy Policy**
 
-This privacy policy applies to the Camera GPS for Geotagging app (hereby referred to as "Application") for mobile devices that was created by Saschl (hereby referred to as "Service Provider") as an Open Source service. This service is intended for use "AS IS".
+This privacy policy applies to the Alpha GPS for Geotagging app (hereby referred to as "
+Application") for mobile devices that was created by Saschl (hereby referred to as "Service
+Provider") as an Open Source service. This service is intended for use "AS IS".
 
 **Information Collection and Use**
 

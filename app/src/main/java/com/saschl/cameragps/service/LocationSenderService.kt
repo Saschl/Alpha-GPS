@@ -114,6 +114,11 @@ class LocationSenderService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
         val currentAddress = this.address
+        startAsForegroundService()
+
+        if (address != null && address.equals(currentAddress)) {
+            return START_STICKY
+        }
         // Check if this is a shutdown request
         if (intent?.action == SonyBluetoothConstants.ACTION_REQUEST_SHUTDOWN) {
             if (currentAddress == null || !PreferencesManager.isKeepAliveEnabled(
@@ -125,18 +130,9 @@ class LocationSenderService : Service() {
                 return START_NOT_STICKY
             }
         } else {
-            // Cancel any pending shutdown since we're starting normally
-            cancelShutdown()
             address = intent?.getStringExtra("address")
 
-            if (address != null && address.equals(currentAddress)) {
-                return START_STICKY
-            }
-
-
             Timber.i("Service initialized")
-            startAsForegroundService()
-
 
             val device: BluetoothDevice = bluetoothManager.adapter.getRemoteDevice(address)
 
@@ -144,7 +140,6 @@ class LocationSenderService : Service() {
                 Timber.i("Gatt will be reused")
             } else {
                 Timber.i("Gatt will be created")
-
                 cameraGatt = device.connectGatt(this, true, bluetoothGattCallback)
             }
         }
@@ -154,8 +149,6 @@ class LocationSenderService : Service() {
     @SuppressLint("MissingPermission")
     override fun onDestroy() {
         super.onDestroy()
-
-        cancelShutdown()
 
         cameraGatt?.close()
         cameraGatt = null
@@ -181,7 +174,7 @@ class LocationSenderService : Service() {
     private fun initializeLogging() {
         if (Timber.treeCount == 0) {
             FileTree.initialize(this)
-            Timber.plant(Timber.DebugTree(), FileTree(this))
+            Timber.plant(FileTree(this))
 
             // Set up global exception handler to log crashes
             val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
@@ -264,7 +257,6 @@ class LocationSenderService : Service() {
         val notification = NotificationsHelper.buildNotification(this)
         NotificationsHelper.showNotification(this, locationTransmissionNotificationId, notification)
 
-        cancelShutdown()
         cameraGatt?.discoverServices()
     }
 
@@ -409,22 +401,6 @@ class LocationSenderService : Service() {
 
     @SuppressLint("MissingPermission")
     fun requestShutdown(startId: Int) {
-        if (isShutdownRequested) {
-            Timber.i("Shutdown already requested, ignoring duplicate request")
-            return
-        }
-
-        isShutdownRequested = true
         stopSelfResult(startId)
-    }
-
-    /**
-     * Cancels any pending shutdown
-     */
-    private fun cancelShutdown() {
-        if (isShutdownRequested) {
-            Timber.i("Cancelling pending shutdown")
-            isShutdownRequested = false
-        }
     }
 }

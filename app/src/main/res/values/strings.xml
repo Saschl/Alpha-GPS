@@ -68,7 +68,7 @@
     <string name="welcome_feature_device_management_title">Device Management</string>
     <string name="welcome_get_started_button">Get Started</string>
     <string name="welcome_settings_note">You can access these settings later from the main menu</string>
-    <string name="welcome_app_icon_description">Camera GPS App Icon</string>
+    <string name="welcome_app_icon_description">Alpha GPS App Icon</string>
 
     <!-- Settings screen strings -->
     <string name="settings">Settings</string>
@@ -82,7 +82,7 @@
     <!-- Help & FAQ strings -->
     <string name="help_faq_title">Help &amp; FAQ</string>
     <string name="help_close_description">Close</string>
-    <string name="help_about_title">About CameraGPS</string>
+    <string name="help_about_title">About Alpha GPS</string>
     <string name="help_about_description">This app provides real-time GPS coordinates to your camera via Bluetooth, allowing for automatic geotagging of your photos without needing the camera\'s built-in GPS.</string>
     <string name="help_need_more_title">Need more help?</string>
     <string name="help_need_more_description">Check the app logs in the top menu for troubleshooting information, or review your device settings to ensure all permissions are granted.</string>

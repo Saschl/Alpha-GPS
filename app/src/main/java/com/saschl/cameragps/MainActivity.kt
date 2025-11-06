@@ -36,14 +36,13 @@ class MainActivity : AppCompatActivity() {
 
         if (Timber.treeCount == 0) {
             FileTree.initialize(this)
-            Timber.plant(Timber.DebugTree(), FileTree(this))
+            Timber.plant(FileTree(this))
 
             // Set up global exception handler to log crashes
             val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
             Thread.setDefaultUncaughtExceptionHandler(GlobalExceptionHandler(defaultHandler))
         }
 
-        Timber.i("created MainActivity")
         setContent {
             CameraGpsTheme {
                 AppContent()
