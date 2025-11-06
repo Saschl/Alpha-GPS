@@ -2,17 +2,14 @@ package com.saschl.cameragps.service
 
 import android.content.Context
 import android.util.Log
-import timber.log.Timber
 import com.saschl.cameragps.database.LogRepository
 import kotlinx.coroutines.runBlocking
+import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import kotlin.collections.map
-import kotlin.let
-import kotlin.stackTraceToString
 
-class FileTree(context: Context) : Timber.Tree() {
+class FileTree(context: Context, private val minPriority: Int) : Timber.Tree() {
     private val logRepository = LogRepository(context.applicationContext)
 
     companion object {
@@ -69,6 +66,8 @@ class FileTree(context: Context) : Timber.Tree() {
         val timestamp = System.currentTimeMillis()
         val exception = t?.stackTraceToString()
 
-        logRepository.insertLog(timestamp, priority, tag, message, exception)
+        if (priority >= minPriority) {
+            logRepository.insertLog(timestamp, priority, tag, message, exception)
+        }
     }
 }

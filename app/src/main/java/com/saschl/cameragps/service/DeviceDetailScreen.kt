@@ -40,8 +40,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.saschl.cameragps.R
 import com.saschl.cameragps.service.pairing.startDevicePresenceObservation
+import com.saschl.cameragps.ui.DeviceDetailViewModel
 import com.saschl.cameragps.utils.PreferencesManager
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -55,6 +57,7 @@ fun DeviceDetailScreen(
     onDisassociate: (device: AssociatedDeviceCompat) -> Unit,
     onClose: () -> Unit
 ) {
+    val viewModel: DeviceDetailViewModel = viewModel()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -208,9 +211,7 @@ fun DeviceDetailScreen(
 
                                 context.startForegroundService(intent)
                             } else {
-                                Timber.i("Stopping LocationSenderService from detail for device ${device.address}")
-                                context.stopService(intent)
-                                startDevicePresenceObservation(deviceManager, device)
+                                viewModel.stopServiceWithDelay(context, device, deviceManager)
                             }
                         }
                     )

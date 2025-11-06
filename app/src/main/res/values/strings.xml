@@ -75,6 +75,9 @@
     <string name="app_controls">App Controls</string>
     <string name="enable_app">Enable App</string>
     <string name="enable_app_description">Allow the app to run and sync GPS data with connected cameras</string>
+    <string name="log_settings">Log Settings</string>
+    <string name="log_level">Log Level</string>
+    <string name="log_level_description">Minimum log level to record</string>
 
     <!-- General strings -->
     <string name="unknown_error">Unknown error</string>

@@ -46,9 +46,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.os.LocaleListCompat
 import com.saschl.cameragps.R
+import com.saschl.cameragps.service.FileTree
 import com.saschl.cameragps.service.LocationSenderService
 import com.saschl.cameragps.utils.LanguageManager
 import com.saschl.cameragps.utils.PreferencesManager
+import timber.log.Timber
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -250,6 +252,79 @@ fun SettingsScreen(
                     }
                 }
             }
+
+            item {
+                // Log Level Settings Card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.log_settings),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant
+                        )
+
+                        val currentLogLevel = remember {
+                            mutableIntStateOf(PreferencesManager.logLevel(context))
+                        }
+                        var showLogLevelDialog by remember { mutableStateOf(false) }
+
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showLogLevelDialog = true },
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = stringResource(R.string.log_level),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Text(
+                                        text = getLogLevelName(currentLogLevel.intValue),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+
+                        if (showLogLevelDialog) {
+                            LogLevelSelectionDialog(
+                                currentLevel = currentLogLevel.intValue,
+                                onLevelSelected = { level ->
+                                    currentLogLevel.intValue = level
+                                    PreferencesManager.setLogLevel(context, level)
+                                    showLogLevelDialog = false
+                                    Timber.uprootAll()
+                                    Timber.plant(FileTree(context, level))
+                                },
+                                onDismiss = { showLogLevelDialog = false }
+                            )
+                        }
+                    }
+                }
+            }
+
             if (debugPanelCounter >= 5) {
                 item {
                     // Debug Panel
@@ -345,3 +420,71 @@ private fun LanguageSelectionDialog(
         }
     )
 }
+
+private fun getLogLevelName(level: Int): String {
+
+    // TODO refactor this
+    return when (level) {
+        android.util.Log.VERBOSE -> "VERBOSE"
+        android.util.Log.DEBUG -> "DEBUG"
+        android.util.Log.INFO -> "INFO"
+        android.util.Log.WARN -> "WARN"
+        android.util.Log.ERROR -> "ERROR"
+        else -> "DEBUG"
+    }
+}
+
+@Composable
+private fun LogLevelSelectionDialog(
+    currentLevel: Int,
+    onLevelSelected: (Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    // TODO refactor this
+    val logLevels = listOf(
+        android.util.Log.VERBOSE to "VERBOSE",
+        android.util.Log.DEBUG to "DEBUG",
+        android.util.Log.INFO to "INFO",
+        android.util.Log.WARN to "WARN",
+        android.util.Log.ERROR to "ERROR"
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(R.string.log_level),
+                style = MaterialTheme.typography.headlineSmall
+            )
+        },
+        text = {
+            LazyColumn {
+                items(logLevels) { (level, name) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onLevelSelected(level) }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = level == currentLevel,
+                            onClick = { onLevelSelected(level) }
+                        )
+                        Text(
+                            text = name,
+                            modifier = Modifier.padding(start = 8.dp),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel_button))
+            }
+        }
+    )
+}
+

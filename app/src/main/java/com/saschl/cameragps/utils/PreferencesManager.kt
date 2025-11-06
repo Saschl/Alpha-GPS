@@ -2,6 +2,7 @@ package com.saschl.cameragps.utils
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.core.content.edit
 import java.time.Duration
 import java.time.Instant
@@ -16,6 +17,9 @@ object PreferencesManager {
     private const val KEY_DEVICE_KEEPALIVE_PREFIX = "device_keepalive_"
     private const val KEY_BATTERY_OPTIMIZATION_DIALOG_DISMISSED = "battery_optimization_dialog_dismissed"
     private const val KEY_LANGUAGE_CODE = "language_code"
+    private const val KEY_LOG_LEVEL = "log_level"
+    private const val KEY_REVIEW_HINT_LAST_SHOWN = "review_hint_last_shown"
+    private const val KEY_REVIEW_HINT_SHOWN_TIMES = "review_hint_shown_times"
 
     private fun getPreferences(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -77,14 +81,14 @@ object PreferencesManager {
     }
 
     fun reviewHintLastShownDaysAgo(context: Context, initialize: Boolean = false): Long {
-        val lastShown = getPreferences(context).getLong("review_hint_last_shown", 0L)
+        val lastShown = getPreferences(context).getLong(KEY_REVIEW_HINT_LAST_SHOWN, 0L)
 
         var lastShownInstant: Instant
         if (lastShown == 0L && initialize) {
             // give the user one day breathing room before showing the hint after setting up the first device
             lastShownInstant = Instant.now().minus(29, ChronoUnit.DAYS)
             getPreferences(context).edit {
-                putLong("review_hint_last_shown", lastShownInstant.epochSecond)
+                putLong(KEY_REVIEW_HINT_LAST_SHOWN, lastShownInstant.epochSecond)
             }
         } else {
             lastShownInstant = Instant.ofEpochSecond(lastShown)
@@ -96,42 +100,52 @@ object PreferencesManager {
 
     fun setReviewHintShownNow(context: Context) {
         getPreferences(context).edit {
-            putLong("review_hint_last_shown", Instant.now().epochSecond)
+            putLong(KEY_REVIEW_HINT_LAST_SHOWN, Instant.now().epochSecond)
         }
     }
 
     fun resetReviewHintShown(context: Context) {
         getPreferences(context).edit {
-            putLong("review_hint_last_shown", 0L)
+            putLong(KEY_REVIEW_HINT_LAST_SHOWN, 0L)
         }
     }
 
     fun reviewHintShownTimes(applicationContext: Context): Int {
-        return getPreferences(applicationContext).getInt("review_hint_shown_times", 0)
+        return getPreferences(applicationContext).getInt(KEY_REVIEW_HINT_SHOWN_TIMES, 0)
     }
 
     fun increaseReviewHintShownTimes(applicationContext: Context) {
         val currentTimes = reviewHintShownTimes(applicationContext)
         getPreferences(applicationContext).edit {
-            putInt("review_hint_shown_times", currentTimes + 1)
+            putInt(KEY_REVIEW_HINT_SHOWN_TIMES, currentTimes + 1)
         }
     }
 
     fun decreaseReviewHintShownTimes(applicationContext: Context) {
         val currentTimes = reviewHintShownTimes(applicationContext)
         getPreferences(applicationContext).edit {
-            putInt("review_hint_shown_times", currentTimes - 1)
+            putInt(KEY_REVIEW_HINT_SHOWN_TIMES, currentTimes - 1)
         }
     }
 
     fun reviewHintLastShownInstant(context: Context): Instant {
-        return Instant.ofEpochSecond(getPreferences(context).getLong("review_hint_last_shown", 0))
+        return Instant.ofEpochSecond(getPreferences(context).getLong(KEY_REVIEW_HINT_LAST_SHOWN, 0))
     }
 
     fun resetReviewHintData(context: Context) {
         getPreferences(context).edit {
-            putLong("review_hint_last_shown", 0L)
-            putInt("review_hint_shown_times", 0)
+            putLong(KEY_REVIEW_HINT_LAST_SHOWN, 0L)
+            putInt(KEY_REVIEW_HINT_SHOWN_TIMES, 0)
+        }
+    }
+
+    fun logLevel(context: Context): Int {
+        return getPreferences(context).getInt(KEY_LOG_LEVEL, Log.INFO)
+    }
+
+    fun setLogLevel(context: Context, logLevel: Int) {
+        getPreferences(context).edit {
+            putInt(KEY_LOG_LEVEL, logLevel)
         }
     }
 }

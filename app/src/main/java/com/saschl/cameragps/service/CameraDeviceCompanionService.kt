@@ -111,7 +111,7 @@ class CameraDeviceCompanionService : CompanionDeviceService() {
         super.onCreate()
         if (Timber.treeCount == 0) {
             FileTree.initialize(this)
-            Timber.plant(FileTree(this))
+            Timber.plant(FileTree(this, PreferencesManager.logLevel(this)))
 
             // Set up global exception handler to log crashes
             val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
