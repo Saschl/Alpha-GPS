@@ -86,9 +86,9 @@ dependencies {
 
     implementation(libs.material)
 
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.0")
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
 
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.4.0")
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
 
 
     // Room database dependencies
