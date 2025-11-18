@@ -116,11 +116,9 @@ class LocationSenderService : Service() {
         val currentAddress = this.address
         startAsForegroundService()
 
-        if (address != null && address.equals(currentAddress)) {
-            return START_STICKY
-        }
         // Check if this is a shutdown request
         if (intent?.action == SonyBluetoothConstants.ACTION_REQUEST_SHUTDOWN) {
+            Timber.i("Shutdown requested for device $currentAddress")
             if (currentAddress == null || !PreferencesManager.isKeepAliveEnabled(
                     this,
                     currentAddress
@@ -131,6 +129,10 @@ class LocationSenderService : Service() {
             }
         } else {
             address = intent?.getStringExtra("address")
+
+            if (this.address != null && address.equals(currentAddress)) {
+                return START_STICKY
+            }
 
             Timber.i("Service initialized")
 
@@ -399,9 +401,7 @@ class LocationSenderService : Service() {
         }
     }
 
-
-    @SuppressLint("MissingPermission")
     fun requestShutdown(startId: Int) {
-        stopSelfResult(startId)
+        stopSelf(startId)
     }
 }
