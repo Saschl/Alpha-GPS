@@ -2,7 +2,7 @@ package com.saschl.cameragps.service
 
 import android.content.Context
 import android.util.Log
-import com.saschl.cameragps.database.LogRepository
+import com.saschl.cameragps.database.logging.LogRepository
 import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 import java.text.SimpleDateFormat

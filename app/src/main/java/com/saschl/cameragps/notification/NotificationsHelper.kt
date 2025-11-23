@@ -53,6 +53,7 @@ internal object NotificationsHelper {
     }
 
     fun buildNotification(context: Context, title: String, content: String): Notification {
+        // TODO separate channels for standby and connected
         return NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(content)

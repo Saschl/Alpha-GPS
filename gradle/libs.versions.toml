@@ -17,6 +17,7 @@ reviewKtx = "2.0.2"
 room = "2.8.3"
 swiperefreshlayout= "1.2.0-beta01"
 coreSplashscreen = "1.2.0"
+lifecycleService = "2.10.0"
 
 
 [libraries]
@@ -48,6 +49,7 @@ accompanist-permissions = { module = "com.google.accompanist:accompanist-permiss
 google-play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "googlePlayServicesLocation" }
 androidx-swiperefreshlayout = { group = "androidx.swiperefreshlayout", name = "swiperefreshlayout", version.ref = "swiperefreshlayout" }
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
+androidx-lifecycle-service = { group = "androidx.lifecycle", name = "lifecycle-service", version.ref = "lifecycleService" }
 
 
 [plugins]

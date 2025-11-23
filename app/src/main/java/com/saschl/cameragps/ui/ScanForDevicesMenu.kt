@@ -137,7 +137,7 @@ fun ScanForDevicesMenu(
             )
             Button(
                 modifier = Modifier.weight(0.5f),
-                enabled = associatedDevices.isEmpty() && isBluetoothEnabled && isLocationEnabled,
+                // enabled = associatedDevices.isEmpty() && isBluetoothEnabled && isLocationEnabled,
                 onClick = {
                     scope.launch {
                         val intentSender =

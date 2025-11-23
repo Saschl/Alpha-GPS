@@ -1,4 +1,4 @@
-package com.saschl.cameragps.database
+package com.saschl.cameragps.database.logging
 
 import androidx.room.Dao
 import androidx.room.Insert

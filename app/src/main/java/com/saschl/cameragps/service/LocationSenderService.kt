@@ -2,8 +2,6 @@ package com.saschl.cameragps.service
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Service
-import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
@@ -12,11 +10,12 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.location.Location
 import android.os.Build
-import android.os.IBinder
 import android.os.Looper
 import androidx.annotation.RequiresPermission
 import androidx.core.app.ServiceCompat
 import androidx.core.content.getSystemService
+import androidx.lifecycle.LifecycleService
+import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -24,9 +23,11 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.saschl.cameragps.R
+import com.saschl.cameragps.database.logging.LogDatabase
 import com.saschl.cameragps.notification.NotificationsHelper
 import com.saschl.cameragps.service.SonyBluetoothConstants.locationTransmissionNotificationId
 import com.saschl.cameragps.utils.PreferencesManager
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.UUID
 
@@ -68,16 +69,20 @@ object SonyBluetoothConstants {
 /**
  * Service responsible for sending GPS location data to Sony cameras via Bluetooth
  */
-class LocationSenderService : Service() {
+class LocationSenderService : LifecycleService() {
 
-    private var address: String? = null
+    //private var address: String? = null
     private var locationDataConfig = LocationDataConfig(shouldSendTimeZoneAndDst = true)
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
-    private var cameraGatt: BluetoothGatt? = null
+
+    //private var cameraGatt: BluetoothGatt? = null
     private var writeLocationCharacteristic: BluetoothGattCharacteristic? = null
     private var locationResult: Location = Location("")
-    private var isShutdownRequested = false
+
+    private lateinit var cameraConnectionManager: CameraConnectionManager
+
+    private val deviceDao = LogDatabase.getDatabase(this).cameraDeviceDao()
 
 
     private val bluetoothManager: BluetoothManager by lazy {
@@ -86,9 +91,10 @@ class LocationSenderService : Service() {
 
     private val bluetoothGattCallback = BluetoothGattCallbackHandler()
 
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
-    }
+    /*  override fun onBind(intent: Intent?): IBinder? {
+          super.onBind(in)
+          return null
+      }*/
 
     private fun hasTimeZoneDstFlag(value: ByteArray): Boolean {
         return value.size >= 5 && (value[4].toInt() and 0x02) != 0
@@ -99,7 +105,11 @@ class LocationSenderService : Service() {
         fusedLocationClient.lastLocation.addOnSuccessListener {
             if (it != null) {
                 locationResult = it
-                sendData(cameraGatt, writeLocationCharacteristic)
+
+                cameraConnectionManager.getBluetoothGattConnections().forEach { gatt ->
+                    sendData(gatt, writeLocationCharacteristic)
+
+                }
             }
         }
         fusedLocationClient.requestLocationUpdates(
@@ -112,38 +122,45 @@ class LocationSenderService : Service() {
 
     @SuppressLint("MissingPermission")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        super.onStartCommand(intent, flags, startId)
 
-        val currentAddress = this.address
+        // val currentAddress = this.address
         startAsForegroundService()
+        val address = intent!!.getStringExtra("address")!!
 
         // Check if this is a shutdown request
-        if (intent?.action == SonyBluetoothConstants.ACTION_REQUEST_SHUTDOWN) {
-            Timber.i("Shutdown requested for device $currentAddress")
-            if (currentAddress == null || !PreferencesManager.isKeepAliveEnabled(
-                    this,
-                    currentAddress
-                )
-            ) {
-                requestShutdown(startId)
-                return START_NOT_STICKY
-            }
-        } else {
-            address = intent?.getStringExtra("address")
+        if (intent.action == SonyBluetoothConstants.ACTION_REQUEST_SHUTDOWN) {
+            Timber.i("Shutdown requested for device $address")
 
-            if (this.address != null && address.equals(currentAddress)) {
+            if (address == "all") {
+                lifecycleScope.launch {
+                    if (deviceDao.getAlwaysOnEnabledDeviceCount() == 0) {
+                        Timber.i("No always-on devices found, disconnecting all cameras and shutting down service")
+                        cameraConnectionManager.disconnectAll()
+                        requestShutdown(startId)
+                    } else {
+                        Timber.i("At least one always-on device found, not shutting down service")
+                    }
+                }
+            }
+
+            lifecycleScope.launch {
+                if (!deviceDao.isDeviceAlwaysOnEnabled(address)) {
+                    cameraConnectionManager.disconnect(intent.getStringExtra("address")!!)
+                }
+                if (cameraConnectionManager.getConnectedCameras().isEmpty()) {
+                    requestShutdown(startId)
+                }
+            }
+
+            return START_STICKY
+        } else {
+            if (cameraConnectionManager.isConnected(address)) {
                 return START_STICKY
             }
-
             Timber.i("Service initialized")
+            cameraConnectionManager.connect(address)
 
-            val device: BluetoothDevice = bluetoothManager.adapter.getRemoteDevice(address)
-
-            if (cameraGatt != null) {
-                Timber.i("Gatt will be reused")
-            } else {
-                Timber.i("Gatt will be created")
-                cameraGatt = device.connectGatt(this, true, bluetoothGattCallback)
-            }
         }
         return START_REDELIVER_INTENT
     }
@@ -152,9 +169,9 @@ class LocationSenderService : Service() {
     override fun onDestroy() {
         super.onDestroy()
 
-        cameraGatt?.close()
-        cameraGatt = null
-        address = null
+        //cameraGatt?.close()
+        //cameraGatt = null
+        //address = null
 
         if (::locationCallback.isInitialized) {
             fusedLocationClient.removeLocationUpdates(locationCallback)
@@ -167,6 +184,8 @@ class LocationSenderService : Service() {
         super.onCreate()
         initializeLogging()
         initializeLocationServices()
+        cameraConnectionManager =
+            CameraConnectionManager(this, bluetoothManager, bluetoothGattCallback)
     }
 
     private fun initializeLocationServices() {
@@ -191,7 +210,10 @@ class LocationSenderService : Service() {
 
             if (shouldUpdateLocation(lastLocation)) {
                 locationResult = lastLocation
-                sendData(cameraGatt, writeLocationCharacteristic)
+
+                cameraConnectionManager.getBluetoothGattConnections().forEach { gatt ->
+                    sendData(gatt, writeLocationCharacteristic)
+                }
             }
         }
 
@@ -216,7 +238,6 @@ class LocationSenderService : Service() {
                 }
                 return false
             }
-
             return true
         }
     }
@@ -251,16 +272,16 @@ class LocationSenderService : Service() {
     }
 
     @SuppressLint("MissingPermission")
-    private fun resumeLocationTransmission() {
-        if (address == null) {
-            Timber.w("Cannot resume location transmission: address is null")
-            return
-        }
+    private fun resumeLocationTransmission(gatt: BluetoothGatt) {
+        /*  if (address == null) {
+              Timber.w("Cannot resume location transmission: address is null")
+              return
+          }*/
 
         val notification = NotificationsHelper.buildNotification(this)
         NotificationsHelper.showNotification(this, locationTransmissionNotificationId, notification)
 
-        cameraGatt?.discoverServices()
+        gatt.discoverServices()
     }
 
     private inner class BluetoothGattCallbackHandler : BluetoothGattCallback() {
@@ -277,7 +298,7 @@ class LocationSenderService : Service() {
                 cancelLocationTransmission()
             } else {
                 Timber.i("Connected to device %d", status)
-                resumeLocationTransmission()
+                resumeLocationTransmission(gatt)
             }
         }
 

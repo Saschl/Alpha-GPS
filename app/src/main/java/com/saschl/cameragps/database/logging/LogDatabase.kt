@@ -1,17 +1,24 @@
-package com.saschl.cameragps.database
+package com.saschl.cameragps.database.logging
 
+import android.content.Context
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import android.content.Context
+import com.saschl.cameragps.database.devices.CameraDevice
+import com.saschl.cameragps.database.devices.CameraDeviceDAO
 
 @Database(
-    entities = [LogEntry::class],
-    version = 1,
-    exportSchema = false
+    entities = [LogEntry::class, CameraDevice::class],
+    version = 2,
+    autoMigrations = [
+        AutoMigration(from = 1, to = 2)
+    ]
 )
 abstract class LogDatabase : RoomDatabase() {
     abstract fun logDao(): LogDao
+
+    abstract fun cameraDeviceDao(): CameraDeviceDAO
 
     companion object {
         @Volatile

@@ -179,4 +179,12 @@
 
     <string name="app_standby_title">待机</string>
     <string name="app_standby_content">等待相机连接</string>
+
+    <!-- Device management strings -->
+    <string name="device_management">设备管理</string>
+    <string name="no_devices_found">未找到设备</string>
+    <string name="delete_device">删除设备</string>
+    <string name="delete_device_confirmation">确定要删除 %1$s 吗？</string>
+    <string name="delete">删除</string>
+    <string name="always_on_enabled">始终开启已启用</string>
 </resources>

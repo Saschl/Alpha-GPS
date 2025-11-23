@@ -12,11 +12,7 @@ object PreferencesManager {
     private const val PREFS_NAME = "camera_gps_prefs"
     private const val KEY_FIRST_LAUNCH = "is_first_launch"
     private const val KEY_APP_ENABLED = "app_enabled"
-    private const val KEY_DEVICE_ENABLED_PREFIX = "device_enabled_"
-
-    private const val KEY_DEVICE_KEEPALIVE_PREFIX = "device_keepalive_"
     private const val KEY_BATTERY_OPTIMIZATION_DIALOG_DISMISSED = "battery_optimization_dialog_dismissed"
-    private const val KEY_LANGUAGE_CODE = "language_code"
     private const val KEY_LOG_LEVEL = "log_level"
     private const val KEY_REVIEW_HINT_LAST_SHOWN = "review_hint_last_shown"
     private const val KEY_REVIEW_HINT_SHOWN_TIMES = "review_hint_shown_times"
@@ -50,15 +46,17 @@ object PreferencesManager {
         }
     }
 
-    fun isDeviceEnabled(context: Context, deviceAddress: String): Boolean {
-        return getPreferences(context).getBoolean(KEY_DEVICE_ENABLED_PREFIX + deviceAddress, true)
-    }
+    /*    fun isDeviceEnabled(context: Context, deviceAddress: String): Boolean {
+            return getPreferences(context).getBoolean(KEY_DEVICE_ENABLED_PREFIX + deviceAddress, true)
+        }*/
 
-    fun setDeviceEnabled(context: Context, deviceAddress: String, enabled: Boolean) {
-        getPreferences(context).edit {
-            putBoolean(KEY_DEVICE_ENABLED_PREFIX + deviceAddress, enabled)
+    /*
+        fun setDeviceEnabled(context: Context, deviceAddress: String, enabled: Boolean) {
+            getPreferences(context).edit {
+                putBoolean(KEY_DEVICE_ENABLED_PREFIX + deviceAddress, enabled)
+            }
         }
-    }
+    */
 
     fun isBatteryOptimizationDialogDismissed(context: Context): Boolean {
         return getPreferences(context).getBoolean(KEY_BATTERY_OPTIMIZATION_DIALOG_DISMISSED, false)
@@ -70,15 +68,15 @@ object PreferencesManager {
         }
     }
 
-    fun isKeepAliveEnabled(context: Context, deviceAddress: String): Boolean {
-        return getPreferences(context).getBoolean(KEY_DEVICE_KEEPALIVE_PREFIX + deviceAddress, false)
-    }
-
-    fun setKeepAliveEnabled(context: Context, deviceAddress: String, enabled: Boolean) {
-        getPreferences(context).edit {
-            putBoolean(KEY_DEVICE_KEEPALIVE_PREFIX + deviceAddress, enabled)
+    /*    fun isKeepAliveEnabled(context: Context, deviceAddress: String): Boolean {
+            return getPreferences(context).getBoolean(KEY_DEVICE_KEEPALIVE_PREFIX + deviceAddress, false)
         }
-    }
+
+        fun setKeepAliveEnabled(context: Context, deviceAddress: String, enabled: Boolean) {
+            getPreferences(context).edit {
+                putBoolean(KEY_DEVICE_KEEPALIVE_PREFIX + deviceAddress, enabled)
+            }
+        }*/
 
     fun reviewHintLastShownDaysAgo(context: Context, initialize: Boolean = false): Long {
         val lastShown = getPreferences(context).getLong(KEY_REVIEW_HINT_LAST_SHOWN, 0L)

@@ -27,6 +27,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,10 +39,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.saschl.cameragps.R
+import com.saschl.cameragps.database.logging.LogDatabase
 import com.saschl.cameragps.service.AssociatedDeviceCompat
 import com.saschl.cameragps.service.LocationSenderService
 import com.saschl.cameragps.service.pairing.PairingManager
 import com.saschl.cameragps.utils.PreferencesManager
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,7 +61,9 @@ fun DevicesScreen(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val scope = rememberCoroutineScope()
     val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
+    val cameraDeviceDAO = LogDatabase.getDatabase(context.applicationContext).cameraDeviceDao()
 
     // State for managing pairing after association
     var pendingPairingDevice by remember { mutableStateOf<AssociatedDeviceCompat?>(null) }
@@ -67,20 +72,22 @@ fun DevicesScreen(
         when (lifecycleState) {
             Lifecycle.State.RESUMED -> {
                 Timber.d("App started, will resume transmission for configured devices")
-                associatedDevices.forEach {
-                    val shouldTransmissionStart =
-                        PreferencesManager.isDeviceEnabled(context.applicationContext, it.address)
-                                && PreferencesManager.isKeepAliveEnabled(
-                            context.applicationContext,
-                            it.address
-                        ) && PreferencesManager.isAppEnabled(context.applicationContext)
-                    if (shouldTransmissionStart) {
-                        Timber.d("Resuming location transmission for device ${it.address}")
-                        val intent = Intent(context, LocationSenderService::class.java)
-                        intent.putExtra("address", it.address.uppercase())
-                        context.startForegroundService(intent)
+                scope.launch {
+                    associatedDevices.forEach {
+                        val shouldTransmissionStart =
+                            cameraDeviceDAO.isDeviceEnabled(it.address)
+                                    && cameraDeviceDAO.isDeviceAlwaysOnEnabled(
+                                it.address
+                            ) && PreferencesManager.isAppEnabled(context.applicationContext)
+                        if (shouldTransmissionStart) {
+                            Timber.d("Resuming location transmission for device ${it.address}")
+                            val intent = Intent(context, LocationSenderService::class.java)
+                            intent.putExtra("address", it.address.uppercase())
+                            context.startForegroundService(intent)
+                        }
                     }
                 }
+
             }
 
             else -> { /* No action needed */

@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,12 +26,9 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
@@ -41,11 +37,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.saschl.cameragps.R
+import com.saschl.cameragps.database.logging.LogDatabase
 import com.saschl.cameragps.service.pairing.startDevicePresenceObservation
 import com.saschl.cameragps.ui.DeviceDetailViewModel
-import com.saschl.cameragps.utils.PreferencesManager
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -58,17 +55,34 @@ fun DeviceDetailScreen(
     onDisassociate: (device: AssociatedDeviceCompat) -> Unit,
     onClose: () -> Unit
 ) {
-    val viewModel: DeviceDetailViewModel = viewModel()
+
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    var isDeviceEnabled by remember {
-        mutableStateOf(PreferencesManager.isDeviceEnabled(context, device.address))
+    val extras = MutableCreationExtras().apply {
+        set(
+            DeviceDetailViewModel.MY_REPOSITORY_KEY,
+            LogDatabase.getDatabase(context).cameraDeviceDao()
+        )
     }
+    val viewModel: DeviceDetailViewModel = viewModel(
+        factory = DeviceDetailViewModel.Factory,
+        extras = extras,
+        key = device.address
+    )
+    val cameraDeviceDAO = LogDatabase.getDatabase(context.applicationContext).cameraDeviceDao()
 
-    var keepAlive by remember {
-        mutableStateOf(PreferencesManager.isKeepAliveEnabled(context, device.address))
+    LaunchedEffect(Unit) {
+        viewModel.deviceEnabledFromDB(device.address)
     }
+    /*   var isDeviceEnabled by remember { mutableStateOf(false) }
+
+       var keepAlive by remember { mutableStateOf(false) }
+
+       LaunchedEffect(device.address) {
+           isDeviceEnabled = cameraDeviceDAO.isDeviceEnabled(device.address)
+           keepAlive = cameraDeviceDAO.isDeviceAlwaysOnEnabled(device.address)
+       }*/
 
     Scaffold(
         topBar = {
@@ -169,18 +183,26 @@ fun DeviceDetailScreen(
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Switch(
-                        checked = isDeviceEnabled,
-                        enabled = !keepAlive,
+                        checked = viewModel.uiState.collectAsState().value.isDeviceEnabled,
+                        enabled = !viewModel.uiState.collectAsState().value.isAlwaysOnEnabled,
                         onCheckedChange = { enabled ->
-                            isDeviceEnabled = enabled
-                            PreferencesManager.setDeviceEnabled(context, device.address, enabled)
+                            viewModel.setDeviceEnabled(enabled, device.address)
+                            scope.launch {
+                                cameraDeviceDAO.setDeviceEnabled(device.address, enabled)
+                            }
                             if(!enabled) {
 
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                                     deviceManager.stopObservingDevicePresence(device.address)
                                 }
                                 Timber.i("Stopping LocationSenderService from detail for device ${device.address}")
-                                context.stopService(Intent(context.applicationContext, LocationSenderService::class.java))
+
+                                val shutdownIntent =
+                                    Intent(context, LocationSenderService::class.java).apply {
+                                        action = SonyBluetoothConstants.ACTION_REQUEST_SHUTDOWN
+                                        putExtra("address", device.address.uppercase())
+                                    }
+                                context.startService(shutdownIntent)
                             } else {
                                 startDevicePresenceObservation(deviceManager, device)
                             }
@@ -198,11 +220,14 @@ fun DeviceDetailScreen(
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Switch(
-                        checked = keepAlive,
-                        enabled = isDeviceEnabled && viewModel.uiState.collectAsState().value.buttonEnabled,
+                        checked = viewModel.uiState.collectAsState().value.isAlwaysOnEnabled,
+                        enabled = viewModel.uiState.collectAsState().value.isDeviceEnabled && viewModel.uiState.collectAsState().value.buttonEnabled,
                         onCheckedChange = { enabled ->
-                            keepAlive = enabled
-                            PreferencesManager.setKeepAliveEnabled(context, device.address, enabled)
+                            //keepAlive = enabled
+                            viewModel.setAlwaysOnEnabled(enabled, device.address)
+                            scope.launch {
+                                cameraDeviceDAO.setAlwaysOnEnabled(device.address, enabled)
+                            }
                             val intent = Intent(context, LocationSenderService::class.java)
                             intent.putExtra("address", device.address.uppercase())
                             if (enabled) {

@@ -166,4 +166,12 @@
     <string name="welcome_feature_connect_title">Verbinde die Kamera</string>
     <string name="how_about_privacy">Wie sieht es mit dem Datenschutz aus?</string>
     <string name="how_about_privacy_answer">Die App überträgt keine Daten in Richtung Entwickler und/oder Drittparteien. Sämtliche erhobene Informationen (Standortdaten) werden nur für die Übertragung der Standortdaten zu der verbundenen Kamera verwendet. Es werden keine Daten permanent gespeichert. Die Standorterfassung wird beendet, sobald die Verbindung zur Kamera getrennt wird.</string>
+
+    <!-- Device management strings -->
+    <string name="device_management">Geräteverwaltung</string>
+    <string name="no_devices_found">Keine Geräte gefunden</string>
+    <string name="delete_device">Gerät löschen</string>
+    <string name="delete_device_confirmation">Möchten Sie %1$s wirklich löschen?</string>
+    <string name="delete">Löschen</string>
+    <string name="always_on_enabled">Immer An aktiviert</string>
 </resources>

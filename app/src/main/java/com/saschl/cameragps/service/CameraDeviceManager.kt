@@ -28,6 +28,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.android.play.core.review.ReviewException
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.google.android.play.core.review.model.ReviewErrorCode
+import com.saschl.cameragps.database.devices.CameraDevice
+import com.saschl.cameragps.database.logging.LogDatabase
 import com.saschl.cameragps.service.pairing.startDevicePresenceObservation
 import com.saschl.cameragps.ui.DevicesScreen
 import com.saschl.cameragps.ui.EnhancedLocationPermissionBox
@@ -44,6 +46,7 @@ fun CameraDeviceManager(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val deviceManager = context.getSystemService<CompanionDeviceManager>()
+    val devicesDao = LogDatabase.getDatabase(context).cameraDeviceDao()
     val adapter = context.getSystemService<BluetoothManager>()?.adapter
     val locationManager = context.getSystemService<LocationManager>()
     var selectedDevice by remember {
@@ -53,7 +56,6 @@ fun CameraDeviceManager(
     val manager = ReviewManagerFactory.create(context)
 
     val activity = LocalActivity.current
-
 
     val lifecycleOwner = LocalLifecycleOwner.current
     val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
@@ -69,6 +71,19 @@ fun CameraDeviceManager(
     var isLocationEnabled by remember {
         mutableStateOf(locationManager?.isProviderEnabled(LocationManager.GPS_PROVIDER) == true ||
                       locationManager?.isProviderEnabled(LocationManager.NETWORK_PROVIDER) == true)
+    }
+
+    LaunchedEffect(associatedDevices) {
+        associatedDevices.forEach {
+            devicesDao.insertDevice(
+                CameraDevice(
+                    deviceName = it.name,
+                    mac = it.address.uppercase(),
+                    alwaysOnEnabled = false,
+                    deviceEnabled = true
+                )
+            )
+        }
     }
 
     LaunchedEffect(associatedDevices, lifecycleState) {
@@ -163,11 +178,6 @@ fun CameraDeviceManager(
                             ?.let { foundDevice ->
                                 Timber.i("Disassociating device: ${foundDevice.name} (${foundDevice.address})")
                                 scope.launch {
-                                    PreferencesManager.setKeepAliveEnabled(
-                                        context,
-                                        foundDevice.address,
-                                        false
-                                    )
 
                                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
                                         deviceManager.stopObservingDevicePresence(
@@ -189,8 +199,16 @@ fun CameraDeviceManager(
                                     val serviceIntent = Intent(
                                         context.applicationContext,
                                         LocationSenderService::class.java
+                                    ).apply {
+                                        action = SonyBluetoothConstants.ACTION_REQUEST_SHUTDOWN
+                                    }
+                                    serviceIntent.putExtra(
+                                        "address",
+                                        foundDevice.address.uppercase()
                                     )
-                                    context.stopService(serviceIntent)
+                                    context.startService(serviceIntent)
+
+                                    devicesDao.deleteDevice(CameraDevice(foundDevice.address.uppercase()))
 
                                     associatedDevices = deviceManager.getAssociatedDevices(adapter)
                                 }

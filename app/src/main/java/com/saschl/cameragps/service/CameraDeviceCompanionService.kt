@@ -104,7 +104,6 @@ class CameraDeviceCompanionService : CompanionDeviceService() {
             super.onDeviceDisappeared(associationInfo)
             Timber.i("Device disappeared old API: ${associationInfo.id}. Service will keep running until destroyed")
         }
-
     }
 
     override fun onCreate() {
@@ -135,6 +134,7 @@ class CameraDeviceCompanionService : CompanionDeviceService() {
             action = SonyBluetoothConstants.ACTION_REQUEST_SHUTDOWN
 
         }
+        shutdownIntent.putExtra("address", "all")
         startService(shutdownIntent)
     }
 

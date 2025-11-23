@@ -35,7 +35,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         if (Timber.treeCount == 0) {
-            var logLevel = PreferencesManager.logLevel(this)
+            val logLevel = PreferencesManager.logLevel(this)
             FileTree.initialize(this)
             Timber.plant(FileTree(this, logLevel))
 

@@ -1,11 +1,10 @@
-package com.saschl.cameragps.database
+package com.saschl.cameragps.database.logging
 
 import android.content.Context
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 class LogRepository(context: Context) {
     private val logDao = LogDatabase.getDatabase(context).logDao()

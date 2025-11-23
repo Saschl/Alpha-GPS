@@ -20,6 +20,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -30,9 +36,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.getSystemService
 import com.saschl.cameragps.R
+import com.saschl.cameragps.database.logging.LogDatabase
 import com.saschl.cameragps.service.AssociatedDeviceCompat
 import com.saschl.cameragps.service.pairing.isDevicePaired
-import com.saschl.cameragps.utils.PreferencesManager
+
 
 @OptIn(ExperimentalFoundationApi::class)
 @SuppressLint("MissingPermission")
@@ -42,8 +49,11 @@ fun AssociatedDevicesList(
     onConnect: (AssociatedDeviceCompat) -> Unit,
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val bluetoothManager = context.getSystemService<BluetoothManager>()
     val adapter = bluetoothManager?.adapter
+
+    val cameraDeviceDAO = LogDatabase.getDatabase(context.applicationContext).cameraDeviceDao()
 
     Column {
         LazyColumn(
@@ -103,6 +113,8 @@ fun AssociatedDevicesList(
                     false
                 }
 
+
+
                 Row(
                     Modifier
                         .fillMaxWidth()
@@ -115,6 +127,11 @@ fun AssociatedDevicesList(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    var isAlwaysOnEnabled by remember(device.address) { mutableStateOf(true) }
+
+                    LaunchedEffect(device.address) {
+                        isAlwaysOnEnabled = cameraDeviceDAO.isDeviceAlwaysOnEnabled(device.address)
+                    }
                     Column(
                         Modifier
                             .fillMaxWidth()
@@ -143,7 +160,7 @@ fun AssociatedDevicesList(
                             )
                         }
                         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S
-                            && !PreferencesManager.isKeepAliveEnabled(context, device.address)
+                            && !isAlwaysOnEnabled
                         ) {
                             Text(
                                 color = MaterialTheme.colorScheme.error,
