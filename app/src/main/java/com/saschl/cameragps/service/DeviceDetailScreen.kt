@@ -40,7 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.saschl.cameragps.R
-import com.saschl.cameragps.database.logging.LogDatabase
+import com.saschl.cameragps.database.LogDatabase
 import com.saschl.cameragps.service.pairing.startDevicePresenceObservation
 import com.saschl.cameragps.ui.DeviceDetailViewModel
 import kotlinx.coroutines.launch

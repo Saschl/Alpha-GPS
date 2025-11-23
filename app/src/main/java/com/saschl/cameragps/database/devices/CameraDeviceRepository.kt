@@ -1,7 +1,7 @@
 package com.saschl.cameragps.database.devices
 
 import android.content.Context
-import com.saschl.cameragps.database.logging.LogDatabase
+import com.saschl.cameragps.database.LogDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 

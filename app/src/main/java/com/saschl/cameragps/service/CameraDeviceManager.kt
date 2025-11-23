@@ -28,8 +28,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.android.play.core.review.ReviewException
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.google.android.play.core.review.model.ReviewErrorCode
+import com.saschl.cameragps.database.LogDatabase
 import com.saschl.cameragps.database.devices.CameraDevice
-import com.saschl.cameragps.database.logging.LogDatabase
 import com.saschl.cameragps.service.pairing.startDevicePresenceObservation
 import com.saschl.cameragps.ui.DevicesScreen
 import com.saschl.cameragps.ui.EnhancedLocationPermissionBox

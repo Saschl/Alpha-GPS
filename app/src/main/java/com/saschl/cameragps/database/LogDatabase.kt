@@ -1,4 +1,4 @@
-package com.saschl.cameragps.database.logging
+package com.saschl.cameragps.database
 
 import android.content.Context
 import androidx.room.AutoMigration
@@ -7,6 +7,8 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.saschl.cameragps.database.devices.CameraDevice
 import com.saschl.cameragps.database.devices.CameraDeviceDAO
+import com.saschl.cameragps.database.logging.LogDao
+import com.saschl.cameragps.database.logging.LogEntry
 
 @Database(
     entities = [LogEntry::class, CameraDevice::class],
