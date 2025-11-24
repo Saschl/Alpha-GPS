@@ -189,4 +189,17 @@
     <string name="delete_device_confirmation">Are you sure you want to delete %1$s?</string>
     <string name="delete">Delete</string>
     <string name="always_on_enabled">Always On Enabled</string>
+
+    <!-- Pairing dialog strings -->
+    <string name="pairing_camera_title">Pairing Camera</string>
+    <string name="pairing_complete_title">Pairing Complete</string>
+    <string name="pairing_failed_title">Pairing Failed</string>
+    <string name="camera_pairing_required_title">Camera Pairing Required</string>
+    <string name="pairing_with_device_please_wait">Pairing with %1$s, please wait...</string>
+    <string name="successfully_paired_with_device">Successfully paired with %1$s.</string>
+    <string name="failed_to_pair_with_device">Failed to pair with %1$s.</string>
+    <string name="done">Done</string>
+    <string name="try_again">Try again</string>
+    <string name="continue_label">Continue</string>
+    <string name="cancel">Cancel</string>
 </resources>

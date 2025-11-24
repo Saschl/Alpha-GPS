@@ -174,4 +174,17 @@
     <string name="delete_device_confirmation">Möchten Sie %1$s wirklich löschen?</string>
     <string name="delete">Löschen</string>
     <string name="always_on_enabled">Immer An aktiviert</string>
+
+    <!-- Pairing dialog strings -->
+    <string name="pairing_camera_title">Kopple Kamera</string>
+    <string name="pairing_complete_title">Kopplung abgeschlossen</string>
+    <string name="pairing_failed_title">Kopplung fehlgeschlagen</string>
+    <string name="camera_pairing_required_title">Kamerakopplung erforderlich</string>
+    <string name="pairing_with_device_please_wait">Kopple mit %1$s, bitte warten …</string>
+    <string name="successfully_paired_with_device">Erfolgreich mit %1$s gekoppelt.</string>
+    <string name="failed_to_pair_with_device">Konnte nicht mit %1$s koppeln.</string>
+    <string name="done">Fertig</string>
+    <string name="try_again">Erneut versuchen</string>
+    <string name="continue_label">Weiter</string>
+    <string name="cancel">Abbrechen</string>
 </resources>

@@ -187,4 +187,17 @@
     <string name="delete_device_confirmation">确定要删除 %1$s 吗？</string>
     <string name="delete">删除</string>
     <string name="always_on_enabled">始终开启已启用</string>
+
+    <!-- Pairing dialog strings -->
+    <string name="pairing_camera_title">正在配对相机</string>
+    <string name="pairing_complete_title">配对完成</string>
+    <string name="pairing_failed_title">配对失败</string>
+    <string name="camera_pairing_required_title">需要配对相机</string>
+    <string name="pairing_with_device_please_wait">正在与 %1$s 配对，请稍候…</string>
+    <string name="successfully_paired_with_device">已成功与 %1$s 配对。</string>
+    <string name="failed_to_pair_with_device">无法与 %1$s 配对。</string>
+    <string name="done">完成</string>
+    <string name="try_again">重试</string>
+    <string name="continue_label">继续</string>
+    <string name="cancel">取消</string>
 </resources>
