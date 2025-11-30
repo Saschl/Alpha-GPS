@@ -150,6 +150,7 @@ class LocationSenderService : LifecycleService() {
                 if (!deviceDao.isDeviceAlwaysOnEnabled(address)) {
                     Timber.d("Disconnecting camera $address as it is not always-on enabled")
                     cameraConnectionManager.disconnect(address)
+                    deviceDao.setTransmissionRunning(address, false)
                 }
                 if (cameraConnectionManager.getConnectedCameras().isEmpty()) {
                     Timber.d("No connected cameras remaining, shutting down service")
@@ -315,13 +316,18 @@ class LocationSenderService : LifecycleService() {
         ) {
             super.onConnectionStateChange(gatt, status, newState)
 
-            // FIXME handle disconnection case of only one device
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 Timber.e("An error happened: $status")
                 cameraConnectionManager.pauseDevice(gatt.device.address.uppercase())
+                lifecycleScope.launch {
+                    deviceDao.setTransmissionRunning(gatt.device.address.uppercase(), false)
+                }
                 cancelLocationTransmission()
             } else {
                 Timber.i("Connected to device %d", status)
+                lifecycleScope.launch {
+                    deviceDao.setTransmissionRunning(gatt.device.address.uppercase(), true)
+                }
                 cameraConnectionManager.resumeDevice(gatt.device.address.uppercase())
                 resumeLocationTransmission(gatt)
             }
@@ -340,6 +346,10 @@ class LocationSenderService : LifecycleService() {
             // TODO reenable reading characteristic for DST and timezone support
             val readCharacteristic =
                 service?.getCharacteristic(SonyBluetoothConstants.CHARACTERISTIC_READ_UUID)
+            if (readCharacteristic != null) {
+                Timber.i("Reading characteristic for timezone and DST support: ${readCharacteristic.uuid}")
+                gatt.readCharacteristic(readCharacteristic)
+            }
 
             // Enable GPS if needed
             val gpsEnableCharacteristic =
@@ -448,6 +458,9 @@ class LocationSenderService : LifecycleService() {
     }
 
     fun requestShutdown(startId: Int) {
+        lifecycleScope.launch {
+            deviceDao.setTransmissionRunning(false)
+        }
         stopSelf(startId)
     }
 }

@@ -80,7 +80,8 @@ fun CameraDeviceManager(
                     deviceName = it.name,
                     mac = it.address.uppercase(),
                     alwaysOnEnabled = false,
-                    deviceEnabled = true
+                    deviceEnabled = true,
+                    transmissionRunning = false
                 )
             )
         }
@@ -158,6 +159,15 @@ fun CameraDeviceManager(
                     associatedDevices = associatedDevices,
                     onDeviceAssociated = {
                         scope.launch {
+                            devicesDao.insertDevice(
+                                CameraDevice(
+                                    deviceName = it.name,
+                                    mac = it.address.uppercase(),
+                                    alwaysOnEnabled = false,
+                                    deviceEnabled = true,
+                                    transmissionRunning = false
+                                )
+                            )
                             delay(1000) // give the system a short time to breathe
                             startDevicePresenceObservation(deviceManager, it)
                         }

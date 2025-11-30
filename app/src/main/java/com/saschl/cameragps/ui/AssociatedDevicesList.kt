@@ -22,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -113,8 +114,6 @@ fun AssociatedDevicesList(
                     false
                 }
 
-
-
                 Row(
                     Modifier
                         .fillMaxWidth()
@@ -128,6 +127,12 @@ fun AssociatedDevicesList(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     var isAlwaysOnEnabled by remember(device.address) { mutableStateOf(true) }
+
+                    val isTransmissionRunning by remember {
+                        cameraDeviceDAO.isTransmissionRunning(
+                            device.address
+                        )
+                    }.observeAsState(false)
 
                     LaunchedEffect(device.address) {
                         isAlwaysOnEnabled = cameraDeviceDAO.isDeviceAlwaysOnEnabled(device.address)
@@ -157,6 +162,13 @@ fun AssociatedDevicesList(
                                 color = MaterialTheme.colorScheme.error,
                                 style = MaterialTheme.typography.bodySmall,
                                 text = context.getString(R.string.not_paired_tap_to_pair_again),
+                            )
+                        }
+                        if (isTransmissionRunning) {
+                            Text(
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.bodySmall,
+                                text = context.getString(R.string.transmission_running),
                             )
                         }
                         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S
