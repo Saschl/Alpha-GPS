@@ -187,9 +187,6 @@ fun DeviceDetailScreen(
                         enabled = !viewModel.uiState.collectAsState().value.isAlwaysOnEnabled,
                         onCheckedChange = { enabled ->
                             viewModel.setDeviceEnabled(enabled, device.address)
-                            scope.launch {
-                                cameraDeviceDAO.setDeviceEnabled(device.address, enabled)
-                            }
                             if(!enabled) {
 
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -225,9 +222,6 @@ fun DeviceDetailScreen(
                         onCheckedChange = { enabled ->
                             //keepAlive = enabled
                             viewModel.setAlwaysOnEnabled(enabled, device.address)
-                            scope.launch {
-                                cameraDeviceDAO.setAlwaysOnEnabled(device.address, enabled)
-                            }
                             val intent = Intent(context, LocationSenderService::class.java)
                             intent.putExtra("address", device.address.uppercase())
                             if (enabled) {

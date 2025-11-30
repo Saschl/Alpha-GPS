@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name" translatable="false">AlphaGPS</string>
     <string name="app_name_ui" translatable="false">Alpha GPS</string>
-    <string name="foreground_service_notification">Transmitting location data to camera</string>
+    <string name="foreground_service_notification">Transmitting location data to %d cameras</string>
     <string name="scan_for_devices">Click to find &amp; associate your camera</string>
     <string name="permission_gps">Access precise location</string>
     <string name="permission_background_gps">Allow location access when the app is in the background</string>
@@ -195,7 +195,7 @@
     <string name="pairing_complete_title">Pairing Complete</string>
     <string name="pairing_failed_title">Pairing Failed</string>
     <string name="camera_pairing_required_title">Camera Pairing Required</string>
-    <string name="pairing_with_device_please_wait">Pairing with %1$s, please wait...</string>
+    <string name="pairing_with_device_please_wait">Pairing with %1$s, please wait…</string>
     <string name="successfully_paired_with_device">Successfully paired with %1$s.</string>
     <string name="failed_to_pair_with_device">Failed to pair with %1$s.</string>
     <string name="done">Done</string>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="foreground_service_notification">正在向相机传输位置数据</string>
+    <string name="foreground_service_notification">正在向相机传输位置数据 %d</string>
     <string name="scan_for_devices">点击查找并关联您的相机</string>
     <string name="permission_gps">访问精确位置</string>
     <string name="permission_background_gps">允许应用在后台访问位置</string>

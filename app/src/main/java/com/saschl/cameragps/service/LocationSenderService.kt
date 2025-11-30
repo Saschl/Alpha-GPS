@@ -71,6 +71,8 @@ object SonyBluetoothConstants {
  */
 class LocationSenderService : LifecycleService() {
 
+    private var isLocationTransmitting: Boolean = false;
+
     //private var address: String? = null
     private var locationDataConfig = LocationDataConfig(shouldSendTimeZoneAndDst = true)
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -84,17 +86,11 @@ class LocationSenderService : LifecycleService() {
 
     private val deviceDao = LogDatabase.getDatabase(this).cameraDeviceDao()
 
-
     private val bluetoothManager: BluetoothManager by lazy {
         applicationContext.getSystemService()!!
     }
 
     private val bluetoothGattCallback = BluetoothGattCallbackHandler()
-
-    /*  override fun onBind(intent: Intent?): IBinder? {
-          super.onBind(in)
-          return null
-      }*/
 
     private fun hasTimeZoneDstFlag(value: ByteArray): Boolean {
         return value.size >= 5 && (value[4].toInt() and 0x02) != 0
@@ -102,22 +98,28 @@ class LocationSenderService : LifecycleService() {
 
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     private fun startLocationTransmission() {
-        fusedLocationClient.lastLocation.addOnSuccessListener {
-            if (it != null) {
-                locationResult = it
+        if (!isLocationTransmitting) {
+            Timber.i("Starting location transmission")
 
-                cameraConnectionManager.getBluetoothGattConnections().forEach { gatt ->
-                    sendData(gatt, writeLocationCharacteristic)
 
+            fusedLocationClient.lastLocation.addOnSuccessListener {
+                if (it != null) {
+                    locationResult = it
+
+                    cameraConnectionManager.getBluetoothGattConnections().forEach { gatt ->
+                        sendData(gatt, writeLocationCharacteristic)
+
+                    }
                 }
             }
+            fusedLocationClient.requestLocationUpdates(
+                LocationRequest.Builder(
+                    Priority.PRIORITY_HIGH_ACCURACY,
+                    SonyBluetoothConstants.LOCATION_UPDATE_INTERVAL_MS,
+                ).build(), locationCallback, Looper.getMainLooper()
+            )
+            isLocationTransmitting = true;
         }
-        fusedLocationClient.requestLocationUpdates(
-            LocationRequest.Builder(
-                Priority.PRIORITY_HIGH_ACCURACY,
-                SonyBluetoothConstants.LOCATION_UPDATE_INTERVAL_MS,
-            ).build(), locationCallback, Looper.getMainLooper()
-        )
     }
 
     @SuppressLint("MissingPermission")
@@ -146,9 +148,11 @@ class LocationSenderService : LifecycleService() {
 
             lifecycleScope.launch {
                 if (!deviceDao.isDeviceAlwaysOnEnabled(address)) {
-                    cameraConnectionManager.disconnect(intent.getStringExtra("address")!!)
+                    Timber.d("Disconnecting camera $address as it is not always-on enabled")
+                    cameraConnectionManager.disconnect(address)
                 }
                 if (cameraConnectionManager.getConnectedCameras().isEmpty()) {
+                    Timber.d("No connected cameras remaining, shutting down service")
                     requestShutdown(startId)
                 }
             }
@@ -243,42 +247,60 @@ class LocationSenderService : LifecycleService() {
     }
 
     private fun startAsForegroundService() {
-        // create the notification channel
-        NotificationsHelper.createNotificationChannel(this)
+        if (!isLocationTransmitting) {
+            // create the notification channel
+            NotificationsHelper.createNotificationChannel(this)
 
-        // promote service to foreground service
-        ServiceCompat.startForeground(
-            this,
-            locationTransmissionNotificationId,
-            NotificationsHelper.buildNotification(
-                this, getString(R.string.app_standby_title),
-                getString(R.string.app_standby_content)
-            ),
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION or ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
+            // promote service to foreground service
+            ServiceCompat.startForeground(
+                this,
+                locationTransmissionNotificationId,
+                NotificationsHelper.buildNotification(
+                    this, getString(R.string.app_standby_title),
+                    getString(R.string.app_standby_content)
+                ),
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION or ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
 
-        )
+            )
+        }
     }
 
     private fun cancelLocationTransmission() {
-        if (::locationCallback.isInitialized) {
-            fusedLocationClient.removeLocationUpdates(locationCallback)
+        if (cameraConnectionManager.getActiveCameras().isEmpty()) {
+            val notification = NotificationsHelper.buildNotification(
+                this,
+                getString(R.string.app_standby_title),
+                getString(R.string.app_standby_content)
+            )
+            NotificationsHelper.showNotification(
+                this,
+                locationTransmissionNotificationId,
+                notification
+            )
+
+            if (::locationCallback.isInitialized) {
+                fusedLocationClient.removeLocationUpdates(locationCallback)
+                isLocationTransmitting = false
+            }
+        } else {
+            val notification = NotificationsHelper.buildNotification(
+                this,
+                cameraConnectionManager.getActiveCameras().size
+            )
+            NotificationsHelper.showNotification(
+                this,
+                locationTransmissionNotificationId,
+                notification
+            )
         }
-        val notification = NotificationsHelper.buildNotification(
-            this,
-            getString(R.string.app_standby_title),
-            getString(R.string.app_standby_content)
-        )
-        NotificationsHelper.showNotification(this, locationTransmissionNotificationId, notification)
     }
 
     @SuppressLint("MissingPermission")
     private fun resumeLocationTransmission(gatt: BluetoothGatt) {
-        /*  if (address == null) {
-              Timber.w("Cannot resume location transmission: address is null")
-              return
-          }*/
-
-        val notification = NotificationsHelper.buildNotification(this)
+        val notification = NotificationsHelper.buildNotification(
+            this,
+            cameraConnectionManager.getActiveCameras().size
+        )
         NotificationsHelper.showNotification(this, locationTransmissionNotificationId, notification)
 
         gatt.discoverServices()
@@ -293,11 +315,14 @@ class LocationSenderService : LifecycleService() {
         ) {
             super.onConnectionStateChange(gatt, status, newState)
 
+            // FIXME handle disconnection case of only one device
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 Timber.e("An error happened: $status")
+                cameraConnectionManager.pauseDevice(gatt.device.address.uppercase())
                 cancelLocationTransmission()
             } else {
                 Timber.i("Connected to device %d", status)
+                cameraConnectionManager.resumeDevice(gatt.device.address.uppercase())
                 resumeLocationTransmission(gatt)
             }
         }

@@ -18,16 +18,16 @@ interface CameraDeviceDAO {
     @Delete
     suspend fun deleteDevice(device: CameraDevice)
 
-    @Query("UPDATE camera_devices SET deviceEnabled = :enabled WHERE mac = :deviceId")
+    @Query("UPDATE camera_devices SET deviceEnabled = :enabled WHERE mac = UPPER(:deviceId)")
     suspend fun setDeviceEnabled(deviceId: String, enabled: Boolean)
 
-    @Query("SELECT alwaysOnEnabled FROM camera_devices WHERE mac = :address")
+    @Query("SELECT alwaysOnEnabled FROM camera_devices WHERE mac = UPPER(:address)")
     suspend fun isDeviceAlwaysOnEnabled(address: String): Boolean
 
-    @Query("UPDATE camera_devices SET alwaysOnEnabled = :enabled WHERE mac = :deviceId")
+    @Query("UPDATE camera_devices SET alwaysOnEnabled = :enabled WHERE mac = UPPER(:deviceId)")
     suspend fun setAlwaysOnEnabled(deviceId: String, enabled: Boolean)
 
-    @Query("SELECT deviceEnabled FROM camera_devices WHERE mac = :address")
+    @Query("SELECT deviceEnabled FROM camera_devices WHERE mac = UPPER(:address)")
     suspend fun isDeviceEnabled(address: String): Boolean
 
     @Query("SELECT count(1) FROM camera_devices WHERE alwaysOnEnabled = 1")

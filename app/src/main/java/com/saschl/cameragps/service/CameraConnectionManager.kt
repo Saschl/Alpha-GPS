@@ -12,7 +12,13 @@ class CameraConnectionManager(
     private val bluetoothManager: BluetoothManager,
     private val gattCallback: BluetoothGattCallback
 ) {
-    private val connections = mutableMapOf<String, BluetoothGatt>()
+
+    data class CameraConnectionConfig(
+        val gatt: BluetoothGatt,
+        val state: Int = -1
+    )
+
+    private val connections = mutableMapOf<String, CameraConnectionConfig>()
 
     @RequiresPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
     fun connect(config: String): Boolean {
@@ -24,26 +30,26 @@ class CameraConnectionManager(
         val device: BluetoothDevice = bluetoothManager.adapter.getRemoteDevice(config)
 
         val gatt = device.connectGatt(context, true, gattCallback)
-        connections[config] = gatt
+        connections[config] = CameraConnectionConfig(gatt = gatt)
 
         return true
     }
 
 
     @RequiresPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
-    fun disconnect(config: String) {
-        connections[config]?.let { gatt ->
-            gatt.disconnect()
-            gatt.close()
+    fun disconnect(address: String) {
+        connections[address]?.let { config ->
+            config.gatt.disconnect()
+            config.gatt.close()
         }
-        connections.remove(config)
+        connections.remove(address)
     }
 
     @RequiresPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
     fun disconnectAll() {
-        connections.values.forEach { gatt ->
-            gatt.disconnect()
-            gatt.close()
+        connections.values.forEach { config ->
+            config.gatt.disconnect()
+            config.gatt.close()
         }
         connections.clear()
     }
@@ -56,7 +62,23 @@ class CameraConnectionManager(
         return connections.keys.toSet()
     }
 
-    fun getBluetoothGattConnections(): MutableCollection<BluetoothGatt> {
-        return connections.values
+    fun getActiveCameras(): Set<String> {
+        return connections.filter { it.value.state == BluetoothGatt.GATT_SUCCESS }.keys.toSet()
+    }
+
+    fun pauseDevice(address: String) {
+        connections[address]?.let { config ->
+            connections[address] = config.copy(state = BluetoothGatt.GATT_FAILURE)
+        }
+    }
+
+    fun resumeDevice(address: String) {
+        connections[address]?.let { config ->
+            connections[address] = config.copy(state = BluetoothGatt.GATT_SUCCESS)
+        }
+    }
+
+    fun getBluetoothGattConnections(): Collection<BluetoothGatt> {
+        return connections.values.map { it.gatt }.toList()
     }
 }
