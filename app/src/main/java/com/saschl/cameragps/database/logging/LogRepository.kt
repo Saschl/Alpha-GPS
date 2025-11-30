@@ -1,6 +1,7 @@
 package com.saschl.cameragps.database.logging
 
 import android.content.Context
+import androidx.lifecycle.LiveData
 import com.saschl.cameragps.database.LogDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,7 +33,7 @@ class LogRepository(context: Context) {
 
     fun getAllLogs(): Flow<List<LogEntry>> = logDao.getAllLogs()
 
-    suspend fun getRecentLogs(limit: Int = 200): List<LogEntry> = logDao.getRecentLogs(limit)
+    fun getRecentLogs(limit: Int = 200): LiveData<List<LogEntry>> = logDao.getRecentLogs(limit)
 
     suspend fun clearAllLogs() {
         logDao.clearAllLogs()
