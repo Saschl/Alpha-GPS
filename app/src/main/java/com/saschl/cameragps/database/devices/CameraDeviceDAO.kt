@@ -42,4 +42,10 @@ interface CameraDeviceDAO {
 
     @Query("UPDATE camera_devices SET transmissionRunning = :running")
     suspend fun setTransmissionRunning(running: Boolean)
+
+    @Query("UPDATE camera_devices SET transmitTimezoneAndDst = :shouldSendTimeZoneAndDst WHERE mac = UPPER(:address)")
+    suspend fun setTimezoneDstFlag(address: String, shouldSendTimeZoneAndDst: TimeZoneDSTState);
+
+    @Query("SELECT transmitTimezoneAndDst FROM camera_devices WHERE mac = UPPER(:address)")
+    suspend fun getTimezoneDstFlag(address: String): TimeZoneDSTState;
 }

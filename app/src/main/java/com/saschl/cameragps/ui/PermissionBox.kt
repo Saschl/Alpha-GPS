@@ -272,7 +272,7 @@ fun EnhancedLocationPermissionBox(
     val backgroundGranted = backgroundLocationPermission.status.isGranted
     val allPermissionsGranted = allForegroundGranted && backgroundGranted
 
-        Box(
+    Box(
             modifier = Modifier
                 .fillMaxSize()
                 .then(modifier),

@@ -220,19 +220,7 @@ fun DeviceDetailScreen(
                         checked = viewModel.uiState.collectAsState().value.isAlwaysOnEnabled,
                         enabled = viewModel.uiState.collectAsState().value.isDeviceEnabled && viewModel.uiState.collectAsState().value.buttonEnabled,
                         onCheckedChange = { enabled ->
-                            //keepAlive = enabled
-                            viewModel.setAlwaysOnEnabled(enabled, device.address)
-                            val intent = Intent(context, LocationSenderService::class.java)
-                            intent.putExtra("address", device.address.uppercase())
-                            if (enabled) {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                                    deviceManager.stopObservingDevicePresence(device.address)
-                                }
-
-                                context.startForegroundService(intent)
-                            } else {
-                                viewModel.stopServiceWithDelay(context, device, deviceManager)
-                            }
+                            viewModel.setAlwaysOnEnabled(enabled, device, deviceManager, context)
                         }
                     )
                 }

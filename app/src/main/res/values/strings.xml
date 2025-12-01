@@ -202,5 +202,4 @@
     <string name="try_again">Try again</string>
     <string name="continue_label">Continue</string>
     <string name="cancel">Cancel</string>
-    <string name="transmission_running">Transmission active</string>
 </resources>

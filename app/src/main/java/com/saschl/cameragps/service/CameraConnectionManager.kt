@@ -3,6 +3,7 @@ package com.saschl.cameragps.service
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
+import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import androidx.annotation.RequiresPermission
@@ -15,7 +16,8 @@ class CameraConnectionManager(
 
     data class CameraConnectionConfig(
         val gatt: BluetoothGatt,
-        val state: Int = -1
+        val state: Int = -1,
+        val writeCharacteristic: BluetoothGattCharacteristic? = null
     )
 
     private val connections = mutableMapOf<String, CameraConnectionConfig>()
@@ -78,7 +80,16 @@ class CameraConnectionManager(
         }
     }
 
-    fun getBluetoothGattConnections(): Collection<BluetoothGatt> {
-        return connections.values.map { it.gatt }.toList()
+    fun getActiveConnections(): Collection<CameraConnectionConfig> {
+        return connections.values.filter { it.state == BluetoothGatt.GATT_SUCCESS }.toList()
+    }
+
+    fun setWriteCharacteristic(
+        address: String,
+        writeLocationCharacteristic: BluetoothGattCharacteristic?
+    ) {
+        connections[address]?.let { config ->
+            connections[address] = config.copy(writeCharacteristic = writeLocationCharacteristic)
+        }
     }
 }

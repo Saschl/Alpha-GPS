@@ -3,6 +3,7 @@ package com.saschl.cameragps.ui
 import android.companion.CompanionDeviceManager
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -55,13 +56,11 @@ class DeviceDetailViewModel(private val cameraDeviceDAO: CameraDeviceDAO) : View
             cameraDeviceDAO.setDeviceEnabled(device, isEnabled)
         }
     }
-    fun stopServiceWithDelay(
+    suspend fun stopServiceWithDelay(
         context: Context,
         device: AssociatedDeviceCompat,
         deviceManager: CompanionDeviceManager
     ) {
-
-        viewModelScope.launch {
 
             Timber.i("Stopping LocationSenderService from detail for device ${device.address}")
             _uiState.update { it.copy(buttonEnabled = false) }
@@ -75,8 +74,6 @@ class DeviceDetailViewModel(private val cameraDeviceDAO: CameraDeviceDAO) : View
             delay(2.seconds)
             startDevicePresenceObservation(deviceManager, device)
             _uiState.update { it.copy(buttonEnabled = true) }
-
-        }
     }
 
     fun deviceEnabledFromDB(address: String) {
@@ -89,13 +86,27 @@ class DeviceDetailViewModel(private val cameraDeviceDAO: CameraDeviceDAO) : View
             }
         }
 
-
     }
 
-    fun setAlwaysOnEnabled(enabled: Boolean, address: String) {
+    fun setAlwaysOnEnabled(
+        enabled: Boolean,
+        device: AssociatedDeviceCompat,
+        deviceManager: CompanionDeviceManager,
+        context: Context
+    ) {
         viewModelScope.launch {
+            cameraDeviceDAO.setAlwaysOnEnabled(device.address, enabled)
+            val intent = Intent(context, LocationSenderService::class.java)
+            intent.putExtra("address", device.address.uppercase())
+            if (enabled) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    deviceManager.stopObservingDevicePresence(device.address)
+                }
+                context.startForegroundService(intent)
+            } else {
+                stopServiceWithDelay(context, device, deviceManager)
+            }
             _uiState.update { it.copy(isAlwaysOnEnabled = enabled) }
-            cameraDeviceDAO.setAlwaysOnEnabled(address, enabled)
         }
     }
 }
