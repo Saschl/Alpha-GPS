@@ -32,10 +32,10 @@ fun PairingConfirmationDialogWithLoading(
         title = {
             Text(
                 text = when {
-                    isPairing -> "Pairing Camera..."
-                    pairingResult == PairingResult.SUCCESS -> "Pairing Complete!"
-                    pairingResult == PairingResult.FAILED -> "Pairing Failed"
-                    else -> "Camera Pairing Required"
+                    isPairing -> stringResource(R.string.pairing_camera_title)
+                    pairingResult == PairingResult.SUCCESS -> stringResource(R.string.pairing_complete_title)
+                    pairingResult == PairingResult.FAILED -> stringResource(R.string.pairing_failed_title)
+                    else -> stringResource(R.string.camera_pairing_required_title)
                 },
                 style = MaterialTheme.typography.headlineSmall
             )
@@ -57,7 +57,10 @@ fun PairingConfirmationDialogWithLoading(
                                 strokeWidth = 3.dp
                             )
                             Text(
-                                text = "Pairing with '$deviceName'...\nPlease wait.",
+                                text = stringResource(
+                                    R.string.pairing_with_device_please_wait,
+                                    deviceName
+                                ),
                                 style = MaterialTheme.typography.bodyMedium,
                                 textAlign = TextAlign.Center
                             )
@@ -66,7 +69,10 @@ fun PairingConfirmationDialogWithLoading(
                     pairingResult == PairingResult.SUCCESS -> {
                         // Show success state
                         Text(
-                            text = "Successfully paired with '$deviceName'!\n\nYou can now connect to your camera.",
+                            text = stringResource(
+                                R.string.successfully_paired_with_device,
+                                deviceName
+                            ),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.primary,
                             textAlign = TextAlign.Center,
@@ -76,7 +82,7 @@ fun PairingConfirmationDialogWithLoading(
                     pairingResult == PairingResult.FAILED -> {
                         // Show failure state
                         Text(
-                            text = "Failed to pair with '$deviceName'.\n\nPlease ensure your camera is in pairing mode and try again.",
+                            text = stringResource(R.string.failed_to_pair_with_device, deviceName),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.error,
                             modifier = Modifier.fillMaxWidth()
@@ -119,17 +125,17 @@ fun PairingConfirmationDialogWithLoading(
                 }
                 pairingResult == PairingResult.SUCCESS -> {
                     TextButton(onClick = onDismiss) {
-                        Text("Done")
+                        Text(stringResource(R.string.done))
                     }
                 }
                 pairingResult == PairingResult.FAILED -> {
                     TextButton(onClick = onRetry) {
-                        Text("Try Again")
+                        Text(stringResource(R.string.try_again))
                     }
                 }
                 else -> {
                     TextButton(onClick = onConfirm) {
-                        Text("Continue")
+                        Text(stringResource(R.string.continue_label))
                     }
                 }
             }
@@ -137,7 +143,7 @@ fun PairingConfirmationDialogWithLoading(
         dismissButton = {
             if (!isPairing && pairingResult != PairingResult.SUCCESS) {
                 TextButton(onClick = onDismiss) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         }

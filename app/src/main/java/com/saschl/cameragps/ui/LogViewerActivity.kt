@@ -22,15 +22,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -41,7 +40,6 @@ import androidx.compose.ui.unit.sp
 import com.saschl.cameragps.R
 import com.saschl.cameragps.service.FileTree
 import com.saschl.cameragps.ui.theme.CameraGpsTheme
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class LogViewerActivity : ComponentActivity() {
@@ -50,11 +48,11 @@ class LogViewerActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             CameraGpsTheme {
-                    LogViewerScreen() {
-                        finish()
-                    }
+                LogViewerScreen() {
+                    finish()
                 }
             }
+        }
     }
 }
 
@@ -64,28 +62,9 @@ private fun LogViewerScreen(
     onClose: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    var logs by remember { mutableStateOf<List<String>>(emptyList()) }
     var isRefreshing by remember { mutableStateOf(false) }
 
-    val pullToRefreshState = rememberPullToRefreshState()
-
-    // Function to refresh logs
-    val refreshLogs = suspend {
-        isRefreshing = true
-        try {
-            // Add a small delay for better UX
-            delay(300)
-            logs = FileTree.getLogs()
-        } catch (e: Exception) {
-            logs = listOf("Error loading logs: ${e.message}")
-        }
-        isRefreshing = false
-    }
-
-    // Load initial logs
-    LaunchedEffect(Unit) {
-        refreshLogs()
-    }
+    val logs by remember { FileTree.getLogs() }.observeAsState(emptyList())
 
     Scaffold(
         topBar = {
@@ -115,66 +94,54 @@ private fun LogViewerScreen(
             )
         }
     ) { paddingValues ->
-        PullToRefreshBox(
-            isRefreshing = isRefreshing,
-            onRefresh = {
-                scope.launch {
-                    refreshLogs()
-                }
-            },
-            state = pullToRefreshState,
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(paddingValues),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            // Clear logs button
+            Button(
+                onClick = {
+                    scope.launch {
+                        try {
+                            FileTree.clearLogs()
+                            // refreshLogs()
+                        } catch (e: Exception) {
+                            //logs = listOf("Error clearing logs: ${e.message}")
+                        }
+                    }
+                },
+                //modifier = Modifier.fillMaxWidth()
             ) {
-                // Clear logs button
-                Button(
-                    onClick = {
-                        scope.launch {
-                            try {
-                                FileTree.clearLogs()
-                                refreshLogs()
-                            } catch (e: Exception) {
-                                logs = listOf("Error clearing logs: ${e.message}")
-                            }
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Clear All Logs")
-                }
+                Text("Clear All Logs")
+            }
 
-                // Log content
-                SelectionContainer {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                            .verticalScroll(rememberScrollState())
-                    ) {
-                        if (logs.isEmpty() && !isRefreshing) {
-                            Text(
-                                text = "No logs available yet. Logs will appear here as the app runs.\n\n📱 Pull down to refresh and fetch new logs.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(16.dp)
-                            )
-                        } else if (logs.isNotEmpty()) {
-                            Text(
-                                text = logs.joinToString("\n\n"),
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    fontFamily = FontFamily.Monospace,
-                                    fontSize = 12.sp
-                                ),
-                                modifier = Modifier.padding(16.dp)
-                            )
-                        }
+            // Log content
+            SelectionContainer {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    if (logs.isEmpty() && !isRefreshing) {
+                        Text(
+                            text = "No logs available yet. Logs will appear here as the app runs.\n\n",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    } else if (logs.isNotEmpty()) {
+                        Text(
+                            text = logs.joinToString("\n\n"),
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontFamily = FontFamily.Monospace,
+                                fontSize = 12.sp
+                            ),
+                            modifier = Modifier.padding(16.dp)
+                        )
                     }
                 }
             }

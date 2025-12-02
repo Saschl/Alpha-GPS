@@ -35,10 +35,20 @@ internal object NotificationsHelper {
         notificationManager.notify(notificationId, notification)
     }
 
-    fun buildNotification(context: Context): Notification {
+    fun buildNotification(context: Context, activeCameras: Int): Notification {
         return NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle(context.getString(R.string.foreground_service_notification))
-            .setContentText(context.getString(R.string.foreground_service_notification))
+            .setContentTitle(
+                context.getString(
+                    R.string.foreground_service_notification,
+                    activeCameras
+                )
+            )
+            .setContentText(
+                context.getString(
+                    R.string.foreground_service_notification,
+                    activeCameras
+                )
+            )
             .setSmallIcon(R.drawable.ic_gps_fixed)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .setContentIntent(Intent(context, MainActivity::class.java).let { notificationIntent ->
@@ -53,6 +63,7 @@ internal object NotificationsHelper {
     }
 
     fun buildNotification(context: Context, title: String, content: String): Notification {
+        // TODO separate channels for standby and connected
         return NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(content)

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="foreground_service_notification">Übertrage Standortdaten zur Kamera</string>
+    <string name="foreground_service_notification">Übertrage Standortdaten zu %d Kameras</string>
     <string name="scan_for_devices">Drücke Start um deine Kamera zu koppeln</string>
     <string name="permission_gps">Zugriff auf genauen Standort</string>
     <string name="permission_background_gps">Erlaube Zugriff auf Standort wenn die App im Hintergrund ist</string>
@@ -166,4 +166,25 @@
     <string name="welcome_feature_connect_title">Verbinde die Kamera</string>
     <string name="how_about_privacy">Wie sieht es mit dem Datenschutz aus?</string>
     <string name="how_about_privacy_answer">Die App überträgt keine Daten in Richtung Entwickler und/oder Drittparteien. Sämtliche erhobene Informationen (Standortdaten) werden nur für die Übertragung der Standortdaten zu der verbundenen Kamera verwendet. Es werden keine Daten permanent gespeichert. Die Standorterfassung wird beendet, sobald die Verbindung zur Kamera getrennt wird.</string>
+
+    <!-- Device management strings -->
+    <string name="device_management">Geräteverwaltung</string>
+    <string name="no_devices_found">Keine Geräte gefunden</string>
+    <string name="delete_device">Gerät löschen</string>
+    <string name="delete_device_confirmation">Möchten Sie %1$s wirklich löschen?</string>
+    <string name="delete">Löschen</string>
+    <string name="always_on_enabled">Immer An aktiviert</string>
+
+    <!-- Pairing dialog strings -->
+    <string name="pairing_camera_title">Kopple Kamera</string>
+    <string name="pairing_complete_title">Kopplung abgeschlossen</string>
+    <string name="pairing_failed_title">Kopplung fehlgeschlagen</string>
+    <string name="camera_pairing_required_title">Kamerakopplung erforderlich</string>
+    <string name="pairing_with_device_please_wait">Kopple mit %1$s, bitte warten …</string>
+    <string name="successfully_paired_with_device">Erfolgreich mit %1$s gekoppelt.</string>
+    <string name="failed_to_pair_with_device">Konnte nicht mit %1$s koppeln.</string>
+    <string name="done">Fertig</string>
+    <string name="try_again">Erneut versuchen</string>
+    <string name="continue_label">Weiter</string>
+    <string name="cancel">Abbrechen</string>
 </resources>

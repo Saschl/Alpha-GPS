@@ -1,5 +1,6 @@
-package com.saschl.cameragps.database
+package com.saschl.cameragps.database.logging
 
+import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
@@ -14,7 +15,7 @@ interface LogDao {
     fun getAllLogs(): Flow<List<LogEntry>>
 
     @Query("SELECT * FROM log_entries ORDER BY timestamp DESC LIMIT :limit")
-    suspend fun getRecentLogs(limit: Int = 200): List<LogEntry>
+    fun getRecentLogs(limit: Int = 200): LiveData<List<LogEntry>>
 
     @Query("DELETE FROM log_entries WHERE id NOT IN (SELECT id FROM log_entries ORDER BY timestamp DESC LIMIT :keepCount)")
     suspend fun deleteOldLogs(keepCount: Int = 500)

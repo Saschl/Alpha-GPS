@@ -12,6 +12,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.getSystemService
+import com.saschl.cameragps.service.SonyBluetoothConstants.ACTION_REQUEST_SHUTDOWN
 import com.saschl.cameragps.utils.PreferencesManager
 import timber.log.Timber
 import java.util.Locale
@@ -66,26 +67,26 @@ class CameraDeviceCompanionService : CompanionDeviceService() {
             return
         }
 
+        val associationId = event.associationId
+        val deviceManager = getSystemService<CompanionDeviceManager>()
+        val associatedDevices = deviceManager?.getMyAssociations()
+        val associationInfo = associatedDevices?.find { it.id == associationId }
+        val address = associationInfo?.deviceMacAddress?.toString()
+
         if (event.event == DevicePresenceEvent.EVENT_BLE_APPEARED) {
 
             Timber.i("Device appeared new API: ${event.associationId}")
-            val associationId = event.associationId
-            val deviceManager = getSystemService<CompanionDeviceManager>()
-            val associatedDevices = deviceManager?.getMyAssociations()
-            val associationInfo = associatedDevices?.find { it.id == associationId }
-            val address = associationInfo?.deviceMacAddress?.toString()
 
             startLocationSenderService(address)
         }
 
         if (event.event == DevicePresenceEvent.EVENT_BLE_DISAPPEARED) {
             Timber.i("Device disappeared new API: ${event.associationId}")
-
-            // Request graceful shutdown instead of immediate termination
-            /* val shutdownIntent = Intent(this, LocationSenderService::class.java).apply {
-                 action = LocationSenderService.ACTION_REQUEST_SHUTDOWN
-             }
-             startService(shutdownIntent)*/
+            if (address == null) {
+                Timber.e("Could not get address for disappeared device with association id: $associationId")
+                return
+            }
+            stopServiceOnDeviceDisappeared(address)
         }
     }
 
@@ -94,7 +95,7 @@ class CameraDeviceCompanionService : CompanionDeviceService() {
         super.onDeviceDisappeared(address)
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             Timber.i("Device disappeared oldest api: $address. Service will keep running until destroyed")
-            return
+            stopServiceOnDeviceDisappeared(address)
         }
     }
 
@@ -103,8 +104,16 @@ class CameraDeviceCompanionService : CompanionDeviceService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) {
             super.onDeviceDisappeared(associationInfo)
             Timber.i("Device disappeared old API: ${associationInfo.id}. Service will keep running until destroyed")
+            stopServiceOnDeviceDisappeared(associationInfo.deviceMacAddress.toString())
         }
+    }
 
+    private fun stopServiceOnDeviceDisappeared(address: String) {
+        val shutdownIntent = Intent(this, LocationSenderService::class.java).apply {
+            action = ACTION_REQUEST_SHUTDOWN
+        }
+        shutdownIntent.putExtra("address", address.uppercase())
+        startService(shutdownIntent)
     }
 
     override fun onCreate() {
@@ -135,6 +144,7 @@ class CameraDeviceCompanionService : CompanionDeviceService() {
             action = SonyBluetoothConstants.ACTION_REQUEST_SHUTDOWN
 
         }
+        shutdownIntent.putExtra("address", "all")
         startService(shutdownIntent)
     }
 

@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name" translatable="false">AlphaGPS</string>
     <string name="app_name_ui" translatable="false">Alpha GPS</string>
-    <string name="foreground_service_notification">Transmitting location data to camera</string>
+    <string name="foreground_service_notification">Transmitting location data to %d cameras</string>
     <string name="scan_for_devices">Click to find &amp; associate your camera</string>
     <string name="permission_gps">Access precise location</string>
     <string name="permission_background_gps">Allow location access when the app is in the background</string>
@@ -181,4 +181,25 @@
     <string name="language_chinese">简体中文</string>
     <string name="how_about_privacy">How about privacy?</string>
     <string name="how_about_privacy_answer">The app does not transmit any data to the developer or third party. All the information (location data) collected is only used for the transmission to the camera. It will not be stored or sent elsewhere. When the device is disconnected, location will not be tracked anymore.</string>
+
+    <!-- Device management strings -->
+    <string name="device_management">Device Management</string>
+    <string name="no_devices_found">No devices found</string>
+    <string name="delete_device">Delete Device</string>
+    <string name="delete_device_confirmation">Are you sure you want to delete %1$s?</string>
+    <string name="delete">Delete</string>
+    <string name="always_on_enabled">Always On Enabled</string>
+
+    <!-- Pairing dialog strings -->
+    <string name="pairing_camera_title">Pairing Camera</string>
+    <string name="pairing_complete_title">Pairing Complete</string>
+    <string name="pairing_failed_title">Pairing Failed</string>
+    <string name="camera_pairing_required_title">Camera Pairing Required</string>
+    <string name="pairing_with_device_please_wait">Pairing with %1$s, please wait…</string>
+    <string name="successfully_paired_with_device">Successfully paired with %1$s.</string>
+    <string name="failed_to_pair_with_device">Failed to pair with %1$s.</string>
+    <string name="done">Done</string>
+    <string name="try_again">Try again</string>
+    <string name="continue_label">Continue</string>
+    <string name="cancel">Cancel</string>
 </resources>

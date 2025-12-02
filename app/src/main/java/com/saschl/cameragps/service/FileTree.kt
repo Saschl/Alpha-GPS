@@ -2,8 +2,10 @@ package com.saschl.cameragps.service
 
 import android.content.Context
 import android.util.Log
-import com.saschl.cameragps.database.LogRepository
-import kotlinx.coroutines.runBlocking
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.map
+import com.saschl.cameragps.database.logging.LogRepository
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -27,16 +29,18 @@ class FileTree(context: Context, private val minPriority: Int) : Timber.Tree() {
             }
         }
 
-        fun getLogs(): List<String> {
+        fun getLogs(): LiveData<List<String>> {
+            Log.i("test", "Getting logs from FileTree")
             return logRepository?.let { repo ->
-                runBlocking {
                     repo.getRecentLogs().map { logEntry ->
-                        val date = dateFormat.format(Date(logEntry.timestamp))
-                        "[$date] [${priorityToString(logEntry.priority)}] ${logEntry.tag ?: "App"}: ${logEntry.message}" +
-                                (logEntry.exception?.let { "\n$it" } ?: "")
+                        logEntry.map {
+                            val date = dateFormat.format(Date(it.timestamp))
+                            "[$date] [${priorityToString(it.priority)}] ${it.tag ?: "App"}: ${it.message}" +
+                                    (it.exception?.let { "\n$it" } ?: "")
+                        }
+
                     }
-                }
-            } ?: emptyList()
+            } ?: MutableLiveData(emptyList())
         }
 
         suspend fun clearLogs() {
