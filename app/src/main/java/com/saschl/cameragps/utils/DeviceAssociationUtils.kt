@@ -72,7 +72,7 @@ object DeviceAssociationUtils {
             .build()
 
         val pairingRequest: AssociationRequest = AssociationRequest.Builder()
-            //.addDeviceFilter(deviceFilter)
+            .addDeviceFilter(deviceFilter)
             .build()
 
         val result = CompletableDeferred<IntentSender>()
