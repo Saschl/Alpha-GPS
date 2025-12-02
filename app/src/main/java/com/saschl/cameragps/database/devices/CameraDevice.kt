@@ -10,7 +10,6 @@ data class CameraDevice(
     val deviceEnabled: Boolean = true,
     val alwaysOnEnabled: Boolean = false,
     val deviceName: String = "N/A",
-    val transmissionRunning: Boolean = false,
     val transmitTimezoneAndDst: TimeZoneDSTState = TimeZoneDSTState.UNDEFINED
 )
 

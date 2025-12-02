@@ -33,6 +33,7 @@ class CameraConnectionManager(
 
         val gatt = device.connectGatt(context, true, gattCallback)
         connections[config] = CameraConnectionConfig(gatt = gatt)
+        LocationSenderService.activeTransmissions[config] = false
 
         return true
     }
@@ -72,11 +73,17 @@ class CameraConnectionManager(
         connections[address]?.let { config ->
             connections[address] = config.copy(state = BluetoothGatt.GATT_FAILURE)
         }
+        LocationSenderService.activeTransmissions[address]?.let {
+            LocationSenderService.activeTransmissions[address] = false
+        }
     }
 
     fun resumeDevice(address: String) {
         connections[address]?.let { config ->
             connections[address] = config.copy(state = BluetoothGatt.GATT_SUCCESS)
+        }
+        LocationSenderService.activeTransmissions[address]?.let {
+            LocationSenderService.activeTransmissions[address] = true
         }
     }
 

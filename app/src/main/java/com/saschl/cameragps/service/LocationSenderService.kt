@@ -13,6 +13,7 @@ import android.location.Location
 import android.os.Build
 import android.os.Looper
 import androidx.annotation.RequiresPermission
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.core.app.ServiceCompat
 import androidx.core.content.getSystemService
 import androidx.lifecycle.LifecycleService
@@ -30,7 +31,6 @@ import com.saschl.cameragps.notification.NotificationsHelper
 import com.saschl.cameragps.service.SonyBluetoothConstants.locationTransmissionNotificationId
 import com.saschl.cameragps.utils.PreferencesManager
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 import java.util.UUID
 
@@ -73,7 +73,6 @@ object SonyBluetoothConstants {
  * Service responsible for sending GPS location data to Sony cameras via Bluetooth
  */
 class LocationSenderService : LifecycleService() {
-
     private var isLocationTransmitting: Boolean = false;
 
     //private var address: String? = null
@@ -96,6 +95,10 @@ class LocationSenderService : LifecycleService() {
 
     private fun hasTimeZoneDstFlag(value: ByteArray): Boolean {
         return value.size >= 5 && (value[4].toInt() and 0x02) != 0
+    }
+
+    companion object {
+        val activeTransmissions = mutableStateMapOf<String, Boolean>()
     }
 
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
@@ -153,7 +156,6 @@ class LocationSenderService : LifecycleService() {
                 if (!deviceDao.isDeviceAlwaysOnEnabled(address)) {
                     Timber.d("Disconnecting camera $address as it is not always-on enabled")
                     cameraConnectionManager.disconnect(address)
-                    deviceDao.setTransmissionRunning(address, false)
                 }
                 if (cameraConnectionManager.getConnectedCameras().isEmpty()) {
                     Timber.d("No connected cameras remaining, shutting down service")
@@ -176,11 +178,6 @@ class LocationSenderService : LifecycleService() {
     @SuppressLint("MissingPermission")
     override fun onDestroy() {
         super.onDestroy()
-
-        //cameraGatt?.close()
-        //cameraGatt = null
-        //address = null
-
         if (::locationCallback.isInitialized) {
             fusedLocationClient.removeLocationUpdates(locationCallback)
         }
@@ -322,17 +319,13 @@ class LocationSenderService : LifecycleService() {
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 Timber.e("An error happened: $status")
                 cameraConnectionManager.pauseDevice(gatt.device.address.uppercase())
-                lifecycleScope.launch {
-                    deviceDao.setTransmissionRunning(gatt.device.address.uppercase(), false)
-                    cancelLocationTransmission()
-                }
+                cancelLocationTransmission()
+
             } else {
                 Timber.i("Connected to device with status %d", status)
-                lifecycleScope.launch {
-                    deviceDao.setTransmissionRunning(gatt.device.address.uppercase(), true)
                     cameraConnectionManager.resumeDevice(gatt.device.address.uppercase())
                     resumeLocationTransmission(gatt)
-                }
+
             }
         }
 
@@ -493,10 +486,8 @@ class LocationSenderService : LifecycleService() {
         }
     }
 
-    fun requestShutdown(startId: Int) {
-        runBlocking {
-            deviceDao.setTransmissionRunning(false)
-        }
+    private fun requestShutdown(startId: Int) {
+        activeTransmissions.clear()
         stopSelf(startId)
     }
 }

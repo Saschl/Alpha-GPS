@@ -31,10 +31,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +48,7 @@ import androidx.core.content.getSystemService
 import com.saschl.cameragps.R
 import com.saschl.cameragps.database.LogDatabase
 import com.saschl.cameragps.service.AssociatedDeviceCompat
+import com.saschl.cameragps.service.LocationSenderService
 import com.saschl.cameragps.service.pairing.isDevicePaired
 
 
@@ -61,12 +60,14 @@ fun AssociatedDevicesList(
     onConnect: (AssociatedDeviceCompat) -> Unit,
 ) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val bluetoothManager = context.getSystemService<BluetoothManager>()
     val adapter = bluetoothManager?.adapter
 
     val cameraDeviceDAO = LogDatabase.getDatabase(context.applicationContext).cameraDeviceDao()
 
+    val enableServer = remember {
+        LocationSenderService.activeTransmissions
+    }
     Column {
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -139,11 +140,13 @@ fun AssociatedDevicesList(
                 ) {
                     var isAlwaysOnEnabled by remember(device.address) { mutableStateOf(true) }
 
-                    val isTransmissionRunning by remember {
-                        cameraDeviceDAO.isTransmissionRunning(
-                            device.address
-                        )
-                    }.observeAsState(false)
+                    /*   val isTransmissionRunning by remember {
+                           cameraDeviceDAO.isTransmissionRunning(
+                               device.address
+                           )
+                       }.observeAsState(false)*/
+                    val isTransmissionRunning = enableServer[device.address]
+
 
                     LaunchedEffect(device.address) {
                         isAlwaysOnEnabled = cameraDeviceDAO.isDeviceAlwaysOnEnabled(device.address)
@@ -165,7 +168,7 @@ fun AssociatedDevicesList(
                                 contentDescription = "Device Icon"
                             )
                             TransmissionDot(
-                                isRunning = isTransmissionRunning,
+                                isRunning = isTransmissionRunning ?: false,
                             )
                         }
 
@@ -188,13 +191,7 @@ fun AssociatedDevicesList(
                                 text = context.getString(R.string.not_paired_tap_to_pair_again),
                             )
                         }
-                        /* if (isTransmissionRunning) {
-                             Text(
-                                 color = MaterialTheme.colorScheme.primary,
-                                 style = MaterialTheme.typography.bodySmall,
-                                 text = context.getString(R.string.transmission_running),
-                             )
-                         }*/
+
                         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S
                             && !isAlwaysOnEnabled
                         ) {

@@ -29,6 +29,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -97,7 +98,8 @@ private fun LogViewerScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Clear logs button
             Button(
@@ -111,7 +113,7 @@ private fun LogViewerScreen(
                         }
                     }
                 },
-                modifier = Modifier.fillMaxWidth()
+                //modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Clear All Logs")
             }

@@ -1,6 +1,5 @@
 package com.saschl.cameragps.database.devices
 
-import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -33,15 +32,6 @@ interface CameraDeviceDAO {
 
     @Query("SELECT count(1) FROM camera_devices WHERE alwaysOnEnabled = 1")
     suspend fun getAlwaysOnEnabledDeviceCount(): Int
-
-    @Query("SELECT transmissionRunning from camera_devices where mac = UPPER(:address)")
-    fun isTransmissionRunning(address: String): LiveData<Boolean>
-
-    @Query("UPDATE camera_devices SET transmissionRunning = :running WHERE mac = UPPER(:deviceId)")
-    suspend fun setTransmissionRunning(deviceId: String, running: Boolean)
-
-    @Query("UPDATE camera_devices SET transmissionRunning = :running")
-    suspend fun setTransmissionRunning(running: Boolean)
 
     @Query("UPDATE camera_devices SET transmitTimezoneAndDst = :shouldSendTimeZoneAndDst WHERE mac = UPPER(:address)")
     suspend fun setTimezoneDstFlag(address: String, shouldSendTimeZoneAndDst: TimeZoneDSTState);

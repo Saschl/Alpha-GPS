@@ -98,6 +98,7 @@ class DeviceDetailViewModel(private val cameraDeviceDAO: CameraDeviceDAO) : View
             cameraDeviceDAO.setAlwaysOnEnabled(device.address, enabled)
             val intent = Intent(context, LocationSenderService::class.java)
             intent.putExtra("address", device.address.uppercase())
+            _uiState.update { it.copy(isAlwaysOnEnabled = enabled) }
             if (enabled) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     deviceManager.stopObservingDevicePresence(device.address)
@@ -106,7 +107,6 @@ class DeviceDetailViewModel(private val cameraDeviceDAO: CameraDeviceDAO) : View
             } else {
                 stopServiceWithDelay(context, device, deviceManager)
             }
-            _uiState.update { it.copy(isAlwaysOnEnabled = enabled) }
         }
     }
 }

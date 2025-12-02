@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "9148c2e33e1bf9c20f629fb716746765",
+    "identityHash": "d6116b9b147c0ba2a23ec4c1b6a4b93e",
     "entities": [
       {
         "tableName": "log_entries",
@@ -52,7 +52,7 @@
       },
       {
         "tableName": "camera_devices",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`mac` TEXT NOT NULL, `deviceEnabled` INTEGER NOT NULL, `alwaysOnEnabled` INTEGER NOT NULL, `deviceName` TEXT NOT NULL, `transmissionRunning` INTEGER NOT NULL, `transmitTimezoneAndDst` TEXT NOT NULL, PRIMARY KEY(`mac`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`mac` TEXT NOT NULL, `deviceEnabled` INTEGER NOT NULL, `alwaysOnEnabled` INTEGER NOT NULL, `deviceName` TEXT NOT NULL, `transmitTimezoneAndDst` TEXT NOT NULL, PRIMARY KEY(`mac`))",
         "fields": [
           {
             "fieldPath": "mac",
@@ -79,12 +79,6 @@
             "notNull": true
           },
           {
-            "fieldPath": "transmissionRunning",
-            "columnName": "transmissionRunning",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
             "fieldPath": "transmitTimezoneAndDst",
             "columnName": "transmitTimezoneAndDst",
             "affinity": "TEXT",
@@ -101,7 +95,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9148c2e33e1bf9c20f629fb716746765')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd6116b9b147c0ba2a23ec4c1b6a4b93e')"
     ]
   }
 }

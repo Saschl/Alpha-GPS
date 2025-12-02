@@ -81,7 +81,6 @@ fun CameraDeviceManager(
                     mac = it.address.uppercase(),
                     alwaysOnEnabled = false,
                     deviceEnabled = true,
-                    transmissionRunning = false
                 )
             )
         }
@@ -165,7 +164,6 @@ fun CameraDeviceManager(
                                     mac = it.address.uppercase(),
                                     alwaysOnEnabled = false,
                                     deviceEnabled = true,
-                                    transmissionRunning = false
                                 )
                             )
                             delay(1000) // give the system a short time to breathe
