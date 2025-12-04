@@ -92,6 +92,11 @@
                 android:value="true" />
         </service>
 
+        <receiver
+            android:name=".service.RestartReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
   <!--      <receiver
             android:name=".service.legacy.BlePresenceReceiver"
             android:exported="false" />

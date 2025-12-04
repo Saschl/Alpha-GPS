@@ -151,6 +151,12 @@
     <string name="battery_optimization_xiaomi_autostart">Open Autostart Settings</string>
     <string name="battery_optimization_xiaomi_battery">Open Battery Settings</string>
 
+    <!-- Oppo-specific battery optimization strings -->
+    <string name="battery_optimization_oppo_title">OPPO Battery Optimization</string>
+    <string name="battery_optimization_oppo_message">OPPO devices (including Realme and OnePlus) require additional steps to ensure the app works reliably in the background:\n\n1. Open Battery Optimization settings\n2. Allow this app to run in the background\n3. Enable "Autostart" for this app\n4. Disable "Battery Optimization" for this app\n5. Set "Background app management" to allow unrestricted background activity</string>
+    <string name="battery_optimization_oppo_autostart">Open Autostart Settings</string>
+    <string name="battery_optimization_oppo_battery">Open Battery Settings</string>
+
 
     <string name="not_paired_tap_to_pair_again">Not paired, please pair the device in the bluetooth settings</string>
     <string name="to_pair_with_your_camera_please">To pair with your camera \'%1$s\', please:</string>

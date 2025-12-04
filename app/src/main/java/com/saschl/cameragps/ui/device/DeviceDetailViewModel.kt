@@ -3,7 +3,6 @@ package com.saschl.cameragps.ui.device
 import android.companion.CompanionDeviceManager
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -99,12 +98,14 @@ class DeviceDetailViewModel(private val cameraDeviceDAO: CameraDeviceDAO) : View
             val intent = Intent(context, LocationSenderService::class.java)
             intent.putExtra("address", device.address.uppercase())
             _uiState.update { it.copy(isAlwaysOnEnabled = enabled) }
-            if (enabled) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    deviceManager.stopObservingDevicePresence(device.address)
-                }
-                context.startForegroundService(intent)
-            } else {
+            // FIXME check if this causes issue, ideally it should simply allow the service to run just like always or restart the FGS
+            // if (enabled) {
+            //    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            //       deviceManager.stopObservingDevicePresence(device.address)
+            //  }
+            // context.startForegroundService(intent)
+            //}
+            if (!enabled) {
                 stopServiceWithDelay(context, device, deviceManager)
             }
         }

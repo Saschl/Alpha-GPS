@@ -87,18 +87,15 @@ dependencies {
     implementation(libs.accompanist.permissions)
 
     implementation(libs.review)
-
     implementation(libs.review.ktx)
 
     implementation(libs.material)
 
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
-
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
     implementation(libs.androidx.compose.runtime.livedata)
-
-
+    implementation(libs.betterypermissionhelper)
 
     // Room database dependencies
     implementation(libs.androidx.room.runtime)

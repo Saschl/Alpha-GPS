@@ -132,6 +132,12 @@
     <string name="battery_optimization_xiaomi_autostart">Autostart-Einstellungen öffnen</string>
     <string name="battery_optimization_xiaomi_battery">Akku-Einstellungen öffnen</string>
 
+    <!-- Oppo-specific battery optimization strings -->
+    <string name="battery_optimization_oppo_title">OPPO Akkuoptimierung</string>
+    <string name="battery_optimization_oppo_message">Auf OPPO-Geräten (einschließlich Realme und OnePlus) sind zusätzliche Schritte nötig, damit die App im Hintergrund zuverlässig funktioniert:\n\n1. Akkuoptimierung öffnen\n2. Dieser App erlauben, im Hintergrund zu laufen\n3. "Autostart" für diese App aktivieren\n4. "Akkuoptimierung" für diese App deaktivieren\n5. "Hintergrund-App-Verwaltung" auf uneingeschränkte Hintergrundaktivität setzen</string>
+    <string name="battery_optimization_oppo_autostart">Autostart-Einstellungen öffnen</string>
+    <string name="battery_optimization_oppo_battery">Akku-Einstellungen öffnen</string>
+
     <string name="quick_start_feature_title">Schnellstart</string>
     <string name="quick_start_feature_description">Folgen Sie den Anweisungen auf dem nächsten Bildschirm, um Ihre Kamera zu koppeln. Nach Abschluss der Kopplung verbindet sich die App automatisch mit Ihrer Kamera und beginnt mit der Übertragung der Standortdaten. Falls dies nicht geschieht, starten Sie Ihre Kamera neu.</string>
     <string name="always_on_quickstart">Always-on Modus</string>

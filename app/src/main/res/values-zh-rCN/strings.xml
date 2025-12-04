@@ -156,7 +156,13 @@
     <string name="battery_optimization_xiaomi_message">小米设备需要额外步骤以确保应用在后台可靠工作：\n\n1. 打开电池优化设置\n2. 将此应用设置为"不优化"\n3. 进入设置 > 应用 > 应用管理\n4. 找到此应用并启用"自启动"\n5. 将"后台应用限制"设置为"无限制"</string>
     <string name="battery_optimization_xiaomi_autostart">打开自启动设置</string>
     <string name="battery_optimization_xiaomi_battery">打开电池设置</string>
-    
+
+    <!-- Oppo-specific battery optimization strings -->
+    <string name="battery_optimization_oppo_title">OPPO电池优化</string>
+    <string name="battery_optimization_oppo_message">OPPO设备（包括真我和一加）需要额外步骤以确保应用在后台可靠工作：\n\n1. 打开电池优化设置\n2. 允许此应用在后台运行\n3. 为此应用启用"自启动"\n4. 为此应用禁用"电池优化"\n5. 将"后台应用管理"设置为允许无限制后台活动</string>
+    <string name="battery_optimization_oppo_autostart">打开自启动设置</string>
+    <string name="battery_optimization_oppo_battery">打开电池设置</string>
+
     <string name="not_paired_tap_to_pair_again">未配对，请在蓝牙设置中配对设备</string>
     <string name="to_pair_with_your_camera_please">要与相机"%1$s"配对，请：</string>
     <string name="_1_turn_on_your_camera">\n1. 打开相机</string>

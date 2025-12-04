@@ -133,7 +133,16 @@ class LocationSenderService : LifecycleService() {
 
         // val currentAddress = this.address
         startAsForegroundService()
-        val address = intent!!.getStringExtra("address")!!
+        val address = intent!!.getStringExtra("address")
+
+        if (address == null) {
+            lifecycleScope.launch {
+                deviceDao.getAllCameraDevices().filter { it.alwaysOnEnabled }.forEach {
+                    cameraConnectionManager.connect(it.mac)
+                }
+            }
+            return START_STICKY
+        }
 
         // Check if this is a shutdown request
         if (intent.action == SonyBluetoothConstants.ACTION_REQUEST_SHUTDOWN) {
@@ -170,7 +179,6 @@ class LocationSenderService : LifecycleService() {
             }
             Timber.i("Service initialized")
             cameraConnectionManager.connect(address)
-
         }
         return START_REDELIVER_INTENT
     }
@@ -178,9 +186,14 @@ class LocationSenderService : LifecycleService() {
     @SuppressLint("MissingPermission")
     override fun onDestroy() {
         super.onDestroy()
-        if (::locationCallback.isInitialized) {
-            fusedLocationClient.removeLocationUpdates(locationCallback)
+        if (isLocationTransmitting) {
+            Timber.e("Service unexpectedly destroyed while GPSLogger was running. Will send broadcast to RestarterReceiver.")
+            val broadcastIntent: Intent =
+                Intent(applicationContext, RestartReceiver::class.java)
+            broadcastIntent.putExtra("was_running", true)
+            sendBroadcast(broadcastIntent)
         }
+
         Timber.i("Destroyed service")
     }
 
@@ -488,6 +501,10 @@ class LocationSenderService : LifecycleService() {
 
     private fun requestShutdown(startId: Int) {
         activeTransmissions.clear()
+        if (::locationCallback.isInitialized) {
+            fusedLocationClient.removeLocationUpdates(locationCallback)
+        }
+        isLocationTransmitting = false
         stopSelf(startId)
     }
 }
