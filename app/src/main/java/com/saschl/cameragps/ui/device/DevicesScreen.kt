@@ -1,4 +1,4 @@
-package com.saschl.cameragps.ui
+package com.saschl.cameragps.ui.device
 
 import android.annotation.SuppressLint
 import android.companion.CompanionDeviceManager
@@ -35,7 +35,10 @@ import com.saschl.cameragps.R
 import com.saschl.cameragps.database.LogDatabase
 import com.saschl.cameragps.service.AssociatedDeviceCompat
 import com.saschl.cameragps.service.LocationSenderService
-import com.saschl.cameragps.service.pairing.PairingManager
+import com.saschl.cameragps.ui.AssociatedDevicesList
+import com.saschl.cameragps.ui.HelpActivity
+import com.saschl.cameragps.ui.LogViewerActivity
+import com.saschl.cameragps.ui.pairing.PairingManager
 import com.saschl.cameragps.utils.PreferencesManager
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -102,7 +105,7 @@ fun DevicesScreen(
                     IconButton(
                         onClick = {
                             context.startActivity(
-                                Intent(context, com.saschl.cameragps.ui.HelpActivity::class.java)
+                                Intent(context, HelpActivity::class.java)
                             )
                         }
                     ) {

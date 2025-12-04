@@ -49,7 +49,7 @@ import com.saschl.cameragps.R
 import com.saschl.cameragps.database.LogDatabase
 import com.saschl.cameragps.service.AssociatedDeviceCompat
 import com.saschl.cameragps.service.LocationSenderService
-import com.saschl.cameragps.service.pairing.isDevicePaired
+import com.saschl.cameragps.ui.pairing.isDevicePaired
 
 
 @OptIn(ExperimentalFoundationApi::class)

@@ -21,7 +21,6 @@ import java.util.Locale
 @RequiresApi(Build.VERSION_CODES.S)
 class CameraDeviceCompanionService : CompanionDeviceService() {
 
-
     private fun startLocationSenderService(address: String?) {
         if (PreferencesManager.isAppEnabled(this)) {
 

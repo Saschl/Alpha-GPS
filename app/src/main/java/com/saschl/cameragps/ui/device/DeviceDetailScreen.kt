@@ -1,4 +1,4 @@
-package com.saschl.cameragps.service
+package com.saschl.cameragps.ui.device
 
 import android.Manifest
 import android.companion.CompanionDeviceManager
@@ -41,8 +41,11 @@ import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.saschl.cameragps.R
 import com.saschl.cameragps.database.LogDatabase
-import com.saschl.cameragps.service.pairing.startDevicePresenceObservation
-import com.saschl.cameragps.ui.DeviceDetailViewModel
+import com.saschl.cameragps.service.AssociatedDeviceCompat
+import com.saschl.cameragps.service.LocationSenderService
+import com.saschl.cameragps.service.SonyBluetoothConstants
+import com.saschl.cameragps.ui.HelpActivity
+import com.saschl.cameragps.ui.pairing.startDevicePresenceObservation
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -109,7 +112,7 @@ fun DeviceDetailScreen(
                     IconButton(
                         onClick = {
                             context.startActivity(
-                                Intent(context, com.saschl.cameragps.ui.HelpActivity::class.java)
+                                Intent(context, HelpActivity::class.java)
                             )
                         }
                     ) {

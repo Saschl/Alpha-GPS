@@ -1,4 +1,4 @@
-package com.saschl.cameragps.ui
+package com.saschl.cameragps.ui.device
 
 import android.companion.CompanionDeviceManager
 import android.content.Context
@@ -14,7 +14,7 @@ import com.saschl.cameragps.database.devices.CameraDeviceDAO
 import com.saschl.cameragps.service.AssociatedDeviceCompat
 import com.saschl.cameragps.service.LocationSenderService
 import com.saschl.cameragps.service.SonyBluetoothConstants
-import com.saschl.cameragps.service.pairing.startDevicePresenceObservation
+import com.saschl.cameragps.ui.pairing.startDevicePresenceObservation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

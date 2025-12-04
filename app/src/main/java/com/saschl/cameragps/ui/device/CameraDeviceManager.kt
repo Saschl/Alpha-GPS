@@ -1,4 +1,4 @@
-package com.saschl.cameragps.service
+package com.saschl.cameragps.ui.device
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
@@ -30,9 +30,13 @@ import com.google.android.play.core.review.ReviewManagerFactory
 import com.google.android.play.core.review.model.ReviewErrorCode
 import com.saschl.cameragps.database.LogDatabase
 import com.saschl.cameragps.database.devices.CameraDevice
-import com.saschl.cameragps.service.pairing.startDevicePresenceObservation
-import com.saschl.cameragps.ui.DevicesScreen
+import com.saschl.cameragps.service.AssociatedDeviceCompat
+import com.saschl.cameragps.service.BluetoothStateBroadcastReceiver
+import com.saschl.cameragps.service.LocationSenderService
+import com.saschl.cameragps.service.SonyBluetoothConstants
+import com.saschl.cameragps.service.getAssociatedDevices
 import com.saschl.cameragps.ui.EnhancedLocationPermissionBox
+import com.saschl.cameragps.ui.pairing.startDevicePresenceObservation
 import com.saschl.cameragps.utils.PreferencesManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

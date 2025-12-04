@@ -1,4 +1,4 @@
-package com.saschl.cameragps.service.pairing
+package com.saschl.cameragps.ui.pairing
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

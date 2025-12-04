@@ -1,4 +1,4 @@
-package com.saschl.cameragps.ui
+package com.saschl.cameragps.ui.device
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothManager
@@ -30,7 +30,9 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.getSystemService
 import com.saschl.cameragps.R
 import com.saschl.cameragps.service.AssociatedDeviceCompat
-import com.saschl.cameragps.service.pairing.isDevicePaired
+import com.saschl.cameragps.ui.BluetoothWarningCard
+import com.saschl.cameragps.ui.LocationWarningCard
+import com.saschl.cameragps.ui.pairing.isDevicePaired
 import com.saschl.cameragps.utils.DeviceAssociationUtils
 import kotlinx.coroutines.launch
 import timber.log.Timber
