@@ -82,16 +82,16 @@ fun HelpScreen(
             answerRes = R.string.how_about_privacy_answer,
         ),
         FaqItem(
+            questionRes = R.string.faq_enable_service_question,
+            answerRes = R.string.faq_enable_service_answer
+        ),
+        FaqItem(
             questionRes = R.string.faq_connect_camera_question,
             answerRes = R.string.faq_connect_camera_answer
         ),
         FaqItem(
             questionRes = R.string.faq_camera_not_appearing_question,
             answerRes = R.string.faq_camera_not_appearing_answer
-        ),
-        FaqItem(
-            questionRes = R.string.faq_enable_service_question,
-            answerRes = R.string.faq_enable_service_answer
         ),
         FaqItem(
             questionRes = R.string.faq_camera_not_connecting_question,

@@ -35,6 +35,8 @@
     <!-- unfortunately some phone vendors do not respect battery optimization exemptions for companion device apps
      it seems like especially oppo devices like to shutdown the foregroundservice as soon as the screen is locked -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+
     <application
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"

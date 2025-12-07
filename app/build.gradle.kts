@@ -22,7 +22,7 @@ android {
         applicationId = "com.saschl.cameragps"
         minSdk = 29
         targetSdk = 36
-        versionCode = 86
+        versionCode = 87
         versionName = "v1.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -81,7 +81,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
     implementation(libs.timber)
-    implementation(libs.androidx.swiperefreshlayout)
+    //implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.google.play.services.location)
     implementation(libs.accompanist.permissions)

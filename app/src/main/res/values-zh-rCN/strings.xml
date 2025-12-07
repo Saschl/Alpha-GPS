@@ -105,8 +105,8 @@
     <string name="faq_camera_not_appearing_answer">• 确保相机处于配对/蓝牙模式\n• 检查相机是否支持所需的蓝牙配置文件\n• 确保您在范围内（通常为10米）\n• 尝试重启手机蓝牙</string>
     
     <string name="faq_enable_service_question">如何永久启用服务？</string>
-    <string name="faq_enable_service_answer">要保持GPS数据与相机同步：\n1. 进入设备设置 > 应用\n2. 在应用列表中找到"Alpha GPS"\n3. 点击并选择"电池"\n4. 选择"不优化"或"允许后台活动"\n5. 这可防止系统停止GPS服务\n\n您也可以通过应用中的设备详情页面访问此设置。</string>
-    
+    <string name="faq_enable_service_answer">请访问应用设置，尝试电池和后台部分的选项。或者尝试以下方法：\n要保持GPS数据与相机同步：\n1. 进入设备设置 > 应用\n2. 在应用列表中找到"Alpha GPS"\n3. 点击并选择"电池"\n4. 选择"不优化"或"允许后台活动"\n5. 这可防止系统停止GPS服务\n\n您也可以通过应用中的设备详情页面访问此设置。</string>
+
     <string name="faq_camera_not_connecting_question">我的相机无法自动连接，该怎么办？</string>
     <string name="faq_camera_not_connecting_answer">不幸的是，可能会出现自动连接不工作的情况。如果遇到问题，请执行以下操作：在主屏幕上，点击您的相机打开详情屏幕。在那里您可以启用"始终开启"模式，这将保持应用在前台</string>
     
@@ -165,7 +165,10 @@
 
     <!-- Battery optimization settings screen strings -->
     <string name="battery_optimization_settings_title">电池和后台设置</string>
-    <string name="battery_optimization_settings_description">如果应用在后台无法可靠运行，请尝试调整这些设置。某些制造商需要额外的后台活动权限。</string>
+    <string name="battery_optimization_settings_short"><![CDATA[如果应用在后台无法可靠运行，请调整这些设置。<b>注意：这不会改变应用本身的行为，只是尝试防止被系统终止。仅在遇到问题时使用。</b>]]></string>
+    <string name="battery_optimization_settings_description">某些制造商需要额外的后台活动权限。如果第一个选项不起作用，请点击"打开设置"按钮。导航到电池/电源部分，尝试将应用排除在优化之外。</string>
+    <string name="learn_more">了解更多</string>
+    <string name="show_less">收起</string>
     <string name="battery_optimization_open_settings">禁用电池优化</string>
     <string name="battery_optimization_open_autostart">打开自启动设置</string>
     <string name="battery_optimization_open_app_settings">打开应用设置</string>

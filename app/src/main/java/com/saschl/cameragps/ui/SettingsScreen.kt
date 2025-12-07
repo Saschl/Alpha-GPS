@@ -3,9 +3,14 @@ package com.saschl.cameragps.ui
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import android.text.Spanned
+import android.text.style.StyleSpan
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -47,10 +52,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.core.os.LocaleListCompat
+import androidx.core.text.HtmlCompat
 import com.saschl.cameragps.R
 import com.saschl.cameragps.database.LogDatabase
 import com.saschl.cameragps.database.devices.CameraDevice
@@ -252,6 +261,210 @@ fun SettingsScreen(
                     }
                 }
             }
+            item {
+                // Battery Optimization Settings Card
+                var isBatteryInfoExpanded by remember { mutableStateOf(false) }
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.battery_optimization_settings_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+
+                        // Short description always visible (with HTML bold support)
+                        val shortDescHtml =
+                            stringResource(R.string.battery_optimization_settings_short)
+                        val shortDescSpanned = remember(shortDescHtml) {
+                            HtmlCompat.fromHtml(shortDescHtml, HtmlCompat.FROM_HTML_MODE_COMPACT)
+                        }
+                        Text(
+                            text = shortDescSpanned.toAnnotatedString(),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        // Expandable "Learn more" section
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { isBatteryInfoExpanded = !isBatteryInfoExpanded },
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                painter = painterResource(
+                                    if (isBatteryInfoExpanded) R.drawable.expand_less_24px
+                                    else R.drawable.expand_more_24px
+                                ),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = stringResource(
+                                    if (isBatteryInfoExpanded) R.string.show_less
+                                    else R.string.learn_more
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.padding(start = 4.dp)
+                            )
+                        }
+
+                        AnimatedVisibility(
+                            visible = isBatteryInfoExpanded,
+                            enter = expandVertically(),
+                            exit = shrinkVertically()
+                        ) {
+                            Text(
+                                text = stringResource(R.string.battery_optimization_settings_description),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                        }
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant
+                        )
+
+                        // Battery Optimization Button
+                        OutlinedButton(
+                            onClick = {
+                                try {
+                                    val uri = "package:${context.packageName}".toUri()
+                                    val intent = Intent(
+                                        Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                                        uri
+                                    ).apply {
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    }
+                                    context.startActivity(intent)
+                                    Timber.i("Opened battery optimization settings for package: ${context.packageName}")
+                                } catch (e: Exception) {
+                                    Timber.e(
+                                        e,
+                                        "Failed to open battery optimization settings, trying fallback"
+                                    )
+                                    try {
+                                        val fallbackIntent =
+                                            Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                                        context.startActivity(fallbackIntent)
+                                        Timber.i("Opened general battery optimization settings")
+                                    } catch (fallbackException: Exception) {
+                                        Timber.e(
+                                            fallbackException,
+                                            "Failed to open any battery optimization settings"
+                                        )
+                                        Toast.makeText(
+                                            context,
+                                            R.string.battery_optimization_open_failed,
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = stringResource(R.string.battery_optimization_open_settings),
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+
+                        // Autostart Settings Button (vendor-specific)
+                        val autostartIntent =
+                            remember { BatteryOptimizationUtil.getResolveableComponentName(context) }
+
+                        if (autostartIntent != null) {
+                            OutlinedButton(
+                                onClick = {
+                                    try {
+                                        val uri = "package:${context.packageName}".toUri()
+                                        autostartIntent.apply {
+                                            data = uri
+                                        }
+
+                                        context.startActivity(autostartIntent)
+                                        Timber.i("Opened autostart settings")
+                                    } catch (e: Exception) {
+                                        Timber.e(
+                                            e,
+                                            "Failed to open autostart settings, trying fallback"
+                                        )
+                                        try {
+                                            val fallbackIntent =
+                                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                                    data = Uri.fromParts(
+                                                        "package",
+                                                        context.packageName,
+                                                        null
+                                                    )
+                                                }
+                                            context.startActivity(fallbackIntent)
+                                            Timber.i("Opened app details settings as fallback")
+                                        } catch (fallbackException: Exception) {
+                                            Timber.e(
+                                                fallbackException,
+                                                "Failed to open any settings"
+                                            )
+                                            Toast.makeText(
+                                                context,
+                                                R.string.battery_optimization_open_failed,
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.battery_optimization_open_autostart),
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+
+                        // App Details Settings Button
+                        OutlinedButton(
+                            onClick = {
+                                try {
+                                    val intent =
+                                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                            data =
+                                                Uri.fromParts("package", context.packageName, null)
+                                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        }
+                                    context.startActivity(intent)
+                                    Timber.i("Opened app details settings")
+                                } catch (e: Exception) {
+                                    Timber.e(e, "Failed to open app details settings")
+                                    Toast.makeText(
+                                        context,
+                                        R.string.battery_optimization_open_failed,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = stringResource(R.string.battery_optimization_open_app_settings),
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
+            }
 
             item {
                 // Language Settings Card
@@ -375,157 +588,6 @@ fun SettingsScreen(
                                     Timber.plant(FileTree(context, level))
                                 },
                                 onDismiss = { showLogLevelDialog = false }
-                            )
-                        }
-                    }
-                }
-            }
-
-            item {
-                // Battery Optimization Settings Card
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.battery_optimization_settings_title),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Medium
-                        )
-
-                        Text(
-                            text = stringResource(R.string.battery_optimization_settings_description),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        HorizontalDivider(
-                            modifier = Modifier.padding(vertical = 8.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant
-                        )
-
-                        // Battery Optimization Button
-                        OutlinedButton(
-                            onClick = {
-                                try {
-                                    val uri = "package:${context.packageName}".toUri()
-                                    val intent = Intent(
-                                        Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                                        uri
-                                    ).apply {
-                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    }
-                                    context.startActivity(intent)
-                                    Timber.i("Opened battery optimization settings for package: ${context.packageName}")
-                                } catch (e: Exception) {
-                                    Timber.e(
-                                        e,
-                                        "Failed to open battery optimization settings, trying fallback"
-                                    )
-                                    try {
-                                        val fallbackIntent =
-                                            Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-                                        context.startActivity(fallbackIntent)
-                                        Timber.i("Opened general battery optimization settings")
-                                    } catch (fallbackException: Exception) {
-                                        Timber.e(
-                                            fallbackException,
-                                            "Failed to open any battery optimization settings"
-                                        )
-                                        Toast.makeText(
-                                            context,
-                                            R.string.battery_optimization_open_failed,
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = stringResource(R.string.battery_optimization_open_settings),
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-
-                        // Autostart Settings Button (vendor-specific)
-                        val autostartIntent =
-                            remember { BatteryOptimizationUtil.getResolveableComponentName(context) }
-
-                        if (autostartIntent != null) {
-                            OutlinedButton(
-                                onClick = {
-                                    try {
-                                        context.startActivity(autostartIntent)
-                                        Timber.i("Opened autostart settings")
-                                    } catch (e: Exception) {
-                                        Timber.e(
-                                            e,
-                                            "Failed to open autostart settings, trying fallback"
-                                        )
-                                        try {
-                                            val fallbackIntent =
-                                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                                    data = Uri.fromParts(
-                                                        "package",
-                                                        context.packageName,
-                                                        null
-                                                    )
-                                                }
-                                            context.startActivity(fallbackIntent)
-                                            Timber.i("Opened app details settings as fallback")
-                                        } catch (fallbackException: Exception) {
-                                            Timber.e(
-                                                fallbackException,
-                                                "Failed to open any settings"
-                                            )
-                                            Toast.makeText(
-                                                context,
-                                                R.string.battery_optimization_open_failed,
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                    }
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.battery_optimization_open_autostart),
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
-
-                        // App Details Settings Button
-                        OutlinedButton(
-                            onClick = {
-                                try {
-                                    val intent =
-                                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                            data =
-                                                Uri.fromParts("package", context.packageName, null)
-                                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                        }
-                                    context.startActivity(intent)
-                                    Timber.i("Opened app details settings")
-                                } catch (e: Exception) {
-                                    Timber.e(e, "Failed to open app details settings")
-                                    Toast.makeText(
-                                        context,
-                                        R.string.battery_optimization_open_failed,
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = stringResource(R.string.battery_optimization_open_app_settings),
-                                fontWeight = FontWeight.Medium
                             )
                         }
                     }
@@ -834,3 +896,38 @@ private fun DeviceItem(
         )
     }
 }
+
+/**
+ * Extension function to convert Android Spanned (HTML) to Compose AnnotatedString
+ */
+private fun Spanned.toAnnotatedString(): AnnotatedString = buildAnnotatedString {
+    append(this@toAnnotatedString.toString())
+    getSpans(0, length, Any::class.java).forEach { span ->
+        val start = getSpanStart(span)
+        val end = getSpanEnd(span)
+        when (span) {
+            is StyleSpan -> {
+                when (span.style) {
+                    android.graphics.Typeface.BOLD -> addStyle(
+                        SpanStyle(fontWeight = FontWeight.Bold),
+                        start,
+                        end
+                    )
+
+                    android.graphics.Typeface.ITALIC -> addStyle(
+                        SpanStyle(fontWeight = FontWeight.Normal),
+                        start,
+                        end
+                    )
+
+                    android.graphics.Typeface.BOLD_ITALIC -> addStyle(
+                        SpanStyle(fontWeight = FontWeight.Bold),
+                        start,
+                        end
+                    )
+                }
+            }
+        }
+    }
+}
+

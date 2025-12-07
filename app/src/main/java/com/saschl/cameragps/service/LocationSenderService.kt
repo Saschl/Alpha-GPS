@@ -319,7 +319,7 @@ class LocationSenderService : LifecycleService() {
             this,
             cameraConnectionManager.getActiveCameras().size
         )
-        // NotificationsHelper.showNotification(this, locationTransmissionNotificationId, notification)
+        NotificationsHelper.showNotification(this, locationTransmissionNotificationId, notification)
 
         gatt.discoverServices()
     }

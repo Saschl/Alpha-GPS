@@ -60,7 +60,6 @@ private fun StandardBatteryOptimizationDialog(
                     onClick = {
                         try {
                             val uri = "package:${context.packageName}".toUri()
-                            // should be safe to use as we do not request the permission and let the user decide
                             val intent =
                                 Intent(
                                     Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,

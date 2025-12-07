@@ -99,8 +99,8 @@
     <string name="faq_camera_not_appearing_question">Why isn\'t my camera appearing in the list?</string>
     <string name="faq_camera_not_appearing_answer">• Ensure your camera is in pairing/Bluetooth mode\n• Check that your camera supports the required Bluetooth profile\n• Make sure you\'re within range (typically 10 meters)\n• Try restarting Bluetooth on your phone</string>
 
-    <string name="faq_enable_service_question">How do I enable the service permanently?</string>
-    <string name="faq_enable_service_answer">To keep GPS data syncing with your camera:\n1. Go to your device\'s Settings > Apps\n2. Find \'Alpha GPS\' in the app list\n3. Tap on it and select \'Battery\'\n4. Choose \'Don\'t optimize\' or \'Allow background activity\'\n5. This prevents the system from stopping the GPS service\n\nYou can also access this through the device details page in the app.</string>
+    <string name="faq_enable_service_question">How do I enable the service permanently? It seems to stop after a while</string>
+    <string name="faq_enable_service_answer">Please visit the App Settings and try the options in the Battery &amp; Background section. Alternatively try the following: \nTo keep GPS data syncing with your camera:\n1. Go to your device\'s Settings > Apps\n2. Find \'Alpha GPS\' in the app list\n3. Tap on it and select \'Battery\'\n4. Choose \'Don\'t optimize\' or \'Allow background activity\'\n5. This prevents the system from stopping the GPS service\n\nYou can also access this through the device details page in the app.</string>
 
     <string name="faq_camera_not_connecting_question">My camera does not connect automatically, what can I do?</string>
     <string name="faq_camera_not_connecting_answer">Unfortunately, there might be situations, where the automatic connection does not work. If you encounter issues please do the following:  On the main screen, tap on your camera to open the details screen. There you have an option to enable the "Always On" mode, which will keep the app in the foreground</string>
@@ -161,7 +161,10 @@
 
     <!-- Battery optimization settings screen strings -->
     <string name="battery_optimization_settings_title">Battery &amp; Background Settings</string>
-    <string name="battery_optimization_settings_description">If the app is not working reliably in the background, try adjusting these settings. Some manufacturers require additional permissions for background activity.</string>
+    <string name="battery_optimization_settings_short"><![CDATA[Adjust these settings if the app doesn\'t work reliably in the background. <b>Note: this will not change the app\'s behaviour itself, it will only try to prevent being killed by the OS. Only use if you encounter issues.</b>]]></string>
+    <string name="battery_optimization_settings_description">Some manufacturers require additional permissions for background activity. If the first option does not work, please tap the "Open Settings" button. Navigate to the Battery/Power section and try to exclude the App from any optimizations.</string>
+    <string name="learn_more">Learn more</string>
+    <string name="show_less">Show less</string>
     <string name="battery_optimization_open_settings">Disable Battery Optimization</string>
     <string name="battery_optimization_open_autostart">Open Autostart Settings</string>
     <string name="battery_optimization_open_app_settings">Open App Settings</string>

@@ -78,7 +78,7 @@
     <string name="faq_camera_not_appearing_answer">• Stellen Sie sicher, dass sich Ihre Kamera im Kopplungs-/Bluetooth-Modus befindet\n• Überprüfen Sie, ob Ihre Kamera das erforderliche Bluetooth-Profil unterstützt\n• Stellen Sie sicher, dass Sie in Reichweite sind (normalerweise 10 Meter)\n• Versuchen Sie, Bluetooth auf Ihrem Telefon neu zu starten</string>
 
     <string name="faq_enable_service_question">Wie aktiviere ich den Service dauerhaft?</string>
-    <string name="faq_enable_service_answer">Um GPS-Daten kontinuierlich mit Ihrer Kamera zu synchronisieren:\n1. Gehen Sie zu den Einstellungen Ihres Geräts > Apps\n2. Finden Sie \'Alpha GPS\' in der App-Liste\n3. Tippen Sie darauf und wählen Sie \'Akku\'\n4. Wählen Sie \'Nicht optimieren\' oder \'Hintergrundaktivität erlauben\'\n5. Dies verhindert, dass das System den GPS-Service stoppt\n\nSie können dies auch über die Gerätedetails-Seite in der App aufrufen.</string>
+    <string name="faq_enable_service_answer">Bitte besuchen Sie die App-Einstellungen und probieren Sie die Optionen im Bereich Akku &amp; Hintergrund aus. Alternativ versuchen Sie Folgendes:\nUm GPS-Daten kontinuierlich mit Ihrer Kamera zu synchronisieren:\n1. Gehen Sie zu den Einstellungen Ihres Geräts > Apps\n2. Finden Sie \'Alpha GPS\' in der App-Liste\n3. Tippen Sie darauf und wählen Sie \'Akku\'\n4. Wählen Sie \'Nicht optimieren\' oder \'Hintergrundaktivität erlauben\'\n5. Dies verhindert, dass das System den GPS-Service stoppt\n\nSie können dies auch über die Gerätedetails-Seite in der App aufrufen.</string>
 
     <string name="faq_permissions_question">Welche Berechtigungen benötigt die App?</string>
     <string name="faq_permissions_answer">Die App benötigt:\n• Standortberechtigungen (für GPS-Daten)\n• Bluetooth-Berechtigungen (zur Verbindung mit der Kamera)\n• Ausnahme von der Akkuoptimierung (für kontinuierlichen Service)\n• Berechtigung für Geräte in der Nähe (für Geräteerkennung)</string>
@@ -140,7 +140,10 @@
 
     <!-- Battery optimization settings screen strings -->
     <string name="battery_optimization_settings_title">Akku &amp; Hintergrund-Einstellungen</string>
-    <string name="battery_optimization_settings_description">Falls die App im Hintergrund nicht zuverlässig funktioniert, versuchen Sie diese Einstellungen anzupassen. Einige Hersteller erfordern zusätzliche Berechtigungen für Hintergrundaktivität.</string>
+    <string name="battery_optimization_settings_short"><![CDATA[Passen Sie diese Einstellungen an, falls die App im Hintergrund nicht zuverlässig funktioniert. <b>Hinweis: Dies ändert nicht das Verhalten App selbst, sondern versucht nur zu verhindern, dass sie vom Betriebssystem beendet wird. Nur bei Problemen verwenden.</b>]]></string>
+    <string name="battery_optimization_settings_description">Einige Hersteller erfordern zusätzliche Berechtigungen für Hintergrundaktivität. Falls die erste Option nicht funktioniert, tippen Sie auf "Einstellungen öffnen". Navigieren Sie zum Akku-/Energiebereich und versuchen Sie, die App von Optimierungen auszuschließen.</string>
+    <string name="learn_more">Mehr erfahren</string>
+    <string name="show_less">Weniger anzeigen</string>
     <string name="battery_optimization_open_settings">Akkuoptimierung deaktivieren</string>
     <string name="battery_optimization_open_autostart">Autostart-Einstellungen öffnen</string>
     <string name="battery_optimization_open_app_settings">App-Einstellungen öffnen</string>
