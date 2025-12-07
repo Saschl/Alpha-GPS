@@ -51,7 +51,6 @@ internal object NotificationsHelper {
                 )
             )
             .setSmallIcon(R.drawable.ic_gps_fixed)
-            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .setContentIntent(Intent(context, MainActivity::class.java).let { notificationIntent ->
                 PendingIntent.getActivity(
                     context,

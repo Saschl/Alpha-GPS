@@ -146,4 +146,14 @@ object PreferencesManager {
             putInt(KEY_LOG_LEVEL, logLevel)
         }
     }
+
+    fun setAutoStartAfterBootEnabled(context: Context, enabled: Boolean) {
+        getPreferences(context).edit {
+            putBoolean("auto_start_after_boot", enabled)
+        }
+    }
+
+    fun getAutoStartAfterBootEnabled(context: Context): Boolean {
+        return getPreferences(context).getBoolean("auto_start_after_boot", false)
+    }
 }

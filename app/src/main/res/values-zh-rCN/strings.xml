@@ -163,6 +163,14 @@
     <string name="battery_optimization_oppo_autostart">打开自启动设置</string>
     <string name="battery_optimization_oppo_battery">打开电池设置</string>
 
+    <!-- Battery optimization settings screen strings -->
+    <string name="battery_optimization_settings_title">电池和后台设置</string>
+    <string name="battery_optimization_settings_description">如果应用在后台无法可靠运行，请尝试调整这些设置。某些制造商需要额外的后台活动权限。</string>
+    <string name="battery_optimization_open_settings">禁用电池优化</string>
+    <string name="battery_optimization_open_autostart">打开自启动设置</string>
+    <string name="battery_optimization_open_app_settings">打开应用设置</string>
+    <string name="battery_optimization_open_failed">无法打开设置</string>
+
     <string name="not_paired_tap_to_pair_again">未配对，请在蓝牙设置中配对设备</string>
     <string name="to_pair_with_your_camera_please">要与相机"%1$s"配对，请：</string>
     <string name="_1_turn_on_your_camera">\n1. 打开相机</string>

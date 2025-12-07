@@ -138,6 +138,14 @@
     <string name="battery_optimization_oppo_autostart">Autostart-Einstellungen öffnen</string>
     <string name="battery_optimization_oppo_battery">Akku-Einstellungen öffnen</string>
 
+    <!-- Battery optimization settings screen strings -->
+    <string name="battery_optimization_settings_title">Akku &amp; Hintergrund-Einstellungen</string>
+    <string name="battery_optimization_settings_description">Falls die App im Hintergrund nicht zuverlässig funktioniert, versuchen Sie diese Einstellungen anzupassen. Einige Hersteller erfordern zusätzliche Berechtigungen für Hintergrundaktivität.</string>
+    <string name="battery_optimization_open_settings">Akkuoptimierung deaktivieren</string>
+    <string name="battery_optimization_open_autostart">Autostart-Einstellungen öffnen</string>
+    <string name="battery_optimization_open_app_settings">App-Einstellungen öffnen</string>
+    <string name="battery_optimization_open_failed">Einstellungen konnten nicht geöffnet werden</string>
+
     <string name="quick_start_feature_title">Schnellstart</string>
     <string name="quick_start_feature_description">Folgen Sie den Anweisungen auf dem nächsten Bildschirm, um Ihre Kamera zu koppeln. Nach Abschluss der Kopplung verbindet sich die App automatisch mit Ihrer Kamera und beginnt mit der Übertragung der Standortdaten. Falls dies nicht geschieht, starten Sie Ihre Kamera neu.</string>
     <string name="always_on_quickstart">Always-on Modus</string>

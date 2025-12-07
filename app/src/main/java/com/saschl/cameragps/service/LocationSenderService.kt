@@ -73,9 +73,9 @@ object SonyBluetoothConstants {
  * Service responsible for sending GPS location data to Sony cameras via Bluetooth
  */
 class LocationSenderService : LifecycleService() {
-    private var isLocationTransmitting: Boolean = false;
+    private var isLocationTransmitting: Boolean = false
 
-    //private var address: String? = null
+    private var isInitialized = true
     private var locationDataConfig = LocationDataConfig(shouldSendTimeZoneAndDst = true)
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
@@ -106,7 +106,6 @@ class LocationSenderService : LifecycleService() {
         if (!isLocationTransmitting) {
             Timber.i("Starting location transmission")
 
-
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                 if (location != null) {
                     locationResult = location
@@ -131,15 +130,20 @@ class LocationSenderService : LifecycleService() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
-        // val currentAddress = this.address
         startAsForegroundService()
         val address = intent!!.getStringExtra("address")
 
         if (address == null) {
             lifecycleScope.launch {
+                if (deviceDao.getAlwaysOnEnabledDeviceCount() == 0) {
+                    Timber.i("No always-on devices found, shutting down service")
+                    requestShutdown(startId)
+                    return@launch
+                }
                 deviceDao.getAllCameraDevices().filter { it.alwaysOnEnabled }.forEach {
                     cameraConnectionManager.connect(it.mac)
                 }
+
             }
             return START_STICKY
         }
@@ -186,9 +190,9 @@ class LocationSenderService : LifecycleService() {
     @SuppressLint("MissingPermission")
     override fun onDestroy() {
         super.onDestroy()
-        if (isLocationTransmitting) {
-            Timber.e("Service unexpectedly destroyed while GPSLogger was running. Will send broadcast to RestarterReceiver.")
-            val broadcastIntent: Intent =
+        if (isInitialized) {
+            Timber.e("Service unexpectedly destroyed, attempting to restart")
+            val broadcastIntent =
                 Intent(applicationContext, RestartReceiver::class.java)
             broadcastIntent.putExtra("was_running", true)
             sendBroadcast(broadcastIntent)
@@ -315,7 +319,7 @@ class LocationSenderService : LifecycleService() {
             this,
             cameraConnectionManager.getActiveCameras().size
         )
-        NotificationsHelper.showNotification(this, locationTransmissionNotificationId, notification)
+        // NotificationsHelper.showNotification(this, locationTransmissionNotificationId, notification)
 
         gatt.discoverServices()
     }
@@ -505,6 +509,7 @@ class LocationSenderService : LifecycleService() {
             fusedLocationClient.removeLocationUpdates(locationCallback)
         }
         isLocationTransmitting = false
+        isInitialized = false
         stopSelf(startId)
     }
 }

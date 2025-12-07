@@ -191,7 +191,6 @@ fun DeviceDetailScreen(
                         onCheckedChange = { enabled ->
                             viewModel.setDeviceEnabled(enabled, device.address)
                             if(!enabled) {
-
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                                     deviceManager.stopObservingDevicePresence(device.address)
                                 }

@@ -1,6 +1,5 @@
 package com.saschl.cameragps.ui
 
-import android.content.ComponentName
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -20,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.saschl.cameragps.R
+import com.saschl.cameragps.utils.BatteryOptimizationUtil
 import com.saschl.cameragps.utils.PreferencesManager
 import timber.log.Timber
 
@@ -28,200 +28,8 @@ import timber.log.Timber
 fun BatteryOptimizationDialog(
     onDismiss: () -> Unit
 ) {
-    when {
-        isXiaomiDevice() -> VendorSpecificBatteryOptimizationDialog(
-            onDismiss = onDismiss,
-            vendor = DeviceVendor.XIAOMI
-        )
-
-        isOppoDevice() -> VendorSpecificBatteryOptimizationDialog(
-            onDismiss = onDismiss,
-            vendor = DeviceVendor.OPPO
-        )
-
-        else -> StandardBatteryOptimizationDialog(onDismiss = onDismiss)
-    }
+    StandardBatteryOptimizationDialog(onDismiss = onDismiss)
 }
-
-enum class DeviceVendor {
-    XIAOMI,
-    OPPO
-}
-
-@Composable
-private fun VendorSpecificBatteryOptimizationDialog(
-    onDismiss: () -> Unit,
-    vendor: DeviceVendor
-) {
-    val context = LocalContext.current
-
-    val titleRes = when (vendor) {
-        DeviceVendor.XIAOMI -> R.string.battery_optimization_xiaomi_title
-        DeviceVendor.OPPO -> R.string.battery_optimization_oppo_title
-    }
-
-    val messageRes = when (vendor) {
-        DeviceVendor.XIAOMI -> R.string.battery_optimization_xiaomi_message
-        DeviceVendor.OPPO -> R.string.battery_optimization_oppo_message
-    }
-
-    val batteryButtonRes = when (vendor) {
-        DeviceVendor.XIAOMI -> R.string.battery_optimization_xiaomi_battery
-        DeviceVendor.OPPO -> R.string.battery_optimization_oppo_battery
-    }
-
-    val autostartButtonRes = when (vendor) {
-        DeviceVendor.XIAOMI -> R.string.battery_optimization_xiaomi_autostart
-        DeviceVendor.OPPO -> R.string.battery_optimization_oppo_autostart
-    }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = stringResource(titleRes),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold
-            )
-        },
-        text = {
-            Text(
-                text = stringResource(messageRes),
-                style = MaterialTheme.typography.bodyMedium
-            )
-        },
-        confirmButton = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                // Battery optimization settings button
-                TextButton(
-                    onClick = {
-                        try {
-                            val intent = when (vendor) {
-                                DeviceVendor.XIAOMI -> Intent().apply {
-                                    component = ComponentName(
-                                        "com.miui.securitycenter",
-                                        "com.miui.appmanager.AppManagerMainActivity"
-                                    )
-                                    putExtra("package_name", context.packageName)
-                                    putExtra(
-                                        "package_label",
-                                        context.applicationInfo.loadLabel(context.packageManager)
-                                    )
-                                }
-
-                                DeviceVendor.OPPO -> Intent().apply {
-                                    component = ComponentName(
-                                        "com.coloros.safecenter",
-                                        "com.coloros.safecenter.permission.startup.StartupAppListActivity"
-                                    )
-                                }
-                            }
-                            context.startActivity(intent)
-                            Timber.i("Opened ${vendor.name} battery optimization settings")
-                        } catch (e: Exception) {
-                            Timber.e(
-                                e,
-                                "Failed to open ${vendor.name} battery optimization settings"
-                            )
-                            // Fallback to general app settings
-                            try {
-                                val fallbackIntent =
-                                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                        data = Uri.fromParts("package", context.packageName, null)
-                                    }
-                                context.startActivity(fallbackIntent)
-                                Timber.i("Opened app details settings as fallback")
-                            } catch (fallbackException: Exception) {
-                                Timber.e(fallbackException, "Failed to open any settings")
-                            }
-                        }
-                        onDismiss()
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = stringResource(batteryButtonRes),
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                // Autostart settings button
-                TextButton(
-                    onClick = {
-                        try {
-                            val autostartIntent = when (vendor) {
-                                DeviceVendor.XIAOMI -> Intent().apply {
-                                    component = ComponentName(
-                                        "com.miui.securitycenter",
-                                        "com.miui.permcenter.autostart.AutoStartManagementActivity"
-                                    )
-                                }
-
-                                DeviceVendor.OPPO -> Intent().apply {
-                                    component = ComponentName(
-                                        "com.coloros.safecenter",
-                                        "com.coloros.safecenter.permission.startup.StartupAppListActivity"
-                                    )
-                                }
-                            }
-                            context.startActivity(autostartIntent)
-                            Timber.i("Opened ${vendor.name} autostart settings")
-                        } catch (e: Exception) {
-                            Timber.e(
-                                e,
-                                "Failed to open ${vendor.name} autostart settings, trying fallback"
-                            )
-                            try {
-                                // Fallback to general app settings
-                                val fallbackIntent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                    data = Uri.fromParts("package", context.packageName, null)
-                                }
-                                context.startActivity(fallbackIntent)
-                                Timber.i("Opened app details settings as fallback")
-                            } catch (fallbackException: Exception) {
-                                Timber.e(fallbackException, "Failed to open any settings")
-                            }
-                        }
-                        onDismiss()
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = stringResource(autostartButtonRes),
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                // Don't show again button
-                TextButton(
-                    onClick = {
-                        PreferencesManager.setBatteryOptimizationDialogDismissed(context, true)
-                        Timber.i("${vendor.name} battery optimization dialog dismissed permanently")
-                        onDismiss()
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(stringResource(R.string.battery_optimization_dont_show))
-                }
-
-                // Cancel button
-                TextButton(
-                    onClick = {
-                        Timber.i("${vendor.name} battery optimization dialog cancelled")
-                        onDismiss()
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(stringResource(R.string.battery_optimization_cancel))
-                }
-            }
-        }
-    )
-}
-
 @Composable
 private fun StandardBatteryOptimizationDialog(
     onDismiss: () -> Unit
@@ -254,7 +62,10 @@ private fun StandardBatteryOptimizationDialog(
                             val uri = "package:${context.packageName}".toUri()
                             // should be safe to use as we do not request the permission and let the user decide
                             val intent =
-                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, uri).apply {
+                                Intent(
+                                    Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                                    uri
+                                ).apply {
                                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                 }
                             context.startActivity(intent)
@@ -279,7 +90,43 @@ private fun StandardBatteryOptimizationDialog(
                         fontWeight = FontWeight.Medium
                     )
                 }
-                
+                TextButton(
+                    onClick = {
+                        try {
+
+                            context.startActivity(
+                                BatteryOptimizationUtil.getResolveableComponentName(
+                                    context
+                                )
+                            )
+                            Timber.i("Opened autostart settings")
+                        } catch (e: Exception) {
+                            Timber.e(
+                                e,
+                                "Failed to openbattery_optimization_xiaomi_autostart autostart settings, trying fallback"
+                            )
+                            try {
+                                // Fallback to general app settings
+                                val fallbackIntent =
+                                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                        data = Uri.fromParts("package", context.packageName, null)
+                                    }
+                                context.startActivity(fallbackIntent)
+                                Timber.i("Opened app details settings as fallback")
+                            } catch (fallbackException: Exception) {
+                                Timber.e(fallbackException, "Failed to open any settings")
+                            }
+                        }
+                        onDismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = stringResource(R.string.battery_optimization_xiaomi_autostart),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
                 TextButton(
                     onClick = {
                         PreferencesManager.setBatteryOptimizationDialogDismissed(context, true)

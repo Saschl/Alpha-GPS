@@ -98,6 +98,10 @@ class DeviceDetailViewModel(private val cameraDeviceDAO: CameraDeviceDAO) : View
             val intent = Intent(context, LocationSenderService::class.java)
             intent.putExtra("address", device.address.uppercase())
             _uiState.update { it.copy(isAlwaysOnEnabled = enabled) }
+
+            if (enabled) {
+                context.startForegroundService(intent)
+            }
             // FIXME check if this causes issue, ideally it should simply allow the service to run just like always or restart the FGS
             // if (enabled) {
             //    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
