@@ -100,7 +100,7 @@
     <string name="faq_camera_not_appearing_answer">• Ensure your camera is in pairing/Bluetooth mode\n• Check that your camera supports the required Bluetooth profile\n• Make sure you\'re within range (typically 10 meters)\n• Try restarting Bluetooth on your phone</string>
 
     <string name="faq_enable_service_question">How do I enable the service permanently?</string>
-    <string name="faq_enable_service_answer">To keep GPS data syncing with your camera:\n1. Go to your device\'s Settings > Apps\n2. Find \'CameraGPS\' in the app list\n3. Tap on it and select \'Battery\'\n4. Choose \'Don\'t optimize\' or \'Allow background activity\'\n5. This prevents the system from stopping the GPS service\n\nYou can also access this through the device details page in the app.</string>
+    <string name="faq_enable_service_answer">To keep GPS data syncing with your camera:\n1. Go to your device\'s Settings > Apps\n2. Find \'Alpha GPS\' in the app list\n3. Tap on it and select \'Battery\'\n4. Choose \'Don\'t optimize\' or \'Allow background activity\'\n5. This prevents the system from stopping the GPS service\n\nYou can also access this through the device details page in the app.</string>
 
     <string name="faq_camera_not_connecting_question">My camera does not connect automatically, what can I do?</string>
     <string name="faq_camera_not_connecting_answer">Unfortunately, there might be situations, where the automatic connection does not work. If you encounter issues please do the following:  On the main screen, tap on your camera to open the details screen. There you have an option to enable the "Always On" mode, which will keep the app in the foreground</string>

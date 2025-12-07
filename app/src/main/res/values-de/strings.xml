@@ -65,7 +65,7 @@
     <!-- Help & FAQ strings -->
     <string name="help_faq_title">Hilfe &amp; FAQ</string>
     <string name="help_close_description">Schließen</string>
-    <string name="help_about_title">Über CameraGPS</string>
+    <string name="help_about_title">Über Alpha GPS</string>
     <string name="help_about_description">Diese App stellt GPS-Koordinaten in Echtzeit über Bluetooth für Ihre Kamera bereit und ermöglicht automatisches Geotagging Ihrer Fotos, ohne das integrierte GPS der Kamera zu benötigen.</string>
     <string name="help_need_more_title">Brauchen Sie weitere Hilfe?</string>
     <string name="help_need_more_description">Überprüfen Sie die App-Logs im oberen Menü für Informationen zur Fehlerbehebung oder überprüfen Sie Ihre Geräteeinstellungen, um sicherzustellen, dass alle Berechtigungen erteilt wurden.</string>
@@ -78,7 +78,7 @@
     <string name="faq_camera_not_appearing_answer">• Stellen Sie sicher, dass sich Ihre Kamera im Kopplungs-/Bluetooth-Modus befindet\n• Überprüfen Sie, ob Ihre Kamera das erforderliche Bluetooth-Profil unterstützt\n• Stellen Sie sicher, dass Sie in Reichweite sind (normalerweise 10 Meter)\n• Versuchen Sie, Bluetooth auf Ihrem Telefon neu zu starten</string>
 
     <string name="faq_enable_service_question">Wie aktiviere ich den Service dauerhaft?</string>
-    <string name="faq_enable_service_answer">Um GPS-Daten kontinuierlich mit Ihrer Kamera zu synchronisieren:\n1. Gehen Sie zu den Einstellungen Ihres Geräts > Apps\n2. Finden Sie \'CameraGPS\' in der App-Liste\n3. Tippen Sie darauf und wählen Sie \'Akku\'\n4. Wählen Sie \'Nicht optimieren\' oder \'Hintergrundaktivität erlauben\'\n5. Dies verhindert, dass das System den GPS-Service stoppt\n\nSie können dies auch über die Gerätedetails-Seite in der App aufrufen.</string>
+    <string name="faq_enable_service_answer">Um GPS-Daten kontinuierlich mit Ihrer Kamera zu synchronisieren:\n1. Gehen Sie zu den Einstellungen Ihres Geräts > Apps\n2. Finden Sie \'Alpha GPS\' in der App-Liste\n3. Tippen Sie darauf und wählen Sie \'Akku\'\n4. Wählen Sie \'Nicht optimieren\' oder \'Hintergrundaktivität erlauben\'\n5. Dies verhindert, dass das System den GPS-Service stoppt\n\nSie können dies auch über die Gerätedetails-Seite in der App aufrufen.</string>
 
     <string name="faq_permissions_question">Welche Berechtigungen benötigt die App?</string>
     <string name="faq_permissions_answer">Die App benötigt:\n• Standortberechtigungen (für GPS-Daten)\n• Bluetooth-Berechtigungen (zur Verbindung mit der Kamera)\n• Ausnahme von der Akkuoptimierung (für kontinuierlichen Service)\n• Berechtigung für Geräte in der Nähe (für Geräteerkennung)</string>
