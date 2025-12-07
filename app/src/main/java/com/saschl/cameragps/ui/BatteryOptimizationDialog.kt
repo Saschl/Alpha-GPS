@@ -23,15 +23,8 @@ import com.saschl.cameragps.utils.BatteryOptimizationUtil
 import com.saschl.cameragps.utils.PreferencesManager
 import timber.log.Timber
 
-
 @Composable
 fun BatteryOptimizationDialog(
-    onDismiss: () -> Unit
-) {
-    StandardBatteryOptimizationDialog(onDismiss = onDismiss)
-}
-@Composable
-private fun StandardBatteryOptimizationDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current

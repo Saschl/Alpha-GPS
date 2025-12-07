@@ -19,7 +19,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.saschl.cameragps.service.FileTree
 import com.saschl.cameragps.service.GlobalExceptionHandler
-import com.saschl.cameragps.ui.BatteryOptimizationDialog
 import com.saschl.cameragps.ui.SettingsScreen
 import com.saschl.cameragps.ui.WelcomeScreen
 import com.saschl.cameragps.ui.device.CameraDeviceManager
@@ -124,13 +123,13 @@ class MainActivity : AppCompatActivity() {
                 )
 
                 // Show battery optimization dialog overlay if needed
-                if (showBatteryOptimizationDialog) {
+                /*if (showBatteryOptimizationDialog) {
                     BatteryOptimizationDialog(
                         onDismiss = {
                             showBatteryOptimizationDialog = false
                         }
                     )
-                }
+                }*/
             }
         }
     }
