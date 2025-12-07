@@ -95,7 +95,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
     implementation(libs.androidx.compose.runtime.livedata)
-    implementation(libs.betterypermissionhelper)
+    //implementation(libs.betterypermissionhelper)
 
     // Room database dependencies
     implementation(libs.androidx.room.runtime)

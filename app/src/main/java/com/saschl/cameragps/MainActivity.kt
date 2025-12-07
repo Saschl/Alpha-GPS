@@ -24,7 +24,6 @@ import com.saschl.cameragps.ui.WelcomeScreen
 import com.saschl.cameragps.ui.device.CameraDeviceManager
 import com.saschl.cameragps.ui.theme.CameraGpsTheme
 import com.saschl.cameragps.utils.PreferencesManager
-import com.waseemsabir.betterypermissionhelper.BatteryPermissionHelper
 import timber.log.Timber
 
 class MainActivity : AppCompatActivity() {
@@ -56,7 +55,6 @@ class MainActivity : AppCompatActivity() {
         val context = LocalContext.current
         var showWelcome by remember { mutableStateOf(PreferencesManager.isFirstLaunch(context)) }
         var showSettings by remember { mutableStateOf(false) }
-        val batteryPermissionHelper = remember { BatteryPermissionHelper.getInstance() }
 
         val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsState()
 
