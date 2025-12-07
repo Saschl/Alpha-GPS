@@ -12,6 +12,8 @@ It makes use of the companion device manager APIs of Android which *should* prov
 
 <a href="https://play.google.com/store/apps/details?id=com.saschl.cameragps"><img width="270" height="80" alt="GetItOnGooglePlay_Badge_Web_color_English" src="https://github.com/user-attachments/assets/775cb6fc-a297-4208-9249-43291c52d045" /></a>
 
+Or join the [Beta](https://play.google.com/apps/testing/com.saschl.cameragps)
+
 OR
 
  Get the APK from the releases and install it directly on your phone. Or use Obtainium and enter the repo URL for a more seamless experience.
