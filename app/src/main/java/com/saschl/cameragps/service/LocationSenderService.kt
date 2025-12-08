@@ -133,7 +133,7 @@ class LocationSenderService : LifecycleService() {
         super.onStartCommand(intent, flags, startId)
 
         startAsForegroundService()
-        val address = intent!!.getStringExtra("address")
+        val address = intent?.getStringExtra("address")
 
         if (address == null) {
             lifecycleScope.launch {
@@ -147,7 +147,7 @@ class LocationSenderService : LifecycleService() {
                     }
                 }
             }
-            return START_STICKY
+            return START_REDELIVER_INTENT
         }
 
         // Check if this is a shutdown request
@@ -165,7 +165,7 @@ class LocationSenderService : LifecycleService() {
                         Timber.i("At least one always-on device found, not shutting down service")
                     }
                 }
-                return START_STICKY
+                return START_REDELIVER_INTENT
             }
 
             lifecycleScope.launch {
@@ -173,7 +173,7 @@ class LocationSenderService : LifecycleService() {
                     Timber.d("Disconnecting camera $address as it is not always-on enabled")
                     cameraConnectionManager.disconnect(address)
                 }
-                // FIXME disabled as it can cause issues with events in quick succession (appear <-> disappear with a few ms delay, seems like an Android issue)
+                // FIXME was disabled as it can cause issues with events in quick succession (appear <-> disappear with a few ms delay, seems like an Android issue)
                 // Wait a bit to ensure the disconnection is fully processed and no weird events appear in te meantime
                 delay(1000)
                 if (cameraConnectionManager.getConnectedCameras().isEmpty()) {
