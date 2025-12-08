@@ -30,6 +30,7 @@ import com.saschl.cameragps.database.devices.TimeZoneDSTState
 import com.saschl.cameragps.notification.NotificationsHelper
 import com.saschl.cameragps.service.SonyBluetoothConstants.locationTransmissionNotificationId
 import com.saschl.cameragps.utils.PreferencesManager
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.UUID
@@ -139,11 +140,11 @@ class LocationSenderService : LifecycleService() {
                     Timber.i("No always-on devices found, shutting down service")
                     requestShutdown(startId)
                     return@launch
+                } else {
+                    deviceDao.getAllCameraDevices().filter { it.alwaysOnEnabled }.forEach {
+                        cameraConnectionManager.connect(it.mac)
+                    }
                 }
-                deviceDao.getAllCameraDevices().filter { it.alwaysOnEnabled }.forEach {
-                    cameraConnectionManager.connect(it.mac)
-                }
-
             }
             return START_STICKY
         }
@@ -152,6 +153,7 @@ class LocationSenderService : LifecycleService() {
         if (intent.action == SonyBluetoothConstants.ACTION_REQUEST_SHUTDOWN) {
             Timber.i("Shutdown requested for device $address")
 
+            // Will be fired by CDM when all associated devices are gone (hopefully)
             if (address == "all") {
                 lifecycleScope.launch {
                     if (deviceDao.getAlwaysOnEnabledDeviceCount() == 0) {
@@ -170,6 +172,9 @@ class LocationSenderService : LifecycleService() {
                     Timber.d("Disconnecting camera $address as it is not always-on enabled")
                     cameraConnectionManager.disconnect(address)
                 }
+                // FIXME disabled as it can cause issues with events in quick succession (appear <-> disappear with a few ms delay, seems like an Android issue)
+                // Wait a bit to ensure the disconnection is fully processed and no weird events appear in te meantime
+                delay(1000)
                 if (cameraConnectionManager.getConnectedCameras().isEmpty()) {
                     Timber.d("No connected cameras remaining, shutting down service")
                     requestShutdown(startId)
@@ -503,6 +508,7 @@ class LocationSenderService : LifecycleService() {
         }
     }
 
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     private fun requestShutdown(startId: Int) {
         activeTransmissions.clear()
         if (::locationCallback.isInitialized) {
@@ -510,6 +516,7 @@ class LocationSenderService : LifecycleService() {
         }
         isLocationTransmitting = false
         isInitialized = false
+        cameraConnectionManager.disconnectAll()
         stopSelf(startId)
     }
 }

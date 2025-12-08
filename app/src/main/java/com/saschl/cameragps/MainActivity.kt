@@ -1,5 +1,6 @@
 package com.saschl.cameragps
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.PowerManager
 import androidx.activity.compose.setContent
@@ -11,14 +12,17 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.getSystemService
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
+import com.saschl.cameragps.database.LogDatabase
 import com.saschl.cameragps.service.FileTree
 import com.saschl.cameragps.service.GlobalExceptionHandler
+import com.saschl.cameragps.service.LocationSenderService
 import com.saschl.cameragps.ui.SettingsScreen
 import com.saschl.cameragps.ui.WelcomeScreen
 import com.saschl.cameragps.ui.device.CameraDeviceManager
@@ -55,10 +59,13 @@ class MainActivity : AppCompatActivity() {
         val context = LocalContext.current
         var showWelcome by remember { mutableStateOf(PreferencesManager.isFirstLaunch(context)) }
         var showSettings by remember { mutableStateOf(false) }
+        val cameraDeviceDAO = LogDatabase.getDatabase(context).cameraDeviceDao()
+        val scope = rememberCoroutineScope()
 
-        val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsState()
+        val lifecycleState by ProcessLifecycleOwner.get().lifecycle.currentStateFlow.collectAsState()
 
         LaunchedEffect(lifecycleState) {
+            Timber.d("Lifecycle state changed: $lifecycleState")
             when (lifecycleState) {
                 Lifecycle.State.RESUMED -> {
                     showWelcome = PreferencesManager.isFirstLaunch(context)
@@ -66,6 +73,32 @@ class MainActivity : AppCompatActivity() {
                         showSettings = false
                     }
                 }
+                else -> { /* No action needed */
+                }
+            }
+        }
+
+        LaunchedEffect(lifecycleState) {
+            when (lifecycleState) {
+                Lifecycle.State.RESUMED -> {
+                    Timber.d("App started, will resume transmission for configured devices")
+                    //  scope.launch {
+                    cameraDeviceDAO.getAllCameraDevices().forEach {
+                        val shouldTransmissionStart =
+                            it.deviceEnabled
+                                    && it.alwaysOnEnabled
+                                    && PreferencesManager.isAppEnabled(context.applicationContext)
+                        if (shouldTransmissionStart) {
+                            Timber.d("Resuming location transmission for device ${it.mac}")
+                            val intent = Intent(context, LocationSenderService::class.java)
+                            intent.putExtra("address", it.mac.uppercase())
+                            context.startForegroundService(intent)
+                        }
+                    }
+                    //  }
+
+                }
+
                 else -> { /* No action needed */
                 }
             }

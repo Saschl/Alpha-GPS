@@ -7,6 +7,8 @@ import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import androidx.annotation.RequiresPermission
+import timber.log.Timber
+import java.util.Collections
 
 class CameraConnectionManager(
     private val context: Context,
@@ -20,7 +22,8 @@ class CameraConnectionManager(
         val writeCharacteristic: BluetoothGattCharacteristic? = null
     )
 
-    private val connections = mutableMapOf<String, CameraConnectionConfig>()
+    private val connections =
+        Collections.synchronizedMap(mutableMapOf<String, CameraConnectionConfig>())
 
     @RequiresPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
     fun connect(config: String): Boolean {
@@ -51,6 +54,7 @@ class CameraConnectionManager(
     @RequiresPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
     fun disconnectAll() {
         connections.values.forEach { config ->
+            Timber.d("DisconnectAll: processing device: ${config.gatt.device.address}")
             config.gatt.disconnect()
             config.gatt.close()
         }
