@@ -26,6 +26,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.saschl.cameragps.R
 import com.saschl.cameragps.database.LogDatabase
+import com.saschl.cameragps.database.devices.CameraDeviceDAO
 import com.saschl.cameragps.database.devices.TimeZoneDSTState
 import com.saschl.cameragps.notification.NotificationsHelper
 import com.saschl.cameragps.service.SonyBluetoothConstants.locationTransmissionNotificationId
@@ -86,7 +87,7 @@ class LocationSenderService : LifecycleService() {
 
     private lateinit var cameraConnectionManager: CameraConnectionManager
 
-    private val deviceDao = LogDatabase.getDatabase(this).cameraDeviceDao()
+    private lateinit var deviceDao: CameraDeviceDAO
 
     private val bluetoothManager: BluetoothManager by lazy {
         applicationContext.getSystemService()!!
@@ -209,6 +210,7 @@ class LocationSenderService : LifecycleService() {
     @SuppressLint("MissingPermission")
     override fun onCreate() {
         super.onCreate()
+        deviceDao = LogDatabase.getDatabase(this).cameraDeviceDao()
         initializeLogging()
         initializeLocationServices()
         cameraConnectionManager =
