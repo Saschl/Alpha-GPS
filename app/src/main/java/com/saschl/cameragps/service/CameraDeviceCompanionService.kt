@@ -14,6 +14,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.getSystemService
 import com.saschl.cameragps.service.SonyBluetoothConstants.ACTION_REQUEST_SHUTDOWN
 import com.saschl.cameragps.utils.PreferencesManager
+import com.saschl.cameragps.utils.SentryInit
 import timber.log.Timber
 import java.util.Locale
 
@@ -120,6 +121,7 @@ class CameraDeviceCompanionService : CompanionDeviceService() {
         if (Timber.forest().find { it is FileTree } == null) {
             FileTree.initialize(this)
             Timber.plant(FileTree(this, PreferencesManager.logLevel(this)))
+            SentryInit.initSentry(this)
 
             // Set up global exception handler to log crashes
             val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
