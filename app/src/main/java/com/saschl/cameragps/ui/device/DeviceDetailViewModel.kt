@@ -13,7 +13,6 @@ import com.saschl.cameragps.database.devices.CameraDeviceDAO
 import com.saschl.cameragps.service.AssociatedDeviceCompat
 import com.saschl.cameragps.service.LocationSenderService
 import com.saschl.cameragps.service.SonyBluetoothConstants
-import com.saschl.cameragps.ui.pairing.startDevicePresenceObservation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -71,7 +70,7 @@ class DeviceDetailViewModel(private val cameraDeviceDAO: CameraDeviceDAO) : View
 
             context.startService(shutdownIntent)
             delay(2.seconds)
-            startDevicePresenceObservation(deviceManager, device)
+            //startDevicePresenceObservation(deviceManager, device)
             _uiState.update { it.copy(buttonEnabled = true) }
     }
 
