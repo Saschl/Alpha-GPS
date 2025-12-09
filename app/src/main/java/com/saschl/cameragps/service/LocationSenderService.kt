@@ -54,6 +54,9 @@ object SonyBluetoothConstants {
     val CHARACTERISTIC_ENABLE_LOCK_GPS_COMMAND: UUID =
         UUID.fromString("0000dd31-0000-1000-8000-00805f9b34fb")
 
+    val CHARACTERISTIC_LOCATION_ENABLED_IN_CAMERA: UUID =
+        UUID.fromString("0000dd01-0000-1000-8000-00805f9b34fb")
+
     const val ACTION_REQUEST_SHUTDOWN = "com.saschl.cameragps.ACTION_REQUEST_SHUTDOWN"
 
     // GPS enable command bytes
@@ -331,8 +334,10 @@ class LocationSenderService : LifecycleService() {
         )
         NotificationsHelper.showNotification(this, locationTransmissionNotificationId, notification)
 
-        gatt.discoverServices()
+        // value from official Sony app
+        gatt.requestMtu(158)
     }
+
 
     private inner class BluetoothGattCallbackHandler : BluetoothGattCallback() {
         @SuppressLint("MissingPermission")
@@ -350,9 +355,36 @@ class LocationSenderService : LifecycleService() {
 
             } else {
                 Timber.i("Connected to device with status %d", status)
-                    cameraConnectionManager.resumeDevice(gatt.device.address.uppercase())
-                    resumeLocationTransmission(gatt)
 
+
+                cameraConnectionManager.resumeDevice(gatt.device.address.uppercase())
+                resumeLocationTransmission(gatt)
+
+                val service = gatt.services?.find { it.uuid == SonyBluetoothConstants.SERVICE_UUID }
+                gatt.readCharacteristic(
+                    service?.getCharacteristic(SonyBluetoothConstants.CHARACTERISTIC_LOCATION_ENABLED_IN_CAMERA)
+                        ?: return
+                )
+            }
+        }
+
+        @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+        override fun onMtuChanged(gatt: BluetoothGatt, mtu: Int, status: Int) {
+            super.onMtuChanged(gatt, mtu, status)
+            gatt.discoverServices()
+        }
+
+        override fun onCharacteristicChanged(
+            gatt: BluetoothGatt,
+            characteristic: BluetoothGattCharacteristic,
+            value: ByteArray
+        ) {
+            super.onCharacteristicChanged(gatt, characteristic, value)
+
+            if (characteristic.uuid.toString().uppercase().startsWith("0000DD01")) {
+                Timber.w("Received characteristic change from camera: ${characteristic.uuid}, $value")
+            } else {
+                Timber.i("Received characteristic change from camera: ${characteristic.uuid}, $value")
             }
         }
 
@@ -429,7 +461,7 @@ class LocationSenderService : LifecycleService() {
                 }
 
                 SonyBluetoothConstants.CHARACTERISTIC_ENABLE_LOCK_GPS_COMMAND -> {
-                    Timber.i("GPS flag enabled on device, will now send data")
+                    Timber.i("GPS flag enabled on device, will now send data, status was $status")
                     startLocationTransmission()
                 }
             }
@@ -465,7 +497,7 @@ class LocationSenderService : LifecycleService() {
         ) {
             super.onCharacteristicRead(gatt, characteristic, status)
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-                doOnRead(characteristic.value, gatt)
+                doOnRead(characteristic.value, gatt, characteristic)
             }
         }
 
@@ -476,11 +508,20 @@ class LocationSenderService : LifecycleService() {
             status: Int,
         ) {
             super.onCharacteristicRead(gatt, characteristic, value, status)
-            doOnRead(value, gatt)
+            doOnRead(value, gatt, characteristic)
         }
 
         // TODO make this a bit cleaner, right now we do not check for specific characteristics, but we only read one anyway
-        private fun doOnRead(value: ByteArray, gatt: BluetoothGatt) {
+        private fun doOnRead(
+            value: ByteArray,
+            gatt: BluetoothGatt,
+            characteristic: BluetoothGattCharacteristic
+        ) {
+
+            if (characteristic.uuid.toString().uppercase().startsWith("0000DD01")) {
+                Timber.w("Received characteristic read from camera (location status): ${characteristic.uuid}, $value")
+                return
+            }
             locationDataConfig =
                 locationDataConfig.copy(shouldSendTimeZoneAndDst = hasTimeZoneDstFlag(value))
             lifecycleScope.launch {
