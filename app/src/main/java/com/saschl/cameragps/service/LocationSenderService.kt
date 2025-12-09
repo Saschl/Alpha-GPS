@@ -34,6 +34,8 @@ import com.saschl.cameragps.utils.PreferencesManager
 import com.saschl.cameragps.utils.SentryInit
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 import java.util.UUID
 
@@ -103,6 +105,8 @@ class LocationSenderService : LifecycleService() {
         return value.size >= 5 && (value[4].toInt() and 0x02) != 0
     }
 
+    private val commandMutex = Mutex()
+
     companion object {
         val activeTransmissions = mutableStateMapOf<String, Boolean>()
     }
@@ -133,68 +137,95 @@ class LocationSenderService : LifecycleService() {
     }
 
     @SuppressLint("MissingPermission")
+    private suspend fun handleNoAddress(startId: Int) {
+
+            if (deviceDao.getAlwaysOnEnabledDeviceCount() == 0) {
+                Timber.i("No always-on devices found, shutting down service")
+                requestShutdown(startId)
+            } else {
+                deviceDao.getAllCameraDevices()
+                    .filter { it.alwaysOnEnabled }
+                    .forEach { cameraConnectionManager.connect(it.mac) }
+            }
+
+    }
+
+    @SuppressLint("MissingPermission")
+    private suspend fun handleShutdownAllDevices(startId: Int) {
+        if (deviceDao.getAlwaysOnEnabledDeviceCount() == 0) {
+            Timber.i("No always-on devices found, disconnecting all cameras and shutting down service")
+            cameraConnectionManager.disconnectAll()
+            requestShutdown(startId)
+        } else {
+            Timber.i("At least one always-on device found, not shutting down service")
+        }
+
+    }
+
+    @SuppressLint("MissingPermission")
+    private suspend fun handleShutdownRequest(address: String, startId: Int) {
+        Timber.i("Shutdown requested for device $address")
+
+        if (address == "all") {
+            handleShutdownAllDevices(startId)
+            return
+        }
+
+        if (!deviceDao.isDeviceAlwaysOnEnabled(address)) {
+            Timber.d("Disconnecting camera $address as it is not always-on enabled")
+            cameraConnectionManager.disconnect(address)
+        }
+
+        delay(1000)
+
+        if (cameraConnectionManager.getConnectedCameras().isEmpty()) {
+            Timber.d("No connected cameras remaining, shutting down service")
+            requestShutdown(startId)
+        }
+    }
+
+    @SuppressLint("MissingPermission")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
         startAsForegroundService()
-        val address = intent?.getStringExtra("address")
 
-        if (address == null) {
-            lifecycleScope.launch {
-                if (deviceDao.getAlwaysOnEnabledDeviceCount() == 0) {
-                    Timber.i("No always-on devices found, shutting down service")
-                    requestShutdown(startId)
-                    return@launch
-                } else {
-                    deviceDao.getAllCameraDevices().filter { it.alwaysOnEnabled }.forEach {
-                        cameraConnectionManager.connect(it.mac)
-                    }
-                }
+        /**
+         *  TODO maybe handle with commandqueue to avoid blocking the main thread (although all operations finish rather quickly)
+         *
+         * val commandQueue = Channel<CommandData>(Channel.UNLIMITED)
+         *  data class CommandData(val intent: Intent?, val startId: Int)
+          */
+
+        lifecycleScope.launch {
+            commandMutex.withLock {
+                handleStartCommand(intent, startId)
+                Timber.i("processed start command $startId with intent action ${intent?.action} and address ${intent?.getStringExtra("address")}")
             }
-            return START_REDELIVER_INTENT
         }
 
-        // Check if this is a shutdown request
-        if (intent.action == SonyBluetoothConstants.ACTION_REQUEST_SHUTDOWN) {
-            Timber.i("Shutdown requested for device $address")
+        return START_REDELIVER_INTENT
+    }
 
-            // Will be fired by CDM when all associated devices are gone (hopefully)
-            if (address == "all") {
-                lifecycleScope.launch {
-                    if (deviceDao.getAlwaysOnEnabledDeviceCount() == 0) {
-                        Timber.i("No always-on devices found, disconnecting all cameras and shutting down service")
-                        cameraConnectionManager.disconnectAll()
-                        requestShutdown(startId)
-                    } else {
-                        Timber.i("At least one always-on device found, not shutting down service")
-                    }
-                }
-                return START_REDELIVER_INTENT
-            }
+    @SuppressLint("MissingPermission")
+    private suspend fun handleStartCommand(intent: Intent?, startId: Int) {
+        val address = intent?.getStringExtra("address")
+        val isShutdownRequest = intent?.action == SonyBluetoothConstants.ACTION_REQUEST_SHUTDOWN
 
-            lifecycleScope.launch {
-                if (!deviceDao.isDeviceAlwaysOnEnabled(address)) {
-                    Timber.d("Disconnecting camera $address as it is not always-on enabled")
-                    cameraConnectionManager.disconnect(address)
-                }
-                // FIXME was disabled as it can cause issues with events in quick succession (appear <-> disappear with a few ms delay, seems like an Android issue)
-                // Wait a bit to ensure the disconnection is fully processed and no weird events appear in te meantime
-                delay(1000)
-                if (cameraConnectionManager.getConnectedCameras().isEmpty()) {
-                    Timber.d("No connected cameras remaining, shutting down service")
-                    requestShutdown(startId)
-                }
-            }
+        if (address == null) {
+            handleNoAddress(startId)
+            return
+        }
 
-            return START_STICKY
-        } else {
-            if (cameraConnectionManager.isConnected(address)) {
-                return START_STICKY
-            }
+        if (isShutdownRequest) {
+            handleShutdownRequest(address, startId)
+            return
+        }
+
+        if (!cameraConnectionManager.isConnected(address)) {
             Timber.i("Service initialized")
             cameraConnectionManager.connect(address)
         }
-        return START_REDELIVER_INTENT
     }
 
     @SuppressLint("MissingPermission")

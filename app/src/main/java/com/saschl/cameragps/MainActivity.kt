@@ -70,7 +70,6 @@ class MainActivity : AppCompatActivity() {
         var showWelcome by remember { mutableStateOf(PreferencesManager.isFirstLaunch(context)) }
         var showSettings by remember { mutableStateOf(false) }
         val cameraDeviceDAO = LogDatabase.getDatabase(context).cameraDeviceDao()
-        val scope = rememberCoroutineScope()
 
         val lifecycleState by ProcessLifecycleOwner.get().lifecycle.currentStateFlow.collectAsState()
 
@@ -92,7 +91,6 @@ class MainActivity : AppCompatActivity() {
             when (lifecycleState) {
                 Lifecycle.State.RESUMED -> {
                     Timber.d("App started, will resume transmission for configured devices")
-                    //  scope.launch {
                     cameraDeviceDAO.getAllCameraDevices().forEach {
                         val shouldTransmissionStart =
                             it.deviceEnabled
@@ -105,8 +103,6 @@ class MainActivity : AppCompatActivity() {
                             context.startForegroundService(intent)
                         }
                     }
-                    //  }
-
                 }
 
                 else -> { /* No action needed */
