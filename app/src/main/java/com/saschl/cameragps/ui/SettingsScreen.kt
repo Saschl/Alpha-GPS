@@ -62,7 +62,6 @@ import androidx.core.os.LocaleListCompat
 import androidx.core.text.HtmlCompat
 import com.saschl.cameragps.R
 import com.saschl.cameragps.database.LogDatabase
-import com.saschl.cameragps.database.devices.CameraDevice
 import com.saschl.cameragps.service.FileTree
 import com.saschl.cameragps.service.LocationSenderService
 import com.saschl.cameragps.utils.BatteryOptimizationUtil
@@ -594,6 +593,72 @@ fun SettingsScreen(
                 }
             }
 
+            item {
+                // Sentry Settings Card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.sentry_settings),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.enable_sentry),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    text = stringResource(R.string.enable_sentry_description),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            var isSentryEnabled by remember {
+                                mutableStateOf(PreferencesManager.sentryEnabled(context))
+                            }
+
+                            Switch(
+                                checked = isSentryEnabled,
+                                onCheckedChange = { enabled ->
+                                    isSentryEnabled = enabled
+                                    PreferencesManager.setSentryEnabled(context, enabled)
+                                }
+                            )
+                        }
+
+                        // Restart hint
+                        Text(
+                            text = stringResource(R.string.sentry_restart_required),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
+            }
+
             if (debugPanelCounter >= 5) {
                 item {
                     // Debug Panel
@@ -811,91 +876,6 @@ private fun LogLevelSelectionDialog(
     )
 }
 
-
-@Composable
-private fun DeviceItem(
-    device: CameraDevice,
-    onDelete: () -> Unit
-) {
-    var showDeleteDialog by remember { mutableStateOf(false) }
-
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = device.deviceName,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = device.mac,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                if (device.alwaysOnEnabled) {
-                    Text(
-                        text = stringResource(R.string.always_on_enabled),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
-            IconButton(onClick = { showDeleteDialog = true }) {
-                Icon(
-                    painter = painterResource(R.drawable.delete_24px),
-                    contentDescription = stringResource(R.string.delete_device),
-                    tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        }
-    }
-
-    if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = {
-                Text(text = stringResource(R.string.delete_device))
-            },
-            text = {
-                Text(
-                    text = stringResource(R.string.delete_device_confirmation, device.deviceName)
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        onDelete()
-                        showDeleteDialog = false
-                    }
-                ) {
-                    Text(
-                        text = stringResource(R.string.delete),
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text(text = stringResource(R.string.cancel_button))
-                }
-            }
-        )
-    }
-}
 
 /**
  * Extension function to convert Android Spanned (HTML) to Compose AnnotatedString

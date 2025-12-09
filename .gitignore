@@ -11,3 +11,6 @@
 local.properties
 *.aab
 *.apk
+
+# Sentry Config File
+sentry.properties

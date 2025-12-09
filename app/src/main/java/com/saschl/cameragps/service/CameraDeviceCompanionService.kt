@@ -117,7 +117,7 @@ class CameraDeviceCompanionService : CompanionDeviceService() {
 
     override fun onCreate() {
         super.onCreate()
-        if (Timber.treeCount == 0) {
+        if (Timber.forest().find { it is FileTree } == null) {
             FileTree.initialize(this)
             Timber.plant(FileTree(this, PreferencesManager.logLevel(this)))
 

@@ -10,20 +10,26 @@ The Application collects information when you download and use it. This informat
 
 *   The time spent on the Application
 *   The operating system you use on your mobile device
-
-The Application does precise information about the location of your mobile device.
+* The version of the Application you are using
+* The device model you are using
 
 The Application collects your device's location, which helps the Service Provider determine your approximate geographical location and make use of in below ways:
 
-*   Geolocation Services: The Service Provider utilizes location data to provide features such as location-based services.
+* Geolocation Services: The Service Provider utilizes location data to provide geotagging features
+  for Sony Cameras. This data will not be transmitted or shared elsewhere.
 
 **Third Party Access**
 
-No data collected by the application will be sent to the developer and/or third parties.
+The app collects anonymous usage data for troubleshooting (Sentry EU data centers). This includes
+logs and stack traces.
+No personal data (including location, device addresses, IP addresses) will ever collected or stored.
+
+You may opt out any time by disabling the troubleshooting feature in the settings of the app.
 
 Please note that the Application utilizes third-party services that have their own Privacy Policy about handling data. Below are the links to the Privacy Policy of the third-party service providers used by the Application:
 
 *   [Google Play Services](https://www.google.com/policies/privacy/)
+* [Sentry](https://sentry.io/privacy/)
 
 **Opt-Out Rights**
 
@@ -43,7 +49,7 @@ The Service Provider is concerned about safeguarding the confidentiality of your
 
 This Privacy Policy may be updated from time to time for any reason. The Service Provider will notify you of any changes to the Privacy Policy by updating this page with the new Privacy Policy. You are advised to consult this Privacy Policy regularly for any changes, as continued use is deemed approval of all changes.
 
-This privacy policy is effective as of 2025-08-12
+This privacy policy is effective as of 2025-12-09
 
 **Your Consent**
 

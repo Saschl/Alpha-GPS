@@ -156,4 +156,14 @@ object PreferencesManager {
     fun getAutoStartAfterBootEnabled(context: Context): Boolean {
         return getPreferences(context).getBoolean("auto_start_after_boot", false)
     }
+
+    fun sentryEnabled(context: Context): Boolean {
+        return getPreferences(context).getBoolean("sentry_enabled", true)
+    }
+
+    fun setSentryEnabled(context: Context, enabled: Boolean) {
+        getPreferences(context).edit {
+            putBoolean("sentry_enabled", enabled)
+        }
+    }
 }

@@ -28,6 +28,7 @@ import com.saschl.cameragps.ui.WelcomeScreen
 import com.saschl.cameragps.ui.device.CameraDeviceManager
 import com.saschl.cameragps.ui.theme.CameraGpsTheme
 import com.saschl.cameragps.utils.PreferencesManager
+import com.saschl.cameragps.utils.SentryInit
 import timber.log.Timber
 
 class MainActivity : AppCompatActivity() {
@@ -36,8 +37,17 @@ class MainActivity : AppCompatActivity() {
         installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        // waiting for view to draw to better represent a captured error with a screenshot
+        /*   findViewById<android.view.View>(android.R.id.content).viewTreeObserver.addOnGlobalLayoutListener {
 
-        if (Timber.treeCount == 0) {
+               throw Exception("Eggs1000 :)")
+
+           }*/
+        if (PreferencesManager.sentryEnabled(this)) {
+            SentryInit.initSentry(this)
+        }
+
+        if (Timber.forest().find { it is FileTree } == null) {
             val logLevel = PreferencesManager.logLevel(this)
             FileTree.initialize(this)
             Timber.plant(FileTree(this, logLevel))

@@ -171,6 +171,13 @@
     <string name="log_settings">Log Level Einstellungen</string>
     <string name="log_level">Log Level</string>
     <string name="log_level_description">Minimaler Log Level welcher aufgezeichntet wird</string>
+
+    <!-- Sentry Settings -->
+    <string name="sentry_settings">Fehlerberichterstattung Einstellungen</string>
+    <string name="enable_sentry">Fehlerberichterstattung aktivieren</string>
+    <string name="enable_sentry_description">Anonyme Absturzberichte senden, um die App zu verbessern</string>
+    <string name="sentry_restart_required">App-Neustart erforderlich, damit die Änderungen wirksam werden</string>
+
     <string name="language_german">Deutsch</string>
     <string name="language_chinese">简体中文</string>
     <string name="settings">Einstellungen</string>
@@ -182,7 +189,7 @@
     <string name="welcome_feature_gps_sync_title">Echtzeit Standortübertragung</string>
     <string name="welcome_feature_connect_title">Verbinde die Kamera</string>
     <string name="how_about_privacy">Wie sieht es mit dem Datenschutz aus?</string>
-    <string name="how_about_privacy_answer">Die App überträgt keine Daten in Richtung Entwickler und/oder Drittparteien. Sämtliche erhobene Informationen (Standortdaten) werden nur für die Übertragung der Standortdaten zu der verbundenen Kamera verwendet. Es werden keine Daten permanent gespeichert. Die Standorterfassung wird beendet, sobald die Verbindung zur Kamera getrennt wird.</string>
+    <string name="how_about_privacy_answer">Die App überträgt keine personenbezogenen Daten an den Entwickler und/oder Drittparteien. Sämtliche erhobenen Informationen (Standortdaten) werden nur für die Übertragung der Standortdaten zu der verbundenen Kamera verwendet und nicht dauerhaft gespeichert. Die Standorterfassung wird beendet, sobald die Verbindung zur Kamera getrennt wird. Zur Analyse von Problemen und Abstürzen können anonymisierte Logs an den Fehlerberichts\-Dienst Sentry gesendet werden. Sie können diese Funktion jederzeit in den App\-Einstellungen unter „Fehlerberichterstattung Einstellungen“ deaktivieren. Bei Fragen und Bedenken melden Sie sich bitte bei der oben genannten E\-Mail\-Adresse.</string>
 
     <!-- Device management strings -->
     <string name="device_management">Geräteverwaltung</string>

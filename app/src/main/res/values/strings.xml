@@ -81,6 +81,12 @@
     <string name="log_level">Log Level</string>
     <string name="log_level_description">Minimum log level to record</string>
 
+    <!-- Sentry Settings -->
+    <string name="sentry_settings">Error Reporting Settings</string>
+    <string name="enable_sentry">Enable Error Reporting</string>
+    <string name="enable_sentry_description">Send anonymous crash reports to help improve the app</string>
+    <string name="sentry_restart_required">App restart required for changes to take effect</string>
+
     <!-- General strings -->
     <string name="unknown_error">Unknown error</string>
 
@@ -199,7 +205,7 @@
     <string name="language_german">Deutsch</string>
     <string name="language_chinese">简体中文</string>
     <string name="how_about_privacy">How about privacy?</string>
-    <string name="how_about_privacy_answer">The app does not transmit any data to the developer or third party. All the information (location data) collected is only used for the transmission to the camera. It will not be stored or sent elsewhere. When the device is disconnected, location will not be tracked anymore.</string>
+    <string name="how_about_privacy_answer">The app does not transmit any personal data to the developer or third parties. All collected information (location data) is only used to transfer GPS coordinates to your connected camera and is not permanently stored. Location collection stops as soon as the connection to the camera is disconnected. To analyze problems and crashes, anonymized logs may be sent to the Sentry error reporting service. You can disable this feature at any time in the app settings under \"Error Reporting Settings\". If you have any questions or concerns, please contact us via the email address mentioned above.</string>
 
     <!-- Device management strings -->
     <string name="device_management">Device Management</string>

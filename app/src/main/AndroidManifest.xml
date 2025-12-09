@@ -109,6 +109,36 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
+        <meta-data
+            android:name="io.sentry.auto-init"
+            android:value="false" />
+        <!-- Required: set your sentry.io project identifier (DSN) -->
+        <meta-data
+            android:name="io.sentry.dsn"
+            android:value="https://3fdd3ec203a1dfe7a741b0143672adf1@o4510501457494016.ingest.de.sentry.io/4510501459460176" />
+        <!-- Add data like request headers, user ip address and device name, see https://docs.sentry.io/platforms/android/data-management/data-collected/ for more info -->
+        <meta-data
+            android:name="io.sentry.send-default-pii"
+            android:value="false" />
+
+        <!-- enable automatic breadcrumbs for user interactions (clicks, swipes, scrolls) -->
+        <meta-data
+            android:name="io.sentry.traces.user-interaction.enable"
+            android:value="true" />
+        <!-- enable screenshot for crashes (could contain sensitive/PII data) -->
+        <meta-data
+            android:name="io.sentry.attach-screenshot"
+            android:value="false" />
+        <!-- enable view hierarchy for crashes -->
+        <meta-data
+            android:name="io.sentry.attach-view-hierarchy"
+            android:value="true" />
+
+        <!-- enable the performance API by setting a sample-rate, adjust in production env -->
+        <meta-data
+            android:name="io.sentry.traces.sample-rate"
+            android:value="1.0" />
     </application>
 
 </manifest>

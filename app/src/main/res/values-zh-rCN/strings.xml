@@ -86,6 +86,12 @@
     <string name="log_level">日志级别</string>
     <string name="log_level_description">要记录的最低日志级别</string>
 
+    <!-- Sentry Settings -->
+    <string name="sentry_settings">错误报告设置</string>
+    <string name="enable_sentry">启用错误报告</string>
+    <string name="enable_sentry_description">发送匿名崩溃报告以帮助改进应用</string>
+    <string name="sentry_restart_required">需要重启应用才能使更改生效</string>
+
     <!-- General strings -->
     <string name="unknown_error">未知错误</string>
     
@@ -192,7 +198,7 @@
     <string name="is_there_documenation_answer">有的！请访问GitHub页面\n您也可以在那里报告应用问题或通过邮件联系我们：</string>
 
     <string name="how_about_privacy">隐私保护如何？</string>
-    <string name="how_about_privacy_answer">该应用不会向开发者或第三方传输任何数据。收集的所有信息（位置数据）仅用于传输到相机。数据不会被存储或发送到其他地方。设备断开连接后，将不再跟踪位置。</string>
+    <string name="how_about_privacy_answer">本应用不会向开发者或任何第三方传输您的个人数据。所有收集到的信息（位置信息）仅用于将 GPS 坐标传输到已连接的相机，不会被永久存储。一旦与相机的连接中断，位置采集即会停止。为分析问题和崩溃，本应用可能会将匿名日志发送到 Sentry 错误报告服务。您可以随时在应用设置中的“错误报告设置”里关闭此功能。如有任何问题或疑虑，请通过上方提到的电子邮件地址与我们联系。</string>
 
     <string name="app_standby_title">待机</string>
     <string name="app_standby_content">等待相机连接</string>

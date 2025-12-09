@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     id("androidx.room")
     id("com.google.devtools.ksp")
+
+    id("io.sentry.android.gradle") version "5.12.2"
 }
 
 android {
@@ -103,4 +105,14 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
+}
+
+
+sentry {
+    org.set("sascha-ni")
+    projectName.set("android")
+
+    // this will upload your source code to Sentry to show it as part of the stack traces
+    // disable if you don't want to expose your sources
+    includeSourceContext.set(true)
 }

@@ -31,6 +31,7 @@ import com.saschl.cameragps.database.devices.TimeZoneDSTState
 import com.saschl.cameragps.notification.NotificationsHelper
 import com.saschl.cameragps.service.SonyBluetoothConstants.locationTransmissionNotificationId
 import com.saschl.cameragps.utils.PreferencesManager
+import com.saschl.cameragps.utils.SentryInit
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -223,13 +224,15 @@ class LocationSenderService : LifecycleService() {
     }
 
     private fun initializeLogging() {
-        if (Timber.treeCount == 0) {
+        if (Timber.forest().find { it is FileTree } == null) {
             FileTree.initialize(this)
             Timber.plant(FileTree(this, PreferencesManager.logLevel(this)))
+            SentryInit.initSentry(this)
 
             // Set up global exception handler to log crashes
             val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
             Thread.setDefaultUncaughtExceptionHandler(GlobalExceptionHandler(defaultHandler))
+
         }
     }
 
