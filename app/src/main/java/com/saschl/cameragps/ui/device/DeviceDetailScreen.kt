@@ -2,6 +2,7 @@ package com.saschl.cameragps.ui.device
 
 import android.Manifest
 import android.companion.CompanionDeviceManager
+import android.companion.ObservingDevicePresenceRequest
 import android.content.Intent
 import android.os.Build
 import androidx.activity.compose.BackHandler
@@ -44,6 +45,7 @@ import com.saschl.cameragps.database.LogDatabase
 import com.saschl.cameragps.service.AssociatedDeviceCompat
 import com.saschl.cameragps.service.LocationSenderService
 import com.saschl.cameragps.service.SonyBluetoothConstants
+import com.saschl.cameragps.service.getAssociatedDevices
 import com.saschl.cameragps.ui.HelpActivity
 import com.saschl.cameragps.ui.pairing.startDevicePresenceObservation
 import kotlinx.coroutines.launch
@@ -56,6 +58,7 @@ fun DeviceDetailScreen(
     device: AssociatedDeviceCompat,
     deviceManager: CompanionDeviceManager,
     onDisassociate: (device: AssociatedDeviceCompat) -> Unit,
+    associationId: Int,
     onClose: () -> Unit
 ) {
 
@@ -73,19 +76,10 @@ fun DeviceDetailScreen(
         extras = extras,
         key = device.address
     )
-    val cameraDeviceDAO = LogDatabase.getDatabase(context.applicationContext).cameraDeviceDao()
 
     LaunchedEffect(Unit) {
         viewModel.deviceEnabledFromDB(device.address)
     }
-    /*   var isDeviceEnabled by remember { mutableStateOf(false) }
-
-       var keepAlive by remember { mutableStateOf(false) }
-
-       LaunchedEffect(device.address) {
-           isDeviceEnabled = cameraDeviceDAO.isDeviceEnabled(device.address)
-           keepAlive = cameraDeviceDAO.isDeviceAlwaysOnEnabled(device.address)
-       }*/
 
     Scaffold(
         topBar = {
@@ -191,7 +185,12 @@ fun DeviceDetailScreen(
                         onCheckedChange = { enabled ->
                             viewModel.setDeviceEnabled(enabled, device.address)
                             if (!enabled) {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+                                    deviceManager.stopObservingDevicePresence(
+                                        ObservingDevicePresenceRequest.Builder()
+                                            .setAssociationId(associationId).build()
+                                    )
+                                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                                     deviceManager.stopObservingDevicePresence(device.address)
                                 }
                                 Timber.i("Stopping LocationSenderService from detail for device ${device.address}")

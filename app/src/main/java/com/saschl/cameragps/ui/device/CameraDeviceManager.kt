@@ -16,6 +16,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -56,6 +57,14 @@ fun CameraDeviceManager(
     var selectedDevice by remember {
         mutableStateOf<AssociatedDeviceCompat?>(null)
     }
+
+    var selectedDeviceAssociationId by remember {
+        mutableIntStateOf(-1)
+    }
+    LaunchedEffect(selectedDevice) {
+        selectedDeviceAssociationId = deviceManager!!.getAssociatedDevices(adapter!!).find { it. address == selectedDevice?.address }?.id!!
+    }
+
 
     val manager = ReviewManagerFactory.create(context)
 
@@ -185,6 +194,7 @@ fun CameraDeviceManager(
                 DeviceDetailScreen(
                     device = selectedDevice!!,
                     deviceManager = deviceManager,
+                    associationId = selectedDeviceAssociationId,
                     onDisassociate = { device ->
                         associatedDevices.find { ass -> ass.address == device.address }
                             ?.let { foundDevice ->
