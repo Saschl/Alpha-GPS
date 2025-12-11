@@ -45,7 +45,6 @@ import com.saschl.cameragps.database.LogDatabase
 import com.saschl.cameragps.service.AssociatedDeviceCompat
 import com.saschl.cameragps.service.LocationSenderService
 import com.saschl.cameragps.service.SonyBluetoothConstants
-import com.saschl.cameragps.service.getAssociatedDevices
 import com.saschl.cameragps.ui.HelpActivity
 import com.saschl.cameragps.ui.pairing.startDevicePresenceObservation
 import kotlinx.coroutines.launch
@@ -221,7 +220,13 @@ fun DeviceDetailScreen(
                         checked = viewModel.uiState.collectAsState().value.isAlwaysOnEnabled,
                         enabled = viewModel.uiState.collectAsState().value.isDeviceEnabled && viewModel.uiState.collectAsState().value.buttonEnabled,
                         onCheckedChange = { enabled ->
-                            viewModel.setAlwaysOnEnabled(enabled, device, deviceManager, context)
+                            viewModel.setAlwaysOnEnabled(
+                                enabled,
+                                device,
+                                deviceManager,
+                                associationId,
+                                context
+                            )
                         }
                     )
                 }

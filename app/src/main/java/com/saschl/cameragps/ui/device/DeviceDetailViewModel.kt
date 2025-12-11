@@ -1,8 +1,10 @@
 package com.saschl.cameragps.ui.device
 
 import android.companion.CompanionDeviceManager
+import android.companion.ObservingDevicePresenceRequest
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -13,6 +15,7 @@ import com.saschl.cameragps.database.devices.CameraDeviceDAO
 import com.saschl.cameragps.service.AssociatedDeviceCompat
 import com.saschl.cameragps.service.LocationSenderService
 import com.saschl.cameragps.service.SonyBluetoothConstants
+import com.saschl.cameragps.ui.pairing.startDevicePresenceObservation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,6 +46,7 @@ class DeviceDetailViewModel(private val cameraDeviceDAO: CameraDeviceDAO) : View
             }
         }
     }
+
     // Expose screen UI state
     private val _uiState = MutableStateFlow(ServiceToggleState())
     val uiState: StateFlow<ServiceToggleState> = _uiState.asStateFlow()
@@ -54,24 +58,25 @@ class DeviceDetailViewModel(private val cameraDeviceDAO: CameraDeviceDAO) : View
             cameraDeviceDAO.setDeviceEnabled(device, isEnabled)
         }
     }
+
     suspend fun stopServiceWithDelay(
         context: Context,
         device: AssociatedDeviceCompat,
         deviceManager: CompanionDeviceManager
     ) {
 
-            Timber.i("Stopping LocationSenderService from detail for device ${device.address}")
-            _uiState.update { it.copy(buttonEnabled = false) }
-            val shutdownIntent = Intent(context, LocationSenderService::class.java).apply {
-                action = SonyBluetoothConstants.ACTION_REQUEST_SHUTDOWN
+        Timber.i("Stopping LocationSenderService from detail for device ${device.address}")
+        _uiState.update { it.copy(buttonEnabled = false) }
+        val shutdownIntent = Intent(context, LocationSenderService::class.java).apply {
+            action = SonyBluetoothConstants.ACTION_REQUEST_SHUTDOWN
 
-            }
-            shutdownIntent.putExtra("address", device.address.uppercase())
+        }
+        shutdownIntent.putExtra("address", device.address.uppercase())
 
-            context.startService(shutdownIntent)
-            delay(2.seconds)
-            //startDevicePresenceObservation(deviceManager, device)
-            _uiState.update { it.copy(buttonEnabled = true) }
+        context.startService(shutdownIntent)
+        delay(2.seconds)
+        //startDevicePresenceObservation(deviceManager, device)
+        _uiState.update { it.copy(buttonEnabled = true) }
     }
 
     fun deviceEnabledFromDB(address: String) {
@@ -90,6 +95,7 @@ class DeviceDetailViewModel(private val cameraDeviceDAO: CameraDeviceDAO) : View
         enabled: Boolean,
         device: AssociatedDeviceCompat,
         deviceManager: CompanionDeviceManager,
+        associationId: Int,
         context: Context
     ) {
         viewModelScope.launch {
@@ -97,20 +103,23 @@ class DeviceDetailViewModel(private val cameraDeviceDAO: CameraDeviceDAO) : View
             val intent = Intent(context, LocationSenderService::class.java)
             intent.putExtra("address", device.address.uppercase())
             _uiState.update { it.copy(isAlwaysOnEnabled = enabled) }
+            // TODO rethink if it is needed to stop the observation
 
             if (enabled) {
                 context.startForegroundService(intent)
-            }
-            // FIXME check if this causes issue, ideally it should simply allow the service to run just like always or restart the FGS
-            // if (enabled) {
-            //    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            //       deviceManager.stopObservingDevicePresence(device.address)
-            //  }
-            // context.startForegroundService(intent)
-            //}
-            if (!enabled) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+                    deviceManager.stopObservingDevicePresence(
+                        ObservingDevicePresenceRequest.Builder()
+                            .setAssociationId(associationId).build()
+                    )
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    deviceManager.stopObservingDevicePresence(device.address)
+                }
+            } else {
                 stopServiceWithDelay(context, device, deviceManager)
+                startDevicePresenceObservation(deviceManager, device)
             }
+
         }
     }
 }
