@@ -158,12 +158,22 @@ object PreferencesManager {
     }
 
     fun sentryEnabled(context: Context): Boolean {
-        return getPreferences(context).getBoolean("sentry_enabled", true)
+        return getPreferences(context).getBoolean("sentry_enabled", false)
     }
 
     fun setSentryEnabled(context: Context, enabled: Boolean) {
         getPreferences(context).edit {
             putBoolean("sentry_enabled", enabled)
+        }
+    }
+
+    fun isSentryConsentDialogDismissed(context: Context): Boolean {
+        return getPreferences(context).getBoolean("sentry_consent_dialog_dismissed", false)
+    }
+
+    fun setSentryConsentDialogDismissed(context: Context, dismissed: Boolean) {
+        getPreferences(context).edit {
+            putBoolean("sentry_consent_dialog_dismissed", dismissed)
         }
     }
 }

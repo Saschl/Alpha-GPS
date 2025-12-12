@@ -225,4 +225,11 @@
     <string name="try_again">重试</string>
     <string name="continue_label">继续</string>
     <string name="cancel">取消</string>
+
+    <!-- Sentry Consent Dialog -->
+    <string name="sentry_consent_title">帮助改进 Alpha GPS</string>
+    <string name="sentry_consent_message">您是否愿意通过发送匿名崩溃报告和错误日志来帮助我们改进应用？这些信息帮助我们识别和修复问题。不会传输任何个人数据或位置信息。您可以稍后在应用设置中更改此设置。</string>
+    <string name="sentry_consent_allow">允许</string>
+    <string name="sentry_consent_decline">拒绝</string>
+    <string name="sentry_consent_dont_show">不再显示</string>
 </resources>

@@ -229,4 +229,11 @@
     <string name="cancel">Cancel</string>
     <string name="enable_auto_start_description">Auto starts the app after a device reboot for configured \"Always On\" devices.</string>
     <string name="hint_if_issues_after_switching">Note: it is possible that you encounter issues (such as camera not connecting anymore) after turning off Always On Mode. If you\'re affected, turn off the camera, wait 20 seconds and it should connect again. If not, it might also help to toggle bluetooth off and on again. This only happens after switching Always On mode off and not during normal operation.</string>
+
+    <!-- Sentry Consent Dialog -->
+    <string name="sentry_consent_title">Help Improve Alpha GPS</string>
+    <string name="sentry_consent_message">Would you like to help us improve the app by sending anonymous crash reports and error logs? This information helps us identify and fix issues. No personal data or location information is transmitted. You can change this setting later in the app settings.</string>
+    <string name="sentry_consent_allow">Allow</string>
+    <string name="sentry_consent_decline">Decline</string>
+    <string name="sentry_consent_dont_show">Don\'t show again</string>
 </resources>

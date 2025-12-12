@@ -213,4 +213,11 @@
     <string name="try_again">Erneut versuchen</string>
     <string name="continue_label">Weiter</string>
     <string name="cancel">Abbrechen</string>
+
+    <!-- Sentry Consent Dialog -->
+    <string name="sentry_consent_title">Helfen Sie, Alpha GPS zu verbessern</string>
+    <string name="sentry_consent_message">Möchten Sie uns helfen, die App zu verbessern, indem Sie anonyme Absturzberichte und Fehlerprotokolle senden? Diese Informationen helfen uns, Probleme zu erkennen und zu beheben. Es werden keine personenbezogenen Daten oder Standortinformationen übertragen. Sie können diese Einstellung später in den App-Einstellungen ändern.</string>
+    <string name="sentry_consent_allow">Erlauben</string>
+    <string name="sentry_consent_decline">Ablehnen</string>
+    <string name="sentry_consent_dont_show">Nicht mehr anzeigen</string>
 </resources>

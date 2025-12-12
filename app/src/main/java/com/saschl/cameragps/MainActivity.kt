@@ -12,7 +12,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.getSystemService
@@ -23,6 +22,7 @@ import com.saschl.cameragps.database.LogDatabase
 import com.saschl.cameragps.service.FileTree
 import com.saschl.cameragps.service.GlobalExceptionHandler
 import com.saschl.cameragps.service.LocationSenderService
+import com.saschl.cameragps.ui.SentryConsentDialog
 import com.saschl.cameragps.ui.SettingsScreen
 import com.saschl.cameragps.ui.WelcomeScreen
 import com.saschl.cameragps.ui.device.CameraDeviceManager
@@ -43,7 +43,11 @@ class MainActivity : AppCompatActivity() {
                throw Exception("Eggs1000 :)")
 
            }*/
-        if (PreferencesManager.sentryEnabled(this)) {
+        // Sentry will be initialized by the consent dialog or if already consented
+        if (PreferencesManager.sentryEnabled(this) && PreferencesManager.isSentryConsentDialogDismissed(
+                this
+            )
+        ) {
             SentryInit.initSentry(this)
         }
 
@@ -112,12 +116,10 @@ class MainActivity : AppCompatActivity() {
 
         // Check if battery optimization dialog should be shown
         val powerManager = context.getSystemService<PowerManager>()
-        val isIgnoringBatteryOptimizations =
-            powerManager?.isIgnoringBatteryOptimizations(context.packageName) == true
 
-        var showBatteryOptimizationDialog by remember {
+        var showSentryDialog by remember {
             mutableStateOf(
-                !PreferencesManager.isBatteryOptimizationDialogDismissed(context)
+                !PreferencesManager.isSentryConsentDialogDismissed(context)
             )
         }
 
@@ -147,9 +149,8 @@ class MainActivity : AppCompatActivity() {
                         powerManager?.isIgnoringBatteryOptimizations(context.packageName) == true
 
                     // Update dialog visibility based on current status
-                    showBatteryOptimizationDialog =
-                        !PreferencesManager.isBatteryOptimizationDialogDismissed(context) &&
-                                !currentBatteryStatus
+                    showSentryDialog =
+                        !PreferencesManager.isSentryConsentDialogDismissed(context)
                 }
 
                 // Show the main camera device manager
@@ -159,14 +160,13 @@ class MainActivity : AppCompatActivity() {
                     }
                 )
 
-                // Show battery optimization dialog overlay if needed
-                /*if (showBatteryOptimizationDialog) {
-                    BatteryOptimizationDialog(
+                if (showSentryDialog) {
+                    SentryConsentDialog(
                         onDismiss = {
-                            showBatteryOptimizationDialog = false
+                            showSentryDialog = false
                         }
                     )
-                }*/
+                }
             }
         }
     }
