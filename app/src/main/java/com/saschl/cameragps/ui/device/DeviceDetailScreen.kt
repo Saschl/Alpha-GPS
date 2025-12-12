@@ -238,6 +238,13 @@ fun DeviceDetailScreen(
                     modifier = Modifier.padding(start = 8.dp, top = 4.dp, bottom = 8.dp),
                     lineHeight = MaterialTheme.typography.labelSmall.lineHeight
                 )
+                Text(
+                    text = stringResource(R.string.hint_if_issues_after_switching),
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = MaterialTheme.typography.labelSmall.fontSize),
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(start = 8.dp, top = 4.dp, bottom = 8.dp),
+                    lineHeight = MaterialTheme.typography.labelSmall.lineHeight
+                )
             }
         }
     }

@@ -228,4 +228,5 @@
     <string name="continue_label">Continue</string>
     <string name="cancel">Cancel</string>
     <string name="enable_auto_start_description">Auto starts the app after a device reboot for configured \"Always On\" devices.</string>
+    <string name="hint_if_issues_after_switching">Note: it is possible that you encounter issues (such as camera not connecting anymore) after turning off Always On Mode. If you\'re affected, turn off the camera, wait 20 seconds and it should connect again. If not, it might also help to toggle bluetooth off and on again. This only happens after switching Always On mode off and not during normal operation.</string>
 </resources>

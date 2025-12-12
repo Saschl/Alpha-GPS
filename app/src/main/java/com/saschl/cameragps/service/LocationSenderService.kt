@@ -138,7 +138,6 @@ class LocationSenderService : LifecycleService() {
 
     @SuppressLint("MissingPermission")
     private suspend fun handleNoAddress(startId: Int) {
-
             if (deviceDao.getAlwaysOnEnabledDeviceCount() == 0) {
                 Timber.i("No always-on devices found, shutting down service")
                 requestShutdown(startId)
@@ -238,7 +237,7 @@ class LocationSenderService : LifecycleService() {
             broadcastIntent.putExtra("was_running", true)
             sendBroadcast(broadcastIntent)
         }
-
+        cameraConnectionManager.disconnectAll()
         Timber.i("Destroyed service")
     }
 
@@ -339,12 +338,13 @@ class LocationSenderService : LifecycleService() {
                 locationTransmissionNotificationId,
                 notification
             )
-
+            Timber.d("No active cameras remaining, stopping location updates")
             if (::locationCallback.isInitialized) {
                 fusedLocationClient.removeLocationUpdates(locationCallback)
                 isLocationTransmitting = false
             }
         } else {
+            Timber.d("Active cameras remaining, updating notification")
             val notification = NotificationsHelper.buildNotification(
                 this,
                 cameraConnectionManager.getActiveCameras().size
@@ -440,23 +440,23 @@ class LocationSenderService : LifecycleService() {
         }
 
         @RequiresPermission(allOf = [Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
-        private suspend fun handleServicesDiscovered(
+        private fun handleServicesDiscovered(
             gatt: BluetoothGatt,
             service: BluetoothGattService?
         ) {
-            val dstTimeZoneFlag = deviceDao.getTimezoneDstFlag(gatt.device.address.uppercase());
-            if (dstTimeZoneFlag != TimeZoneDSTState.UNDEFINED) {
-                locationDataConfig =
-                    locationDataConfig.copy(shouldSendTimeZoneAndDst = TimeZoneDSTState.ENABLED == dstTimeZoneFlag)
-                enableGpsTransmission(gatt)
-            } else {
+            // TODO seems like this can be changed on the fly, so we should read it every time
+            /*            val dstTimeZoneFlag = deviceDao.getTimezoneDstFlag(gatt.device.address.uppercase());
+                        if (dstTimeZoneFlag != TimeZoneDSTState.UNDEFINED) {
+                            locationDataConfig =
+                                locationDataConfig.copy(shouldSendTimeZoneAndDst = TimeZoneDSTState.ENABLED == dstTimeZoneFlag)
+                            enableGpsTransmission(gatt)
+                        } else {*/
                 val readCharacteristic =
                     service?.getCharacteristic(SonyBluetoothConstants.CHARACTERISTIC_READ_UUID)
                 if (readCharacteristic != null) {
                     Timber.i("Reading characteristic for timezone and DST support: ${readCharacteristic.uuid}")
                     gatt.readCharacteristic(readCharacteristic)
                 }
-            }
         }
 
         @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
