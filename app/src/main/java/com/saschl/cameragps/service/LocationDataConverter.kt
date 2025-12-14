@@ -5,6 +5,7 @@ import java.nio.ByteBuffer
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import kotlin.math.abs
 
 /**
  * Utility class for converting location and time data to byte arrays for Sony camera communication
@@ -110,6 +111,34 @@ object LocationDataConverter {
         }
 
         return data
+    }
+
+    // For cameras that have explicit time sync
+    fun serializeTimeAreaData(zonedDateTime: ZonedDateTime): ByteArray {
+        val systemZone = ZoneId.systemDefault()
+        val instant = zonedDateTime.toInstant()
+        val standardOffsetMinutes = systemZone.rules.getStandardOffset(instant).totalSeconds / 60
+        val hoursComponent = abs(standardOffsetMinutes / 60)
+        val offsetMinutesComponent = abs(standardOffsetMinutes % 60)
+        val signedOffsetHourByte = (if (standardOffsetMinutes < 0) -hoursComponent else hoursComponent).toByte()
+
+        return ByteArray(13).apply {
+            this[0] = 12
+            this[1] = 0
+            this[2] = 0
+            zonedDateTime.year.toShort().toByteArray().let {
+                this[3] = it[0]
+                this[4] = it[1]
+            }
+            this[5] = zonedDateTime.monthValue.toByte()
+            this[6] = zonedDateTime.dayOfMonth.toByte()
+            this[7] = zonedDateTime.hour.toByte()
+            this[8] = zonedDateTime.minute.toByte()
+            this[9] = zonedDateTime.second.toByte()
+            this[10] = if (systemZone.rules.isDaylightSavings(instant)) 1 else 0
+            this[11] = signedOffsetHourByte
+            this[12] = offsetMinutesComponent.toByte()
+        }
     }
 }
 

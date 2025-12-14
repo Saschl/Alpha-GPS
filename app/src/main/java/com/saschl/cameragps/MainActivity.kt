@@ -143,10 +143,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             else -> {
-                // Check battery optimization status when entering main screen
                 LaunchedEffect(Unit) {
-                    val currentBatteryStatus =
-                        powerManager?.isIgnoringBatteryOptimizations(context.packageName) == true
 
                     // Update dialog visibility based on current status
                     showSentryDialog =

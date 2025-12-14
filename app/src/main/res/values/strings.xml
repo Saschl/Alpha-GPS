@@ -109,7 +109,7 @@
     <string name="faq_enable_service_answer">Please visit the App Settings and try the options in the Battery &amp; Background section. Alternatively try the following: \nTo keep GPS data syncing with your camera:\n1. Go to your device\'s Settings > Apps\n2. Find \'Alpha GPS\' in the app list\n3. Tap on it and select \'Battery\'\n4. Choose \'Don\'t optimize\' or \'Allow background activity\'\n5. This prevents the system from stopping the GPS service\n\nYou can also access this through the device details page in the app.</string>
 
     <string name="faq_camera_not_connecting_question">My camera does not connect automatically, what can I do?</string>
-    <string name="faq_camera_not_connecting_answer">Unfortunately, there might be situations, where the automatic connection does not work. If you encounter issues please do the following:  On the main screen, tap on your camera to open the details screen. There you have an option to enable the "Always On" mode, which will keep the app in the foreground</string>
+    <string name="faq_camera_not_connecting_answer">Unfortunately, there might be situations, where the automatic connection does not work. If you encounter issues please do the following:  On the main screen, tap on your camera to open the details screen. There you have an option to enable the "Always On" mode, which will keep the app in the foreground. \nOtherwise try toggling bluetooth or remove the device from the app and associate it again.</string>
 
 
     <string name="faq_permissions_question">What permissions does the app need?</string>

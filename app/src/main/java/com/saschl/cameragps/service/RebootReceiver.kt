@@ -6,29 +6,38 @@ import android.content.Intent
 import android.util.Log
 import androidx.core.content.ContextCompat
 import com.saschl.cameragps.utils.PreferencesManager
+import com.saschl.cameragps.utils.SentryInit
+import timber.log.Timber
 
 class RebootReceiver : BroadcastReceiver() {
-
-    /*
-        companion object {
-            fun enable(context: Context) {
-                val receiver = ComponentName(context, RebootReceiver::class.java)
-                context.packageManager.setComponentEnabledSetting(
-                    receiver, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP)
-            }
-        }
-    */
 
 
     override fun onReceive(context: Context, intent: Intent) {
         val serviceIntent = Intent(context, LocationSenderService::class.java)
 
-        Log.i(
-            "yo",
+        if (PreferencesManager.sentryEnabled(context)) {
+            SentryInit.initSentry(context)
+        }
+
+        if (Timber.forest().find { it is FileTree } == null) {
+            val logLevel = PreferencesManager.logLevel(context)
+            FileTree.initialize(context)
+            Timber.plant( FileTree(context, logLevel))
+
+            // Set up global exception handler to log crashes
+            val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+            Thread.setDefaultUncaughtExceptionHandler(GlobalExceptionHandler(defaultHandler))
+        }
+
+        Timber.i(
             "RebootReceiver received intent: ${intent.action} with preference ${
                 PreferencesManager.getAutoStartAfterBootEnabled(context)
             }"
         )
+        if(Intent.ACTION_MY_PACKAGE_REPLACED == intent.action) {
+            ContextCompat.startForegroundService(context, serviceIntent)
+        }
+
         if (Intent.ACTION_BOOT_COMPLETED == intent.action && PreferencesManager.getAutoStartAfterBootEnabled(
                 context
             )

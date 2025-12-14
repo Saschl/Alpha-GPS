@@ -90,6 +90,7 @@ fun CameraDeviceManager(
         }
     }
 
+    // TODO refactor out of composable
     LaunchedEffect(associatedDevices, lifecycleState) {
         if (associatedDevices.isNotEmpty() && PreferencesManager.reviewHintLastShownDaysAgo(
                 context.applicationContext,

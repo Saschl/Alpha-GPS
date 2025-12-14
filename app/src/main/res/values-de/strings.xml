@@ -93,7 +93,7 @@
     <string name="faq_disconnects_answer">Versuchen Sie diese Lösungen:\n• Halten Sie Ihr Telefon näher zur Kamera\n• Deaktivieren Sie die Akkuoptimierung für die App\n• Überprüfen Sie, ob Ihre Kamera Energiesparmodi hat, die Bluetooth beeinträchtigen\n• Starten Sie beide Geräte neu und koppeln Sie sie bei Bedarf erneut</string>
 
     <string name="faq_camera_not_connecting_question">Meine Kamera verbindet sich nicht automatisch, was kann ich tun?</string>
-    <string name="faq_camera_not_connecting_answer">Leider kann es vorkommen, dass die automatische Verbindung nicht funktioniert. Falls Sie Probleme haben, gehen Sie bitte wie folgt vor: Tippen Sie auf dem Hauptbildschirm auf Ihre Kamera, um die Detailansicht zu öffnen. Dort haben Sie die Möglichkeit, den "Immer aktiv"-Modus zu aktivieren, der die App im Vordergrund hält</string>
+    <string name="faq_camera_not_connecting_answer">Leider kann es vorkommen, dass die automatische Verbindung nicht funktioniert. Falls Sie Probleme haben, gehen Sie bitte wie folgt vor: Tippen Sie auf dem Hauptbildschirm auf Ihre Kamera, um die Detailansicht zu öffnen. Dort haben Sie die Möglichkeit, den Always On Modus zu aktivieren, der die App im Vordergrund hält. \nAlternativ können Sie Bluetooth kurz aus- und wieder einschalten oder das Gerät in der App entfernen und erneut koppeln.</string>
 
     <!-- Help menu item -->
     <string name="help_menu_item">Hilfe</string>

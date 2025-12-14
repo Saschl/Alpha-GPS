@@ -29,6 +29,7 @@ import com.saschl.cameragps.database.LogDatabase
 import com.saschl.cameragps.database.devices.CameraDeviceDAO
 import com.saschl.cameragps.database.devices.TimeZoneDSTState
 import com.saschl.cameragps.notification.NotificationsHelper
+import com.saschl.cameragps.service.SonyBluetoothConstants.CHARACTERISTIC_READ_UUID
 import com.saschl.cameragps.service.SonyBluetoothConstants.locationTransmissionNotificationId
 import com.saschl.cameragps.utils.PreferencesManager
 import com.saschl.cameragps.utils.SentryInit
@@ -37,6 +38,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
+import java.time.ZonedDateTime
 import java.util.UUID
 
 /**
@@ -45,6 +47,8 @@ import java.util.UUID
 object SonyBluetoothConstants {
     // Service UUID of the sony cameras
     val SERVICE_UUID: UUID = UUID.fromString("8000dd00-dd00-ffff-ffff-ffffffffffff")
+
+    val CONTROL_SERVICE_UUID: UUID = UUID.fromString("8000CC00-CC00-FFFF-FFFF-FFFFFFFFFFFF")
 
     // Characteristic for the location services
     val CHARACTERISTIC_UUID: UUID = UUID.fromString("0000dd11-0000-1000-8000-00805f9b34fb")
@@ -58,6 +62,9 @@ object SonyBluetoothConstants {
 
     val CHARACTERISTIC_LOCATION_ENABLED_IN_CAMERA: UUID =
         UUID.fromString("0000dd01-0000-1000-8000-00805f9b34fb")
+
+    val TIME_SYNC_CHARACTERISTIC_UUID: UUID =
+        UUID.fromString("0000cc13-0000-1000-8000-00805f9b34fb")
 
     const val ACTION_REQUEST_SHUTDOWN = "com.saschl.cameragps.ACTION_REQUEST_SHUTDOWN"
 
@@ -122,7 +129,6 @@ class LocationSenderService : LifecycleService() {
 
                     cameraConnectionManager.getActiveConnections().forEach { device ->
                         sendData(device.gatt, device.writeCharacteristic)
-
                     }
                 }
             }
@@ -138,14 +144,14 @@ class LocationSenderService : LifecycleService() {
 
     @SuppressLint("MissingPermission")
     private suspend fun handleNoAddress(startId: Int) {
-            if (deviceDao.getAlwaysOnEnabledDeviceCount() == 0) {
-                Timber.i("No always-on devices found, shutting down service")
-                requestShutdown(startId)
-            } else {
-                deviceDao.getAllCameraDevices()
-                    .filter { it.alwaysOnEnabled }
-                    .forEach { cameraConnectionManager.connect(it.mac) }
-            }
+        if (deviceDao.getAlwaysOnEnabledDeviceCount() == 0) {
+            Timber.i("No always-on devices found, shutting down service")
+            requestShutdown(startId)
+        } else {
+            deviceDao.getAllCameraDevices()
+                .filter { it.alwaysOnEnabled }
+                .forEach { cameraConnectionManager.connect(it.mac) }
+        }
 
     }
 
@@ -194,12 +200,18 @@ class LocationSenderService : LifecycleService() {
          *
          * val commandQueue = Channel<CommandData>(Channel.UNLIMITED)
          *  data class CommandData(val intent: Intent?, val startId: Int)
-          */
+         */
 
         lifecycleScope.launch {
             commandMutex.withLock {
                 handleStartCommand(intent, startId)
-                Timber.i("processed start command $startId with intent action ${intent?.action} and address ${intent?.getStringExtra("address")}")
+                Timber.i(
+                    "processed start command $startId with intent action ${intent?.action} and address ${
+                        intent?.getStringExtra(
+                            "address"
+                        )
+                    }"
+                )
             }
         }
 
@@ -365,7 +377,7 @@ class LocationSenderService : LifecycleService() {
         )
         NotificationsHelper.showNotification(this, locationTransmissionNotificationId, notification)
 
-        // value from official Sony app
+        // value from official Sony app,  might be unused on Android >= 14
         gatt.requestMtu(158)
     }
 
@@ -391,11 +403,6 @@ class LocationSenderService : LifecycleService() {
                 cameraConnectionManager.resumeDevice(gatt.device.address.uppercase())
                 resumeLocationTransmission(gatt)
 
-                val service = gatt.services?.find { it.uuid == SonyBluetoothConstants.SERVICE_UUID }
-                gatt.readCharacteristic(
-                    service?.getCharacteristic(SonyBluetoothConstants.CHARACTERISTIC_LOCATION_ENABLED_IN_CAMERA)
-                        ?: return
-                )
             }
         }
 
@@ -451,12 +458,12 @@ class LocationSenderService : LifecycleService() {
                                 locationDataConfig.copy(shouldSendTimeZoneAndDst = TimeZoneDSTState.ENABLED == dstTimeZoneFlag)
                             enableGpsTransmission(gatt)
                         } else {*/
-                val readCharacteristic =
-                    service?.getCharacteristic(SonyBluetoothConstants.CHARACTERISTIC_READ_UUID)
-                if (readCharacteristic != null) {
-                    Timber.i("Reading characteristic for timezone and DST support: ${readCharacteristic.uuid}")
-                    gatt.readCharacteristic(readCharacteristic)
-                }
+            val readCharacteristic =
+                service?.getCharacteristic(CHARACTERISTIC_READ_UUID)
+            if (readCharacteristic != null) {
+                Timber.i("Reading characteristic for timezone and DST support: ${readCharacteristic.uuid}")
+                gatt.readCharacteristic(readCharacteristic)
+            }
         }
 
         @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
@@ -492,13 +499,47 @@ class LocationSenderService : LifecycleService() {
                 }
 
                 SonyBluetoothConstants.CHARACTERISTIC_ENABLE_LOCK_GPS_COMMAND -> {
-                    Timber.i("GPS flag enabled on device, will now send data, status was $status")
+                    Timber.i("GPS flag enabled on device, will now send time sync data if feature exists, status was $status")
+                    sendTimeSyncData(gatt)
+                }
+
+                SonyBluetoothConstants.TIME_SYNC_CHARACTERISTIC_UUID -> {
+                    Timber.i("Time sync data sent to device, will now start location transmission, status was $status")
                     startLocationTransmission()
                 }
             }
 
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 Timber.e("Error writing characteristic: $status")
+            }
+        }
+
+        @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
+        private fun sendTimeSyncData(gatt: BluetoothGatt) {
+            val service =
+                gatt.services?.find { it.uuid == SonyBluetoothConstants.CONTROL_SERVICE_UUID }
+            val timeSyncCharacteristic =
+                service?.getCharacteristic(SonyBluetoothConstants.TIME_SYNC_CHARACTERISTIC_UUID)
+
+            if (timeSyncCharacteristic == null) {
+                Timber.i("Time sync characteristic not found, starting location transmission directly")
+                startLocationTransmission()
+                return
+            }
+            timeSyncCharacteristic.let {
+                val timeSyncPacket =
+                    LocationDataConverter.serializeTimeAreaData(ZonedDateTime.now())
+                Timber.d("Sending time sync data to camera")
+
+                if (!BluetoothGattUtils.writeCharacteristic(
+                        gatt,
+                        it,
+                        timeSyncPacket
+                    )
+                ) {
+                    Timber.e("Failed to send time sync data to camera, starting location transmission directly")
+                    startLocationTransmission()
+                }
             }
         }
 
@@ -520,6 +561,7 @@ class LocationSenderService : LifecycleService() {
             }
         }
 
+        @RequiresPermission(allOf = [Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.BLUETOOTH_CONNECT])
         @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
         override fun onCharacteristicRead(
             gatt: BluetoothGatt,
@@ -532,6 +574,7 @@ class LocationSenderService : LifecycleService() {
             }
         }
 
+        @RequiresPermission(allOf = [Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.BLUETOOTH_CONNECT])
         override fun onCharacteristicRead(
             gatt: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic,
@@ -543,15 +586,25 @@ class LocationSenderService : LifecycleService() {
         }
 
         // TODO make this a bit cleaner, right now we do not check for specific characteristics, but we only read one anyway
+        @RequiresPermission(allOf = [Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
         private fun doOnRead(
             value: ByteArray,
             gatt: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic
         ) {
+            val service = gatt.services?.find { it.uuid == SonyBluetoothConstants.SERVICE_UUID }
+            val locationEnabledCharacteristic =
+                service?.getCharacteristic(SonyBluetoothConstants.CHARACTERISTIC_LOCATION_ENABLED_IN_CAMERA)
 
-            if (characteristic.uuid.toString().uppercase().startsWith("0000DD01")) {
+            if (locationEnabledCharacteristic != null && characteristic.uuid.equals(CHARACTERISTIC_READ_UUID)) {
+
+                if (gatt.readCharacteristic(locationEnabledCharacteristic)) {
+                    return
+                }
+
+                // last read, so we can start writing
+            } else {
                 Timber.w("Received characteristic read from camera (location status): ${characteristic.uuid}, $value")
-                return
             }
             locationDataConfig =
                 locationDataConfig.copy(shouldSendTimeZoneAndDst = hasTimeZoneDstFlag(value))

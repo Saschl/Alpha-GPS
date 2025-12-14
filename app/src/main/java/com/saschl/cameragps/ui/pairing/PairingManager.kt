@@ -29,15 +29,16 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.Locale
 
-// =============================================================================
-// Bluetooth Utility Functions
-// =============================================================================
-
 @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
 fun isDevicePaired(adapter: BluetoothAdapter?, deviceAddress: String): Boolean {
-    return adapter?.bondedDevices?.any {
+    
+    // To avoid weird state if bluetooth is disabled
+    if (adapter?.isEnabled != true) return true
+
+    return adapter.bondedDevices?.any {
         it.address == deviceAddress.uppercase(Locale.getDefault())
     } ?: false
+
 }
 
 @RequiresPermission(allOf = [Manifest.permission.BLUETOOTH_CONNECT])
@@ -70,19 +71,27 @@ fun BondingStateListener(
             override fun onReceive(context: Context?, intent: Intent?) {
                 when (intent?.action) {
                     BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
-                        val bondState = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.BOND_NONE)
-                        val bondedDevice = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
-                        } else {
-                            @Suppress("DEPRECATION")
-                            intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-                        }
+                        val bondState = intent.getIntExtra(
+                            BluetoothDevice.EXTRA_BOND_STATE,
+                            BluetoothDevice.BOND_NONE
+                        )
+                        val bondedDevice =
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                intent.getParcelableExtra(
+                                    BluetoothDevice.EXTRA_DEVICE,
+                                    BluetoothDevice::class.java
+                                )
+                            } else {
+                                @Suppress("DEPRECATION")
+                                intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                            }
 
                         if (bondedDevice?.address == device.address) {
                             when (bondState) {
                                 BluetoothDevice.BOND_BONDED -> {
                                     currentOnBondingSuccess()
                                 }
+
                                 BluetoothDevice.BOND_NONE -> {
                                     currentOnBondingFailed()
                                 }
@@ -175,7 +184,9 @@ fun PairingManager(
     if (pairingDialogState.isPairing && pairingDialogState.device != null) {
         val bluetoothManager = context.getSystemService<BluetoothManager>()
         val adapter = bluetoothManager?.adapter
-        val bluetoothDevice = pairingDialogState.device!!.device ?: adapter?.getRemoteDevice(pairingDialogState.device!!.address)
+        val bluetoothDevice = pairingDialogState.device!!.device ?: adapter?.getRemoteDevice(
+            pairingDialogState.device!!.address
+        )
 
         if (bluetoothDevice != null) {
             BondingStateListener(

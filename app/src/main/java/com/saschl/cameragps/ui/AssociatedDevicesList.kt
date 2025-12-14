@@ -140,11 +140,6 @@ fun AssociatedDevicesList(
                 ) {
                     var isAlwaysOnEnabled by remember(device.address) { mutableStateOf(true) }
 
-                    /*   val isTransmissionRunning by remember {
-                           cameraDeviceDAO.isTransmissionRunning(
-                               device.address
-                           )
-                       }.observeAsState(false)*/
                     val isTransmissionRunning = enableServer[device.address]
 
 
@@ -188,7 +183,7 @@ fun AssociatedDevicesList(
                             Text(
                                 color = MaterialTheme.colorScheme.error,
                                 style = MaterialTheme.typography.bodySmall,
-                                text = context.getString(R.string.not_paired_tap_to_pair_again),
+                                text = stringResource(R.string.not_paired_tap_to_pair_again),
                             )
                         }
 
@@ -198,7 +193,7 @@ fun AssociatedDevicesList(
                             Text(
                                 color = MaterialTheme.colorScheme.error,
                                 style = MaterialTheme.typography.bodySmall,
-                                text = context.getString(R.string.android_12_requires_keep_alive),
+                                text = stringResource(R.string.android_12_requires_keep_alive),
                             )
                         }
                     }
