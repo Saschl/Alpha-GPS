@@ -189,7 +189,6 @@ class LocationSenderService : LifecycleService() {
         }
     }
 
-    @SuppressLint("MissingPermission")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
@@ -218,7 +217,6 @@ class LocationSenderService : LifecycleService() {
         return START_REDELIVER_INTENT
     }
 
-    @SuppressLint("MissingPermission")
     private suspend fun handleStartCommand(intent: Intent?, startId: Int) {
         val address = intent?.getStringExtra("address")
         val isShutdownRequest = intent?.action == SonyBluetoothConstants.ACTION_REQUEST_SHUTDOWN
@@ -324,17 +322,22 @@ class LocationSenderService : LifecycleService() {
             // create the notification channel
             NotificationsHelper.createNotificationChannel(this)
 
-            // promote service to foreground service
-            ServiceCompat.startForeground(
-                this,
-                locationTransmissionNotificationId,
-                NotificationsHelper.buildNotification(
-                    this, getString(R.string.app_standby_title),
-                    getString(R.string.app_standby_content)
-                ),
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION or ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
+            try {
+                // promote service to foreground service
+                ServiceCompat.startForeground(
+                    this,
+                    locationTransmissionNotificationId,
+                    NotificationsHelper.buildNotification(
+                        this, getString(R.string.app_standby_title),
+                        getString(R.string.app_standby_content)
+                    ),
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION or ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
 
-            )
+                )
+            } catch (e: SecurityException) {
+                Timber.e("Failed to start foreground service due to missing permissions: ${e.message}")
+            }
+
         }
     }
 
@@ -427,7 +430,6 @@ class LocationSenderService : LifecycleService() {
         }
 
 
-        @SuppressLint("MissingPermission")
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
             super.onServicesDiscovered(gatt, status)
             val service = gatt.services?.find { it.uuid == SonyBluetoothConstants.SERVICE_UUID }
@@ -446,7 +448,7 @@ class LocationSenderService : LifecycleService() {
             }
         }
 
-        @RequiresPermission(allOf = [Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
+        @SuppressLint("MissingPermission")
         private fun handleServicesDiscovered(
             gatt: BluetoothGatt,
             service: BluetoothGattService?

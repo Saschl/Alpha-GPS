@@ -25,7 +25,6 @@ class CameraConnectionManager(
     private val connections =
         Collections.synchronizedMap(mutableMapOf<String, CameraConnectionConfig>())
 
-    @RequiresPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
     fun connect(config: String): Boolean {
         // Check if already connected
         if (connections.containsKey(config)) {
@@ -34,9 +33,14 @@ class CameraConnectionManager(
 
         val device: BluetoothDevice = bluetoothManager.adapter.getRemoteDevice(config)
 
-        val gatt = device.connectGatt(context, true, gattCallback)
-        connections[config] = CameraConnectionConfig(gatt = gatt)
-        LocationSenderService.activeTransmissions[config] = false
+        try {
+            val gatt = device.connectGatt(context, true, gattCallback)
+            connections[config] = CameraConnectionConfig(gatt = gatt)
+            LocationSenderService.activeTransmissions[config] = false
+        } catch (e: SecurityException) {
+            Timber.e("SecurityException while connecting to device $config: ${e.message}")
+            return false
+        }
 
         return true
     }
