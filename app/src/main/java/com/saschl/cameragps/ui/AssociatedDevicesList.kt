@@ -1,7 +1,5 @@
 package com.saschl.cameragps.ui
 
-import android.annotation.SuppressLint
-import android.bluetooth.BluetoothManager
 import android.os.Build
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -44,25 +42,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.core.content.getSystemService
 import com.saschl.cameragps.R
 import com.saschl.cameragps.database.LogDatabase
 import com.saschl.cameragps.service.AssociatedDeviceCompat
 import com.saschl.cameragps.service.LocationSenderService
-import com.saschl.cameragps.ui.pairing.isDevicePaired
 
 
 @OptIn(ExperimentalFoundationApi::class)
-@SuppressLint("MissingPermission")
 @Composable
 fun AssociatedDevicesList(
     associatedDevices: List<AssociatedDeviceCompat>,
     onConnect: (AssociatedDeviceCompat) -> Unit,
 ) {
     val context = LocalContext.current
-    val bluetoothManager = context.getSystemService<BluetoothManager>()
-    val adapter = bluetoothManager?.adapter
-
     val cameraDeviceDAO = LogDatabase.getDatabase(context.applicationContext).cameraDeviceDao()
 
     val enableServer = remember {
@@ -119,13 +111,7 @@ fun AssociatedDevicesList(
                 }
             }
 
-            items(associatedDevices) { device ->
-                val isPaired = try {
-                    adapter?.let { isDevicePaired(it, device.address) } ?: false
-                } catch (_: SecurityException) {
-                    false
-                }
-
+            items(associatedDevices, key = { device -> device.address }) { device ->
                 Row(
                     Modifier
                         .fillMaxWidth()
@@ -179,7 +165,7 @@ fun AssociatedDevicesList(
                             text = device.name
                         )
 
-                        if (!isPaired) {
+                        if (!device.isPaired) {
                             Text(
                                 color = MaterialTheme.colorScheme.error,
                                 style = MaterialTheme.typography.bodySmall,

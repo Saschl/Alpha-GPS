@@ -173,6 +173,8 @@ fun CameraDeviceManager(
                             )
                             delay(1000) // give the system a short time to breathe
                             startDevicePresenceObservation(deviceManager, it)
+                            // Refresh the devices list to update pairing state
+                            associatedDevices = deviceManager.getAssociatedDevices(adapter)
                         }
                     },
                     onConnect = { device ->

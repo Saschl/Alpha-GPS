@@ -37,12 +37,7 @@ class MainActivity : AppCompatActivity() {
         installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        // waiting for view to draw to better represent a captured error with a screenshot
-        /*   findViewById<android.view.View>(android.R.id.content).viewTreeObserver.addOnGlobalLayoutListener {
 
-               throw Exception("Eggs1000 :)")
-
-           }*/
         // Sentry will be initialized by the consent dialog or if already consented
         if (PreferencesManager.sentryEnabled(this) && PreferencesManager.isSentryConsentDialogDismissed(
                 this
