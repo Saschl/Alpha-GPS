@@ -1,10 +1,8 @@
 package com.saschl.cameragps.ui.device
 
 import android.companion.CompanionDeviceManager
-import android.companion.ObservingDevicePresenceRequest
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -15,7 +13,6 @@ import com.saschl.cameragps.database.devices.CameraDeviceDAO
 import com.saschl.cameragps.service.AssociatedDeviceCompat
 import com.saschl.cameragps.service.LocationSenderService
 import com.saschl.cameragps.service.SonyBluetoothConstants
-import com.saschl.cameragps.ui.pairing.startDevicePresenceObservation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -107,17 +104,17 @@ class DeviceDetailViewModel(private val cameraDeviceDAO: CameraDeviceDAO) : View
 
             if (enabled) {
                 context.startForegroundService(intent)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
-                    deviceManager.stopObservingDevicePresence(
-                        ObservingDevicePresenceRequest.Builder()
-                            .setAssociationId(associationId).build()
-                    )
-                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    deviceManager.stopObservingDevicePresence(device.address)
-                }
+                /* if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+                     deviceManager.stopObservingDevicePresence(
+                         ObservingDevicePresenceRequest.Builder()
+                             .setAssociationId(associationId).build()
+                     )
+                 } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                     deviceManager.stopObservingDevicePresence(device.address)
+                 }*/
             } else {
                 stopServiceWithDelay(context, device, deviceManager)
-                startDevicePresenceObservation(deviceManager, device)
+                // startDevicePresenceObservation(deviceManager, device)
             }
 
         }
