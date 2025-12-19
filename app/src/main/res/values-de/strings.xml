@@ -198,8 +198,8 @@
     <string name="delete_device_confirmation">Möchten Sie %1$s wirklich löschen?</string>
     <string name="delete">Löschen</string>
     <string name="always_on_enabled">Immer An aktiviert</string>
-    <string name="enable_auto_start_description">Startet die App nach einem Geräte-Neustart automatisch für Kameras, für die der „Immer an“-Modus konfiguriert ist.</string>
-    <string name="hint_if_issues_after_switching">Hinweis: Nach dem Deaktivieren des Always-On-Modus können Probleme auftreten (z.B. dass sich die Kamera nicht mehr verbindet). Wenn Sie betroffen sind, schalten Sie die Kamera aus, warten Sie 20 Sekunden und in der Regel verbindet sie sich erneut. Falls nicht, hilft es häufig, Bluetooth kurz aus- und wieder einzuschalten. Das passiert nur direkt nach dem Ausschalten des Always-On-Modus und nicht während des normalen Betriebs.</string>
+    <string name="enable_auto_start_description">Startet die App nach einem Geräte-Neustart automatisch für Kameras, für die der „Immer an"-Modus konfiguriert ist.</string>
+    <string name="hint_if_issues_after_switching">Hinweis: Aufgrund von kürzlichen Änderungen in der App kann es nach dem Deaktivieren des „Immer an"-Modus erforderlich sein, einmalig eine Aktion durchzuführen. Deaktivieren und reaktivieren Sie das Gerät einfach einmal in diesen Einstellungen. Dies ist nur einmal nach dem App-Update nötig – nachfolgende Moduswechsel funktionieren sofort.</string>
 
     <!-- Pairing dialog strings -->
     <string name="pairing_camera_title">Kopple Kamera</string>

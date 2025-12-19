@@ -210,8 +210,8 @@
     <string name="delete_device_confirmation">确定要删除 %1$s 吗？</string>
     <string name="delete">删除</string>
     <string name="always_on_enabled">始终开启已启用</string>
-    <string name="enable_auto_start_description">在设备重启后，为已配置“始终开启”模式的设备自动启动此应用。</string>
-    <string name="hint_if_issues_after_switching">注意：关闭始终开启模式后，可能会出现相机无法再连接等问题。如果发生，请关闭相机，等待20秒，通常即可重新连接。如仍无效，尝试先关闭再开启蓝牙。此问题仅在关闭始终开启模式后出现，正常运行时不会发生。</string>
+    <string name="enable_auto_start_description">在设备重启后，为已配置"始终开启"模式的设备自动启动此应用。</string>
+    <string name="hint_if_issues_after_switching">注意：由于应用近期的更新，在禁用"始终开启"模式后如遇到问题，您可能需要执行一次性操作。只需在此设置中将设备停用再重新启用一次即可。这仅在应用更新后需要操作一次，之后的模式切换将立即生效。</string>
 
     <!-- Pairing dialog strings -->
     <string name="pairing_camera_title">正在配对相机</string>
