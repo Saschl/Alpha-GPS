@@ -127,6 +127,7 @@ class LocationSenderService : LifecycleService() {
                 if (location != null) {
                     locationResult = location
 
+                    Timber.d("Sending initial location to all active connections")
                     cameraConnectionManager.getActiveConnections().forEach { device ->
                         sendData(device.gatt, device.writeCharacteristic)
                     }
@@ -282,11 +283,14 @@ class LocationSenderService : LifecycleService() {
     private inner class LocationUpdateHandler : LocationCallback() {
         override fun onLocationResult(fetchedLocation: LocationResult) {
             val lastLocation = fetchedLocation.lastLocation ?: return
+            Timber.d("Got a new location")
 
             if (shouldUpdateLocation(lastLocation)) {
                 locationResult = lastLocation
+                Timber.d("Will update cameras with new location")
 
                 cameraConnectionManager.getActiveConnections().forEach {
+                    Timber.d("Sending location to camera ${it.gatt.device.name}")
                     sendData(it.gatt, it.writeCharacteristic)
                 }
             }
@@ -402,7 +406,6 @@ class LocationSenderService : LifecycleService() {
             } else {
                 Timber.i("Connected to device with status %d", status)
 
-
                 cameraConnectionManager.resumeDevice(gatt.device.address.uppercase())
                 resumeLocationTransmission(gatt)
 
@@ -482,7 +485,7 @@ class LocationSenderService : LifecycleService() {
                     SonyBluetoothConstants.GPS_ENABLE_COMMAND
                 )
             } else {
-                Timber.d("Characteristic to enable GPS does not exist, starting transmission directly")
+                Timber.i("Characteristic to enable GPS does not exist, starting transmission directly")
                 startLocationTransmission()
             }
         }
@@ -616,9 +619,9 @@ class LocationSenderService : LifecycleService() {
                     if (locationDataConfig.shouldSendTimeZoneAndDst) TimeZoneDSTState.ENABLED else TimeZoneDSTState.DISABLED
                 )
             }
+            Timber.i("Characteristic read, shouldSendTimeZoneAndDst: ${locationDataConfig.shouldSendTimeZoneAndDst}")
             enableGpsTransmission(gatt)
 
-            Timber.i("Characteristic read, shouldSendTimeZoneAndDst: ${locationDataConfig.shouldSendTimeZoneAndDst}")
         }
     }
 

@@ -27,6 +27,7 @@ object BluetoothGattUtils {
                 Timber.e("Writing characteristic failed. Result: $result")
                 false
             } else {
+                Timber.d("Characteristic written successfully (API 33+)")
                 true
             }
         } else {
