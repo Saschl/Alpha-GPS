@@ -19,26 +19,28 @@ class CameraConnectionManager(
     data class CameraConnectionConfig(
         val gatt: BluetoothGatt,
         val state: Int = -1,
-        val writeCharacteristic: BluetoothGattCharacteristic? = null
+        val writeCharacteristic: BluetoothGattCharacteristic? = null,
+        var locationDataConfig: LocationDataConfig = LocationDataConfig(shouldSendTimeZoneAndDst = true)
     )
 
     private val connections =
         Collections.synchronizedMap(mutableMapOf<String, CameraConnectionConfig>())
 
-    fun connect(config: String): Boolean {
+    fun connect(mac: String): Boolean {
         // Check if already connected
-        if (connections.containsKey(config)) {
+        if (connections.containsKey(mac)) {
             return true
         }
 
-        val device: BluetoothDevice = bluetoothManager.adapter.getRemoteDevice(config)
+        val device: BluetoothDevice = bluetoothManager.adapter.getRemoteDevice(mac)
 
         try {
             val gatt = device.connectGatt(context, true, gattCallback)
-            connections[config] = CameraConnectionConfig(gatt = gatt)
-            LocationSenderService.activeTransmissions[config] = false
+                ?: throw IllegalStateException("Failed to connect to device $mac: GATT is null")
+            connections[mac] = CameraConnectionConfig(gatt = gatt)
+            LocationSenderService.activeTransmissions[mac] = false
         } catch (e: SecurityException) {
-            Timber.e("SecurityException while connecting to device $config: ${e.message}")
+            Timber.e("SecurityException while connecting to device $mac: ${e.message}")
             return false
         }
 
@@ -48,21 +50,17 @@ class CameraConnectionManager(
 
     @RequiresPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
     fun disconnect(address: String) {
-        connections[address]?.let { config ->
-            config.gatt.disconnect()
-            config.gatt.close()
-        }
-        connections.remove(address)
+        connections.remove(address)?.gatt?.close()
     }
 
     @RequiresPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
     fun disconnectAll() {
-        connections.values.forEach { config ->
-            Timber.d("DisconnectAll: processing device: ${config.gatt.device.address}")
-            config.gatt.disconnect()
-            config.gatt.close()
+        val snapshot: List<CameraConnectionConfig> = synchronized(connections) {
+            connections.values.toList().also { connections.clear() }
         }
-        connections.clear()
+        snapshot.forEach { config ->
+            runCatching { config.gatt.close() }.onFailure { Timber.w(it) }
+        }
     }
 
     fun isConnected(config: String): Boolean {
@@ -105,6 +103,12 @@ class CameraConnectionManager(
     ) {
         connections[address]?.let { config ->
             connections[address] = config.copy(writeCharacteristic = writeLocationCharacteristic)
+        }
+    }
+
+    fun setLocationDataConfig(uppercase: String, locationDataConfig: LocationDataConfig) {
+        connections[uppercase]?.let { config ->
+            connections[uppercase] = config.copy(locationDataConfig = locationDataConfig)
         }
     }
 }

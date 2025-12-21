@@ -16,10 +16,10 @@ object LocationDataConverter {
      * Converts location coordinates to byte array format expected by Sony cameras
      */
     fun convertCoordinates(location: Location): ByteArray {
-        val latitude = (location.latitude * 10000000).toInt()
+        val latitude = (location.latitude * 1.0E7).toInt()
         val latitudeBytes = ByteBuffer.allocate(Int.SIZE_BYTES).putInt(latitude).array()
 
-        val longitude = (location.longitude * 10000000).toInt()
+        val longitude = (location.longitude * 1.0E7).toInt()
         val longitudeBytes = ByteBuffer.allocate(Int.SIZE_BYTES).putInt(longitude).array()
 
         return latitudeBytes + longitudeBytes

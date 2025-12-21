@@ -17,19 +17,24 @@ data class AssociatedDeviceCompat(
     val address: String,
     var name: String,
     val device: BluetoothDevice?,
-    var isPaired: Boolean = false
+    var isPaired: Boolean = true
 )
 
 
 @SuppressLint("MissingPermission")
 internal fun CompanionDeviceManager.getAssociatedDevices(adapter: BluetoothAdapter): List<AssociatedDeviceCompat> {
+    val isBluetoothOn = adapter.isEnabled
     val associatedDevice = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         myAssociations.map {
             it.toAssociatedDevice().apply {
                 // Check if device is Bluetooth paired
-                isPaired = adapter.bondedDevices?.any { bondedDevice ->
-                    bondedDevice.address.equals(address, ignoreCase = true)
-                } ?: false
+                isPaired = if (isBluetoothOn) {
+                    adapter.bondedDevices.any { bondedDevice ->
+                        bondedDevice.address.equals(address, ignoreCase = true)
+                    }
+                } else {
+                    true
+                }
             }
         }
     } else {
@@ -42,9 +47,13 @@ internal fun CompanionDeviceManager.getAssociatedDevices(adapter: BluetoothAdapt
                 address = deviceAddress,
                 name = adapter.getRemoteDevice(it.uppercase()).name ?: "N/A",
                 device = null,
-                isPaired = adapter.bondedDevices?.any { bondedDevice ->
-                    bondedDevice.address == deviceAddress
-                } ?: false
+                isPaired = if (isBluetoothOn) {
+                    adapter.bondedDevices.any { bondedDevice ->
+                        bondedDevice.address == deviceAddress
+                    }
+                } else {
+                    true
+                }
             )
         }
     }

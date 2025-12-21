@@ -2,12 +2,14 @@ package com.saschl.cameragps.service
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
 import android.bluetooth.BluetoothManager
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.location.Location
 import android.os.Build
@@ -15,6 +17,7 @@ import android.os.Looper
 import androidx.annotation.RequiresPermission
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.core.app.ServiceCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
@@ -26,6 +29,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.saschl.cameragps.R
 import com.saschl.cameragps.database.LogDatabase
+import com.saschl.cameragps.database.devices.CameraDevice
 import com.saschl.cameragps.database.devices.CameraDeviceDAO
 import com.saschl.cameragps.database.devices.TimeZoneDSTState
 import com.saschl.cameragps.notification.NotificationsHelper
@@ -91,7 +95,7 @@ class LocationSenderService : LifecycleService() {
     private var isLocationTransmitting: Boolean = false
 
     private var isInitialized = true
-    private var locationDataConfig = LocationDataConfig(shouldSendTimeZoneAndDst = true)
+
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
 
@@ -114,6 +118,9 @@ class LocationSenderService : LifecycleService() {
 
     private val commandMutex = Mutex()
 
+    private lateinit var bluetoothStateReceiver: BluetoothStateBroadcastReceiver
+
+
     companion object {
         val activeTransmissions = mutableStateMapOf<String, Boolean>()
     }
@@ -126,10 +133,9 @@ class LocationSenderService : LifecycleService() {
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                 if (location != null) {
                     locationResult = location
-
                     Timber.d("Sending initial location to all active connections")
                     cameraConnectionManager.getActiveConnections().forEach { device ->
-                        sendData(device.gatt, device.writeCharacteristic)
+                        sendData(device.gatt, device.writeCharacteristic, device.locationDataConfig)
                     }
                 }
             }
@@ -149,11 +155,22 @@ class LocationSenderService : LifecycleService() {
             Timber.i("No always-on devices found, shutting down service")
             requestShutdown(startId)
         } else {
-            deviceDao.getAllCameraDevices()
-                .filter { it.alwaysOnEnabled }
-                .forEach { cameraConnectionManager.connect(it.mac) }
+            runCatching {
+                deviceDao.getAllCameraDevices()
+                    .filter { it.alwaysOnEnabled }
+                    .forEach { device ->
+                        runCatching {
+                            cameraConnectionManager.connect(device.mac)
+                        }
+                            .onFailure { handleGattConnectionFailure(startId, device) }
+                    }
+            }
         }
 
+    }
+
+    private fun handleGattConnectionFailure(startId: Int, cameraDevice: CameraDevice) {
+        Timber.e("Failed to connect to device ${cameraDevice.deviceName}, bluetooth is likely disabled")
     }
 
     @SuppressLint("MissingPermission")
@@ -190,10 +207,32 @@ class LocationSenderService : LifecycleService() {
         }
     }
 
+    @SuppressLint("MissingPermission")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
         startAsForegroundService()
+
+        if (!::bluetoothStateReceiver.isInitialized) {
+            bluetoothStateReceiver = BluetoothStateBroadcastReceiver { enabled ->
+                Timber.w("Bluetooth turned off, will shutdown service")
+                if (!enabled) requestShutdown()
+            }
+
+            val filter = IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
+            ContextCompat.registerReceiver(
+                this,
+                bluetoothStateReceiver,
+                filter,
+                ContextCompat.RECEIVER_NOT_EXPORTED
+            )
+        }
+
+        if (!bluetoothManager.adapter.isEnabled) {
+            Timber.w("Bluetooth is disabled, will shutdown service")
+            requestShutdown(startId)
+            return START_NOT_STICKY
+        }
 
         /**
          *  TODO maybe handle with commandqueue to avoid blocking the main thread (although all operations finish rather quickly)
@@ -234,7 +273,9 @@ class LocationSenderService : LifecycleService() {
 
         if (!cameraConnectionManager.isConnected(address)) {
             Timber.i("Service initialized")
-            cameraConnectionManager.connect(address)
+            runCatching {
+                cameraConnectionManager.connect(address)
+            }.onFailure { Timber.e("Failed to connect to device, bluetooth is likely turned off") }
         }
     }
 
@@ -248,6 +289,11 @@ class LocationSenderService : LifecycleService() {
             broadcastIntent.putExtra("was_running", true)
             sendBroadcast(broadcastIntent)
         }
+        runCatching {
+            unregisterReceiver(bluetoothStateReceiver)
+        }.onFailure { e ->
+            Timber.e(e, "Failed to unregister Bluetooth state receiver")
+        }
         cameraConnectionManager.disconnectAll()
         Timber.i("Destroyed service")
     }
@@ -255,6 +301,8 @@ class LocationSenderService : LifecycleService() {
     @SuppressLint("MissingPermission")
     override fun onCreate() {
         super.onCreate()
+
+
         deviceDao = LogDatabase.getDatabase(this).cameraDeviceDao()
         initializeLogging()
         initializeLocationServices()
@@ -291,7 +339,7 @@ class LocationSenderService : LifecycleService() {
 
                 cameraConnectionManager.getActiveConnections().forEach {
                     Timber.d("Sending location to camera ${it.gatt.device.name}")
-                    sendData(it.gatt, it.writeCharacteristic)
+                    sendData(it.gatt, it.writeCharacteristic, it.locationDataConfig)
                 }
             }
         }
@@ -512,6 +560,14 @@ class LocationSenderService : LifecycleService() {
                     Timber.i("Time sync data sent to device, will now start location transmission, status was $status")
                     startLocationTransmission()
                 }
+
+                SonyBluetoothConstants.CHARACTERISTIC_UUID -> {
+                    Timber.d("Location data sent to device, status was $status")
+                }
+
+                else -> {
+                    Timber.w("Unknown characteristic written: ${writtenCharacteristic?.uuid}, status was $status")
+                }
             }
 
             if (status != BluetoothGatt.GATT_SUCCESS) {
@@ -601,7 +657,10 @@ class LocationSenderService : LifecycleService() {
             val locationEnabledCharacteristic =
                 service?.getCharacteristic(SonyBluetoothConstants.CHARACTERISTIC_LOCATION_ENABLED_IN_CAMERA)
 
-            if (locationEnabledCharacteristic != null && characteristic.uuid.equals(CHARACTERISTIC_READ_UUID)) {
+            if (locationEnabledCharacteristic != null && characteristic.uuid.equals(
+                    CHARACTERISTIC_READ_UUID
+                )
+            ) {
 
                 if (gatt.readCharacteristic(locationEnabledCharacteristic)) {
                     return
@@ -611,15 +670,17 @@ class LocationSenderService : LifecycleService() {
             } else {
                 Timber.w("Received characteristic read from camera (location status): ${characteristic.uuid}, $value")
             }
-            locationDataConfig =
-                locationDataConfig.copy(shouldSendTimeZoneAndDst = hasTimeZoneDstFlag(value))
+            cameraConnectionManager.setLocationDataConfig(
+                gatt.device.address.uppercase(),
+                LocationDataConfig(hasTimeZoneDstFlag(value))
+            )
             lifecycleScope.launch {
                 deviceDao.setTimezoneDstFlag(
                     gatt.device.address.uppercase(),
-                    if (locationDataConfig.shouldSendTimeZoneAndDst) TimeZoneDSTState.ENABLED else TimeZoneDSTState.DISABLED
+                    if (hasTimeZoneDstFlag(value)) TimeZoneDSTState.ENABLED else TimeZoneDSTState.DISABLED
                 )
             }
-            Timber.i("Characteristic read, shouldSendTimeZoneAndDst: ${locationDataConfig.shouldSendTimeZoneAndDst}")
+            Timber.i("Characteristic read, shouldSendTimeZoneAndDst: ${hasTimeZoneDstFlag(value)}")
             enableGpsTransmission(gatt)
 
         }
@@ -629,6 +690,7 @@ class LocationSenderService : LifecycleService() {
     private fun sendData(
         gatt: BluetoothGatt?,
         characteristic: BluetoothGattCharacteristic?,
+        locationDataConfig: LocationDataConfig
     ) {
         if (gatt == null || characteristic == null) {
             Timber.w("Cannot send data: GATT or characteristic is null")
@@ -644,7 +706,7 @@ class LocationSenderService : LifecycleService() {
     }
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-    private fun requestShutdown(startId: Int) {
+    private fun requestShutdown(startId: Int? = null) {
         activeTransmissions.clear()
         if (::locationCallback.isInitialized) {
             fusedLocationClient.removeLocationUpdates(locationCallback)
@@ -652,6 +714,11 @@ class LocationSenderService : LifecycleService() {
         isLocationTransmitting = false
         isInitialized = false
         cameraConnectionManager.disconnectAll()
-        stopSelf(startId)
+        if (startId != null) {
+            stopSelf(startId)
+        } else {
+            stopSelf()
+        }
     }
+
 }
