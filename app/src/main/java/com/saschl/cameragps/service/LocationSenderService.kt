@@ -155,7 +155,9 @@ class LocationSenderService : LifecycleService() {
 
     @SuppressLint("MissingPermission")
     private suspend fun handleNoAddress(startId: Int) {
-        startAsForegroundService()
+        if(!startAsForegroundService()) {
+            return
+        }
         if (deviceDao.getAlwaysOnEnabledDeviceCount() == 0) {
             Timber.i("No always-on devices found, shutting down service")
             requestShutdown(startId)
@@ -273,7 +275,9 @@ class LocationSenderService : LifecycleService() {
             return
         }
 
-        startAsForegroundService()
+        if(!startAsForegroundService()) {
+            return
+        }
 
         if (!cameraConnectionManager.isConnected(address)) {
             Timber.i("Service initialized")
@@ -373,7 +377,7 @@ class LocationSenderService : LifecycleService() {
         }
     }
 
-    private fun startAsForegroundService() {
+    private fun startAsForegroundService(): Boolean {
         if (!isLocationTransmitting) {
             // create the notification channel
             NotificationsHelper.createNotificationChannel(this)
@@ -393,9 +397,10 @@ class LocationSenderService : LifecycleService() {
             } catch (e: SecurityException) {
                 Timber.e("Failed to start foreground service due to missing permissions: ${e.message}")
                 stopSelf()
+                return false
             }
-
         }
+        return true
     }
 
     private fun cancelLocationTransmission() {
