@@ -392,6 +392,7 @@ class LocationSenderService : LifecycleService() {
                 )
             } catch (e: SecurityException) {
                 Timber.e("Failed to start foreground service due to missing permissions: ${e.message}")
+                stopSelf()
             }
 
         }
