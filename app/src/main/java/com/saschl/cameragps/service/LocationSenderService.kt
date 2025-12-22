@@ -33,6 +33,7 @@ import com.saschl.cameragps.database.devices.CameraDevice
 import com.saschl.cameragps.database.devices.CameraDeviceDAO
 import com.saschl.cameragps.database.devices.TimeZoneDSTState
 import com.saschl.cameragps.notification.NotificationsHelper
+import com.saschl.cameragps.service.SonyBluetoothConstants.CHARACTERISTIC_LOCATION_ENABLED_IN_CAMERA
 import com.saschl.cameragps.service.SonyBluetoothConstants.CHARACTERISTIC_READ_UUID
 import com.saschl.cameragps.service.SonyBluetoothConstants.locationTransmissionNotificationId
 import com.saschl.cameragps.utils.PreferencesManager
@@ -44,6 +45,7 @@ import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 import java.time.ZonedDateTime
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Constants for Sony camera Bluetooth communication
@@ -120,6 +122,8 @@ class LocationSenderService : LifecycleService() {
 
     private lateinit var bluetoothStateReceiver: BluetoothStateBroadcastReceiver
 
+    private val gattErrorCount = AtomicInteger(0)
+
 
     companion object {
         val activeTransmissions = mutableStateMapOf<String, Boolean>()
@@ -151,22 +155,22 @@ class LocationSenderService : LifecycleService() {
 
     @SuppressLint("MissingPermission")
     private suspend fun handleNoAddress(startId: Int) {
+        startAsForegroundService()
         if (deviceDao.getAlwaysOnEnabledDeviceCount() == 0) {
             Timber.i("No always-on devices found, shutting down service")
             requestShutdown(startId)
         } else {
+
             runCatching {
                 deviceDao.getAllCameraDevices()
                     .filter { it.alwaysOnEnabled }
                     .forEach { device ->
                         runCatching {
                             cameraConnectionManager.connect(device.mac)
-                        }
-                            .onFailure { handleGattConnectionFailure(startId, device) }
+                        }.onFailure { handleGattConnectionFailure(startId, device) }
                     }
             }
         }
-
     }
 
     private fun handleGattConnectionFailure(startId: Int, cameraDevice: CameraDevice) {
@@ -211,7 +215,6 @@ class LocationSenderService : LifecycleService() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
-        startAsForegroundService()
 
         if (!::bluetoothStateReceiver.isInitialized) {
             bluetoothStateReceiver = BluetoothStateBroadcastReceiver { enabled ->
@@ -265,11 +268,12 @@ class LocationSenderService : LifecycleService() {
             handleNoAddress(startId)
             return
         }
-
         if (isShutdownRequest) {
             handleShutdownRequest(address, startId)
             return
         }
+
+        startAsForegroundService()
 
         if (!cameraConnectionManager.isConnected(address)) {
             Timber.i("Service initialized")
@@ -447,7 +451,11 @@ class LocationSenderService : LifecycleService() {
             super.onConnectionStateChange(gatt, status, newState)
 
             if (status != BluetoothGatt.GATT_SUCCESS) {
-                Timber.e("An error happened: $status")
+                if (status == 19) {
+                    Timber.i("Device disconnected in callback")
+                } else {
+                    Timber.e("An error happened: $status")
+                }
                 cameraConnectionManager.pauseDevice(gatt.device.address.uppercase())
                 cancelLocationTransmission()
 
@@ -563,6 +571,7 @@ class LocationSenderService : LifecycleService() {
 
                 SonyBluetoothConstants.CHARACTERISTIC_UUID -> {
                     Timber.d("Location data sent to device, status was $status")
+                    gattErrorCount.set(0)
                 }
 
                 else -> {
@@ -571,7 +580,13 @@ class LocationSenderService : LifecycleService() {
             }
 
             if (status != BluetoothGatt.GATT_SUCCESS) {
-                Timber.e("Error writing characteristic: $status")
+                val currentCount = gattErrorCount.incrementAndGet()
+                Timber.w("Error writing characteristic: $status with count $currentCount")
+              /*  if (currentCount > 50) {
+                    Timber.e("Too many GATT errors, disconnecting from device")
+                    cameraConnectionManager.pauseDevice(gatt.device.address.uppercase())
+                    cancelLocationTransmission()
+                }*/
             }
         }
 
@@ -655,19 +670,22 @@ class LocationSenderService : LifecycleService() {
         ) {
             val service = gatt.services?.find { it.uuid == SonyBluetoothConstants.SERVICE_UUID }
             val locationEnabledCharacteristic =
-                service?.getCharacteristic(SonyBluetoothConstants.CHARACTERISTIC_LOCATION_ENABLED_IN_CAMERA)
+                service?.getCharacteristic(CHARACTERISTIC_LOCATION_ENABLED_IN_CAMERA)
 
             if (locationEnabledCharacteristic != null && characteristic.uuid.equals(
                     CHARACTERISTIC_READ_UUID
                 )
             ) {
 
-                if (gatt.readCharacteristic(locationEnabledCharacteristic)) {
+                val locEnabled = gatt.readCharacteristic(locationEnabledCharacteristic);
+
+                Timber.i("Read request for location enabled characteristic: ${locEnabled}")
+                if (locEnabled) {
                     return
                 }
 
-                // last read, so we can start writing
-            } else {
+
+            } else if (characteristic.uuid.equals(CHARACTERISTIC_LOCATION_ENABLED_IN_CAMERA)){
                 Timber.w("Received characteristic read from camera (location status): ${characteristic.uuid}, $value")
             }
             cameraConnectionManager.setLocationDataConfig(
@@ -702,6 +720,12 @@ class LocationSenderService : LifecycleService() {
 
         if (!BluetoothGattUtils.writeCharacteristic(gatt, characteristic, locationPacket)) {
             Timber.e("Failed to send location data to camera")
+           /* val currentErrorCount = gattErrorCount.incrementAndGet()
+            if (currentErrorCount > 50) {
+                Timber.e("Too many GATT errors, disconnecting from device")
+                cameraConnectionManager.pauseDevice(gatt.device.address.uppercase())
+                cancelLocationTransmission()
+            }*/
         }
     }
 

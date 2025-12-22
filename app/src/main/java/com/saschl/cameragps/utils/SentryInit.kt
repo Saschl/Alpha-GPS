@@ -20,7 +20,7 @@ object SentryInit {
                 SentryTimberIntegration(
                     minEventLevel = SentryLevel.ERROR,
                     minBreadcrumbLevel = SentryLevel.INFO,
-                    minLogsLevel = SentryLogLevel.DEBUG
+                    minLogsLevel = SentryLogLevel.INFO
                 )
             )
             options.logs.beforeSend = SentryOptions.Logs.BeforeSendLogCallback { event ->

@@ -10,6 +10,10 @@ import android.content.IntentFilter
 import android.location.LocationManager
 import android.os.Build
 import androidx.activity.compose.LocalActivity
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -20,6 +24,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
@@ -73,9 +79,13 @@ fun CameraDeviceManager(
     }
 
     var isLocationEnabled by remember {
-        mutableStateOf(locationManager?.isProviderEnabled(LocationManager.GPS_PROVIDER) == true ||
-                      locationManager?.isProviderEnabled(LocationManager.NETWORK_PROVIDER) == true)
+        mutableStateOf(
+            locationManager?.isProviderEnabled(LocationManager.GPS_PROVIDER) == true ||
+                    locationManager?.isProviderEnabled(LocationManager.NETWORK_PROVIDER) == true
+        )
     }
+
+    var isReviewFlowActive by remember { mutableStateOf(false) }
 
     LaunchedEffect(associatedDevices) {
         associatedDevices.forEach {
@@ -91,27 +101,33 @@ fun CameraDeviceManager(
     }
 
     // TODO refactor out of composable
-    LaunchedEffect(associatedDevices, lifecycleState) {
+    LaunchedEffect(lifecycleState) {
         if (associatedDevices.isNotEmpty() && PreferencesManager.reviewHintLastShownDaysAgo(
                 context.applicationContext,
                 true
             ) >= 30
-            && lifecycleState.isAtLeast(Lifecycle.State.STARTED) && PreferencesManager.reviewHintShownTimes(context.applicationContext) < 3
+            && lifecycleState == Lifecycle.State.RESUMED && PreferencesManager.reviewHintShownTimes(
+                context.applicationContext
+            ) < 3
         ) {
             val request = manager.requestReviewFlow()
             PreferencesManager.setReviewHintShownNow(context.applicationContext)
             PreferencesManager.increaseReviewHintShownTimes(context.applicationContext)
+
             request.addOnCompleteListener { task ->
                 if (task.isSuccessful) {
+                    isReviewFlowActive = true
                     // We got the ReviewInfo object
                     val reviewInfo = task.result
-                    val flow = manager.launchReviewFlow(activity!! , reviewInfo)
+                    val flow = manager.launchReviewFlow(activity!!, reviewInfo)
                     flow.addOnCompleteListener { _ ->
                         Timber.i("Review done!")
+                        isReviewFlowActive = false
                     }
                 } else {
                     // There was some problem, log or handle the error code.
-                    @ReviewErrorCode val reviewErrorCode = (task.exception as ReviewException).errorCode
+                    @ReviewErrorCode val reviewErrorCode =
+                        (task.exception as ReviewException).errorCode
                     Timber.e("Review flow failed with error code: $reviewErrorCode")
                     PreferencesManager.resetReviewHintShown(context.applicationContext)
                     PreferencesManager.decreaseReviewHintShownTimes(context.applicationContext)
@@ -143,9 +159,11 @@ fun CameraDeviceManager(
             Lifecycle.State.RESUMED -> {
                 associatedDevices = deviceManager!!.getAssociatedDevices(adapter!!)
                 isBluetoothEnabled = adapter.isEnabled == true
-                isLocationEnabled = locationManager?.isProviderEnabled(LocationManager.GPS_PROVIDER) == true ||
-                                  locationManager?.isProviderEnabled(LocationManager.NETWORK_PROVIDER) == true
+                isLocationEnabled =
+                    locationManager?.isProviderEnabled(LocationManager.GPS_PROVIDER) == true ||
+                            locationManager?.isProviderEnabled(LocationManager.NETWORK_PROVIDER) == true
             }
+
             else -> { /* No action needed */
             }
         }
@@ -154,87 +172,98 @@ fun CameraDeviceManager(
     if (deviceManager == null || adapter == null) {
         Text(text = "No Companion device manager found. The device does not support it.")
     } else {
-        if (selectedDevice == null) {
-            EnhancedLocationPermissionBox {
-                DevicesScreen(
-                    deviceManager = deviceManager,
-                    isBluetoothEnabled = isBluetoothEnabled,
-                    isLocationEnabled = isLocationEnabled,
-                    associatedDevices = associatedDevices,
-                    onDeviceAssociated = {
-                        scope.launch {
-                            devicesDao.insertDevice(
-                                CameraDevice(
-                                    deviceName = it.name,
-                                    mac = it.address.uppercase(),
-                                    alwaysOnEnabled = false,
-                                    deviceEnabled = true,
-                                )
-                            )
-                            delay(1000) // give the system a short time to breathe
-                            startDevicePresenceObservation(deviceManager, it)
-                            // Refresh the devices list to update pairing state
-                            associatedDevices = deviceManager.getAssociatedDevices(adapter)
-                        }
-                    },
-                    onConnect = { device ->
-                        selectedDevice = device
-                    },
-                    onSettingsClick = onSettingsClick
-                )
-            }
-        } else {
-            EnhancedLocationPermissionBox {
-                DeviceDetailScreen(
-                    device = selectedDevice!!,
-                    deviceManager = deviceManager,
-                    associationId = deviceManager.getAssociatedDevices(adapter)
-                        .find { it.address == selectedDevice?.address }?.id!!,
-                    onDisassociate = { device ->
-                        associatedDevices.find { ass -> ass.address == device.address }
-                            ?.let { foundDevice ->
-                                Timber.i("Disassociating device: ${foundDevice.name} (${foundDevice.address})")
-                                scope.launch {
-
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
-                                        deviceManager.stopObservingDevicePresence(
-                                            ObservingDevicePresenceRequest.Builder()
-                                                .setAssociationId(foundDevice.id).build()
-                                        )
-                                    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                        @Suppress("DEPRECATION")
-                                        deviceManager.stopObservingDevicePresence(foundDevice.address)
-                                    }
-
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                        deviceManager.disassociate(foundDevice.id)
-                                    } else {
-                                        @Suppress("DEPRECATION")
-                                        deviceManager.disassociate(foundDevice.address)
-                                    }
-
-                                    val serviceIntent = Intent(
-                                        context.applicationContext,
-                                        LocationSenderService::class.java
-                                    ).apply {
-                                        action = SonyBluetoothConstants.ACTION_REQUEST_SHUTDOWN
-                                    }
-                                    serviceIntent.putExtra(
-                                        "address",
-                                        foundDevice.address.uppercase()
+        Box {
+            if (selectedDevice == null) {
+                EnhancedLocationPermissionBox {
+                    DevicesScreen(
+                        deviceManager = deviceManager,
+                        isBluetoothEnabled = isBluetoothEnabled,
+                        isLocationEnabled = isLocationEnabled,
+                        associatedDevices = associatedDevices,
+                        onDeviceAssociated = {
+                            scope.launch {
+                                devicesDao.insertDevice(
+                                    CameraDevice(
+                                        deviceName = it.name,
+                                        mac = it.address.uppercase(),
+                                        alwaysOnEnabled = false,
+                                        deviceEnabled = true,
                                     )
-                                    context.startService(serviceIntent)
-
-                                    devicesDao.deleteDevice(CameraDevice(foundDevice.address.uppercase()))
-
-                                    associatedDevices = deviceManager.getAssociatedDevices(adapter)
-                                }
-                                selectedDevice = null
+                                )
+                                delay(1000) // give the system a short time to breathe
+                                startDevicePresenceObservation(deviceManager, it)
+                                // Refresh the devices list to update pairing state
+                                associatedDevices = deviceManager.getAssociatedDevices(adapter)
                             }
-                    },
-                    onClose = { selectedDevice = null }
-                )
+                        },
+                        onConnect = { device ->
+                            selectedDevice = device
+                        },
+                        onSettingsClick = onSettingsClick
+                    )
+                }
+            } else {
+                EnhancedLocationPermissionBox {
+                    DeviceDetailScreen(
+                        device = selectedDevice!!,
+                        deviceManager = deviceManager,
+                        associationId = deviceManager.getAssociatedDevices(adapter)
+                            .find { it.address == selectedDevice?.address }?.id!!,
+                        onDisassociate = { device ->
+                            associatedDevices.find { ass -> ass.address == device.address }
+                                ?.let { foundDevice ->
+                                    Timber.i("Disassociating device: ${foundDevice.name} (${foundDevice.address})")
+                                    scope.launch {
+
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+                                            deviceManager.stopObservingDevicePresence(
+                                                ObservingDevicePresenceRequest.Builder()
+                                                    .setAssociationId(foundDevice.id).build()
+                                            )
+                                        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                            @Suppress("DEPRECATION")
+                                            deviceManager.stopObservingDevicePresence(foundDevice.address)
+                                        }
+
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                            deviceManager.disassociate(foundDevice.id)
+                                        } else {
+                                            @Suppress("DEPRECATION")
+                                            deviceManager.disassociate(foundDevice.address)
+                                        }
+
+                                        val serviceIntent = Intent(
+                                            context.applicationContext,
+                                            LocationSenderService::class.java
+                                        ).apply {
+                                            action = SonyBluetoothConstants.ACTION_REQUEST_SHUTDOWN
+                                        }
+                                        serviceIntent.putExtra(
+                                            "address",
+                                            foundDevice.address.uppercase()
+                                        )
+                                        context.startService(serviceIntent)
+
+                                        devicesDao.deleteDevice(CameraDevice(foundDevice.address.uppercase()))
+
+                                        associatedDevices =
+                                            deviceManager.getAssociatedDevices(adapter)
+                                    }
+                                    selectedDevice = null
+                                }
+                        },
+                        onClose = { selectedDevice = null }
+                    )
+                }
             }
+        }
+        if (isReviewFlowActive) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .clickable(enabled = false) { }
+            )
         }
     }
 }

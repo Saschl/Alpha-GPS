@@ -1,6 +1,7 @@
 package com.saschl.cameragps.service
 
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothDevice.BOND_BONDED
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
@@ -32,9 +33,12 @@ class CameraConnectionManager(
             return true
         }
 
-        val device: BluetoothDevice = bluetoothManager.adapter.getRemoteDevice(mac)
-
         try {
+            val device: BluetoothDevice = bluetoothManager.adapter.getRemoteDevice(mac)
+            if (device.bondState != BOND_BONDED) {
+                Timber.e("Device $mac is not paired. Cannot connect.")
+                return false
+            }
             val gatt = device.connectGatt(context, true, gattCallback)
                 ?: throw IllegalStateException("Failed to connect to device $mac: GATT is null")
             connections[mac] = CameraConnectionConfig(gatt = gatt)

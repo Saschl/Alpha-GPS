@@ -131,22 +131,15 @@ class CameraDeviceCompanionService : CompanionDeviceService() {
     }
 
 
-    @SuppressLint("MissingPermission")
-    override fun onDestroy() {
-        super.onDestroy()
-        Timber.i("CompanionDeviceService destroyed. Will request graceful shutdown now")
-
-        // For some reason Android 12 immediately kills the service without onDeviceDisappeared.
-        // FOr now it seems to work as it finds the device again after some time so it's more or less ok
-        // Still very weird and should be handled better
-        // the disappeared event also seems to be missed sometimes.. we will request shutdown here as well
-        // Request graceful shutdown instead of immediate termination
+    override fun onUnbind(intent: Intent?): Boolean {
+        Timber.i("CompanionDeviceService onUnbind called. Will request shutdown of FGS")
         val shutdownIntent = Intent(this, LocationSenderService::class.java).apply {
-            action = SonyBluetoothConstants.ACTION_REQUEST_SHUTDOWN
+            action = ACTION_REQUEST_SHUTDOWN
 
         }
         shutdownIntent.putExtra("address", "all")
         startService(shutdownIntent)
+        return super.onUnbind(intent)
     }
 
 
