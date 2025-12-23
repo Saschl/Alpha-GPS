@@ -40,6 +40,7 @@ import com.saschl.cameragps.utils.PreferencesManager
 import com.saschl.cameragps.utils.SentryInit
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
@@ -155,7 +156,7 @@ class LocationSenderService : LifecycleService() {
 
     @SuppressLint("MissingPermission")
     private suspend fun handleNoAddress(startId: Int) {
-        if(!startAsForegroundService()) {
+        if (!startAsForegroundService()) {
             return
         }
         if (deviceDao.getAlwaysOnEnabledDeviceCount() == 0) {
@@ -275,7 +276,7 @@ class LocationSenderService : LifecycleService() {
             return
         }
 
-        if(!startAsForegroundService()) {
+        if (!startAsForegroundService()) {
             return
         }
 
@@ -295,6 +296,12 @@ class LocationSenderService : LifecycleService() {
             val broadcastIntent =
                 Intent(applicationContext, RestartReceiver::class.java)
             broadcastIntent.putExtra("was_running", true)
+            // FIXME find way without blocking call
+            runBlocking {
+                val hadAlwaysOnDevices =
+                    deviceDao.getAlwaysOnEnabledDeviceCount() > 0
+                broadcastIntent.putExtra("had_always_on_devices", hadAlwaysOnDevices)
+            }
             sendBroadcast(broadcastIntent)
         }
         runCatching {
@@ -378,28 +385,30 @@ class LocationSenderService : LifecycleService() {
     }
 
     private fun startAsForegroundService(): Boolean {
-        if (!isLocationTransmitting) {
-            // create the notification channel
-            NotificationsHelper.createNotificationChannel(this)
 
-            try {
-                // promote service to foreground service
-                ServiceCompat.startForeground(
-                    this,
-                    locationTransmissionNotificationId,
-                    NotificationsHelper.buildNotification(
-                        this, getString(R.string.app_standby_title),
-                        getString(R.string.app_standby_content)
-                    ),
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION or ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
+        // create the notification channel
+        // TODO no need to create every time
+        NotificationsHelper.createNotificationChannel(this)
 
-                )
-            } catch (e: SecurityException) {
-                Timber.e("Failed to start foreground service due to missing permissions: ${e.message}")
-                stopSelf()
-                return false
-            }
+        try {
+            // promote service to foreground service
+            ServiceCompat.startForeground(
+                this,
+                locationTransmissionNotificationId,
+                NotificationsHelper.buildNotification(
+                    this, getString(R.string.app_standby_title),
+                    getString(R.string.app_standby_content)
+                ),
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION or ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
+
+            )
+        } catch (e: SecurityException) {
+            Timber.e("Failed to start foreground service due to missing permissions: ${e.message}")
+            isInitialized = false
+            stopSelf()
+            return false
         }
+
         return true
     }
 
@@ -588,11 +597,11 @@ class LocationSenderService : LifecycleService() {
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 val currentCount = gattErrorCount.incrementAndGet()
                 Timber.w("Error writing characteristic: $status with count $currentCount")
-              /*  if (currentCount > 50) {
-                    Timber.e("Too many GATT errors, disconnecting from device")
-                    cameraConnectionManager.pauseDevice(gatt.device.address.uppercase())
-                    cancelLocationTransmission()
-                }*/
+                /*  if (currentCount > 50) {
+                      Timber.e("Too many GATT errors, disconnecting from device")
+                      cameraConnectionManager.pauseDevice(gatt.device.address.uppercase())
+                      cancelLocationTransmission()
+                  }*/
             }
         }
 
@@ -691,7 +700,7 @@ class LocationSenderService : LifecycleService() {
                 }
 
 
-            } else if (characteristic.uuid.equals(CHARACTERISTIC_LOCATION_ENABLED_IN_CAMERA)){
+            } else if (characteristic.uuid.equals(CHARACTERISTIC_LOCATION_ENABLED_IN_CAMERA)) {
                 Timber.w("Received characteristic read from camera (location status): ${characteristic.uuid}, $value")
             }
             cameraConnectionManager.setLocationDataConfig(
@@ -726,12 +735,12 @@ class LocationSenderService : LifecycleService() {
 
         if (!BluetoothGattUtils.writeCharacteristic(gatt, characteristic, locationPacket)) {
             Timber.e("Failed to send location data to camera")
-           /* val currentErrorCount = gattErrorCount.incrementAndGet()
-            if (currentErrorCount > 50) {
-                Timber.e("Too many GATT errors, disconnecting from device")
-                cameraConnectionManager.pauseDevice(gatt.device.address.uppercase())
-                cancelLocationTransmission()
-            }*/
+            /* val currentErrorCount = gattErrorCount.incrementAndGet()
+             if (currentErrorCount > 50) {
+                 Timber.e("Too many GATT errors, disconnecting from device")
+                 cameraConnectionManager.pauseDevice(gatt.device.address.uppercase())
+                 cancelLocationTransmission()
+             }*/
         }
     }
 

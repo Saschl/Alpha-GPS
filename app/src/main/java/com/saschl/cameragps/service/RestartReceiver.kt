@@ -26,11 +26,13 @@ class RestartReceiver : BroadcastReceiver() {
         }
         Timber.w("LocationSenderService service is being killed, broadcast received. Attempting to restart")
         val wasRunning = intent.getBooleanExtra("was_running", false)
+        val hadAlwaysOnDevices = intent.getBooleanExtra("had_always_on_devices", false)
         Timber.i("was_running:%s", wasRunning)
+        Timber.i("had_always_on_devices:%s", hadAlwaysOnDevices)
 
         val serviceIntent = Intent(context, LocationSenderService::class.java)
 
-        if (wasRunning) {
+        if (wasRunning && hadAlwaysOnDevices) {
             ContextCompat.startForegroundService(context, serviceIntent)
         }
     }
