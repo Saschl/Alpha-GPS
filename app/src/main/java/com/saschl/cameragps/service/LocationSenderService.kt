@@ -218,24 +218,9 @@ class LocationSenderService : LifecycleService() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
-
-        if (!::bluetoothStateReceiver.isInitialized) {
-            bluetoothStateReceiver = BluetoothStateBroadcastReceiver { enabled ->
-                Timber.w("Bluetooth turned off, will shutdown service")
-                if (!enabled) requestShutdown()
-            }
-
-            val filter = IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
-            ContextCompat.registerReceiver(
-                this,
-                bluetoothStateReceiver,
-                filter,
-                ContextCompat.RECEIVER_NOT_EXPORTED
-            )
-        }
-
         if (!bluetoothManager.adapter.isEnabled) {
             Timber.w("Bluetooth is disabled, will shutdown service")
+            startAsForegroundService()
             requestShutdown(startId)
             return START_NOT_STICKY
         }
@@ -263,6 +248,7 @@ class LocationSenderService : LifecycleService() {
         return START_REDELIVER_INTENT
     }
 
+    @SuppressLint("MissingPermission")
     private suspend fun handleStartCommand(intent: Intent?, startId: Int) {
         val address = intent?.getStringExtra("address")
         val isShutdownRequest = intent?.action == SonyBluetoothConstants.ACTION_REQUEST_SHUTDOWN
@@ -278,6 +264,23 @@ class LocationSenderService : LifecycleService() {
 
         if (!startAsForegroundService()) {
             return
+        }
+
+        // shutdown service if bluetooth is turned off
+        // could be potentially improved by just disabling the transmission and reconnect after bluetooth is on again
+        if (!::bluetoothStateReceiver.isInitialized) {
+            bluetoothStateReceiver = BluetoothStateBroadcastReceiver { enabled ->
+                Timber.w("Bluetooth turned off, will shutdown service")
+                if (!enabled) requestShutdown()
+            }
+
+            val filter = IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
+            ContextCompat.registerReceiver(
+                this,
+                bluetoothStateReceiver,
+                filter,
+                ContextCompat.RECEIVER_NOT_EXPORTED
+            )
         }
 
         if (!cameraConnectionManager.isConnected(address)) {
@@ -301,11 +304,11 @@ class LocationSenderService : LifecycleService() {
                 val hadAlwaysOnDevices =
                     deviceDao.getAlwaysOnEnabledDeviceCount() > 0
                 broadcastIntent.putExtra("had_always_on_devices", hadAlwaysOnDevices)
+                sendBroadcast(broadcastIntent)
             }
-            sendBroadcast(broadcastIntent)
         }
         runCatching {
-            unregisterReceiver(bluetoothStateReceiver)
+            if (::bluetoothStateReceiver.isInitialized) unregisterReceiver(bluetoothStateReceiver)
         }.onFailure { e ->
             Timber.e(e, "Failed to unregister Bluetooth state receiver")
         }
@@ -397,7 +400,8 @@ class LocationSenderService : LifecycleService() {
                 locationTransmissionNotificationId,
                 NotificationsHelper.buildNotification(
                     this, getString(R.string.app_standby_title),
-                    getString(R.string.app_standby_content)
+                    getString(R.string.app_standby_content),
+                    NotificationsHelper.NOTIFICATION_CHANNEL_ID
                 ),
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION or ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
 
@@ -433,7 +437,8 @@ class LocationSenderService : LifecycleService() {
             Timber.d("Active cameras remaining, updating notification")
             val notification = NotificationsHelper.buildNotification(
                 this,
-                cameraConnectionManager.getActiveCameras().size
+                cameraConnectionManager.getActiveCameras().size,
+                channelId = NotificationsHelper.DISCONNECT_NOTIFICATION_CHANNEL
             )
             NotificationsHelper.showNotification(
                 this,
@@ -466,8 +471,8 @@ class LocationSenderService : LifecycleService() {
             super.onConnectionStateChange(gatt, status, newState)
 
             if (status != BluetoothGatt.GATT_SUCCESS) {
-                if (status == 19) {
-                    Timber.i("Device disconnected in callback")
+                if (status == 19 || status == 8) {
+                    Timber.i("Device disconnected in callback due to device turned off or out of range: $status")
                 } else {
                     Timber.e("An error happened: $status")
                 }
