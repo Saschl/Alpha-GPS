@@ -232,4 +232,5 @@
     <string name="sentry_consent_allow">允许</string>
     <string name="sentry_consent_decline">拒绝</string>
     <string name="sentry_consent_dont_show">不再显示</string>
+    <string name="notification_channel_name">Transmission state</string>
 </resources>

@@ -13,19 +13,27 @@ import com.saschl.cameragps.R
 
 internal object NotificationsHelper {
 
-    private const val NOTIFICATION_CHANNEL_ID = "general_notification_channel"
+    const val NOTIFICATION_CHANNEL_ID = "general_notification_channel"
+    const val DISCONNECT_NOTIFICATION_CHANNEL = "disconnect_notification_channel"
+
 
     fun createNotificationChannel(context: Context) {
         val notificationManager =
             context.getSystemService(Service.NOTIFICATION_SERVICE) as NotificationManager
 
-        // create the notification channel
         val channel = NotificationChannel(
             NOTIFICATION_CHANNEL_ID,
-            context.getString(R.string.foreground_service_notification),
+            context.getString(R.string.notification_channel_name),
+            NotificationManager.IMPORTANCE_DEFAULT
+        )
+
+        val disconnectChannel = NotificationChannel(
+            DISCONNECT_NOTIFICATION_CHANNEL,
+            context.getString(R.string.disconnect_notification_channel_name),
             NotificationManager.IMPORTANCE_DEFAULT
         )
         notificationManager.createNotificationChannel(channel)
+        notificationManager.createNotificationChannel(disconnectChannel)
     }
 
     fun showNotification(context: Context, notificationId: Int, notification: Notification) {
@@ -35,8 +43,12 @@ internal object NotificationsHelper {
         notificationManager.notify(notificationId, notification)
     }
 
-    fun buildNotification(context: Context, activeCameras: Int): Notification {
-        return NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
+    fun buildNotification(
+        context: Context,
+        activeCameras: Int,
+        channelId: String = NOTIFICATION_CHANNEL_ID
+    ): Notification {
+        return NotificationCompat.Builder(context, channelId)
             .setOngoing(true)
             .setContentTitle(
                 context.getString(
@@ -62,9 +74,14 @@ internal object NotificationsHelper {
             .build()
     }
 
-    fun buildNotification(context: Context, title: String, content: String): Notification {
+    fun buildNotification(
+        context: Context,
+        title: String,
+        content: String,
+        channelId: String = DISCONNECT_NOTIFICATION_CHANNEL
+    ): Notification {
         // TODO separate channels for standby and connected
-        return NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
+        return NotificationCompat.Builder(context, channelId)
             .setOngoing(true)
             .setContentTitle(title)
             .setContentText(content)

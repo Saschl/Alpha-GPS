@@ -220,4 +220,5 @@
     <string name="sentry_consent_allow">Erlauben</string>
     <string name="sentry_consent_decline">Ablehnen</string>
     <string name="sentry_consent_dont_show">Nicht mehr anzeigen</string>
+    <string name="notification_channel_name">Transmission state</string>
 </resources>

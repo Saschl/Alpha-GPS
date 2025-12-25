@@ -236,4 +236,6 @@
     <string name="sentry_consent_allow">Allow</string>
     <string name="sentry_consent_decline">Decline</string>
     <string name="sentry_consent_dont_show">Don\'t show again</string>
+    <string name="notification_channel_name">Transmission state</string>
+    <string name="disconnect_notification_channel_name">device disconnected</string>
 </resources>
