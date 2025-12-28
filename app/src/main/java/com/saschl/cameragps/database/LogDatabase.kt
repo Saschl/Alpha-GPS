@@ -3,8 +3,10 @@ package com.saschl.cameragps.database
 import android.content.Context
 import androidx.room.AutoMigration
 import androidx.room.Database
+import androidx.room.DeleteColumn
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.AutoMigrationSpec
 import com.saschl.cameragps.database.devices.CameraDevice
 import com.saschl.cameragps.database.devices.CameraDeviceDAO
 import com.saschl.cameragps.database.logging.LogDao
@@ -12,9 +14,10 @@ import com.saschl.cameragps.database.logging.LogEntry
 
 @Database(
     entities = [LogEntry::class, CameraDevice::class],
-    version = 2,
+    version = 3,
     autoMigrations = [
-        AutoMigration(from = 1, to = 2)
+        AutoMigration(from = 1, to = 2),
+        AutoMigration(from = 2, to = 3, LogDatabase.DeleteOldColumn::class)
     ]
 )
 abstract class LogDatabase : RoomDatabase() {
@@ -38,4 +41,11 @@ abstract class LogDatabase : RoomDatabase() {
             }
         }
     }
+
+
+    @DeleteColumn(
+        tableName = "camera_devices",
+        columnName = "transmitTimezoneAndDst"
+    )
+    class DeleteOldColumn : AutoMigrationSpec
 }

@@ -32,10 +32,4 @@ interface CameraDeviceDAO {
 
     @Query("SELECT count(1) FROM camera_devices WHERE alwaysOnEnabled = 1")
     suspend fun getAlwaysOnEnabledDeviceCount(): Int
-
-    @Query("UPDATE camera_devices SET transmitTimezoneAndDst = :shouldSendTimeZoneAndDst WHERE mac = UPPER(:address)")
-    suspend fun setTimezoneDstFlag(address: String, shouldSendTimeZoneAndDst: TimeZoneDSTState);
-
-    @Query("SELECT transmitTimezoneAndDst FROM camera_devices WHERE mac = UPPER(:address)")
-    suspend fun getTimezoneDstFlag(address: String): TimeZoneDSTState;
 }
