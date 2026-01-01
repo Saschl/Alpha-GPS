@@ -31,7 +31,6 @@ import com.saschl.cameragps.R
 import com.saschl.cameragps.database.LogDatabase
 import com.saschl.cameragps.database.devices.CameraDevice
 import com.saschl.cameragps.database.devices.CameraDeviceDAO
-import com.saschl.cameragps.database.devices.TimeZoneDSTState
 import com.saschl.cameragps.notification.NotificationsHelper
 import com.saschl.cameragps.service.SonyBluetoothConstants.CHARACTERISTIC_LOCATION_ENABLED_IN_CAMERA
 import com.saschl.cameragps.service.SonyBluetoothConstants.CHARACTERISTIC_READ_UUID
@@ -201,14 +200,9 @@ class LocationSenderService : LifecycleService() {
             return
         }
 
-        if (!deviceDao.isDeviceAlwaysOnEnabled(address)) {
-            Timber.d("Disconnecting camera $address as it is not always-on enabled")
-            cameraConnectionManager.disconnect(address)
-        }
-
         delay(1000)
 
-        if (cameraConnectionManager.getConnectedCameras().isEmpty()) {
+        if (cameraConnectionManager.getActiveCameras().isEmpty()) {
             Timber.d("No connected cameras remaining, shutting down service")
             requestShutdown(startId)
         }
@@ -712,12 +706,7 @@ class LocationSenderService : LifecycleService() {
                 gatt.device.address.uppercase(),
                 LocationDataConfig(hasTimeZoneDstFlag(value))
             )
-            lifecycleScope.launch {
-                deviceDao.setTimezoneDstFlag(
-                    gatt.device.address.uppercase(),
-                    if (hasTimeZoneDstFlag(value)) TimeZoneDSTState.ENABLED else TimeZoneDSTState.DISABLED
-                )
-            }
+
             Timber.i("Characteristic read, shouldSendTimeZoneAndDst: ${hasTimeZoneDstFlag(value)}")
             enableGpsTransmission(gatt)
 

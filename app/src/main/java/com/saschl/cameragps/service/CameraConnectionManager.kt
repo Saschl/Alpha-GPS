@@ -53,26 +53,20 @@ class CameraConnectionManager(
 
 
     @RequiresPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
-    fun disconnect(address: String) {
-        connections.remove(address)?.gatt?.close()
-    }
-
-    @RequiresPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
     fun disconnectAll() {
         val snapshot: List<CameraConnectionConfig> = synchronized(connections) {
             connections.values.toList().also { connections.clear() }
         }
         snapshot.forEach { config ->
-            runCatching { config.gatt.close() }.onFailure { Timber.w(it) }
+            runCatching {
+                config.gatt.disconnect()
+                config.gatt.close()
+            }.onFailure { Timber.w(it) }
         }
     }
 
     fun isConnected(config: String): Boolean {
         return connections.containsKey(config)
-    }
-
-    fun getConnectedCameras(): Set<String> {
-        return connections.keys.toSet()
     }
 
     fun getActiveCameras(): Set<String> {
@@ -86,6 +80,7 @@ class CameraConnectionManager(
         LocationSenderService.activeTransmissions[address]?.let {
             LocationSenderService.activeTransmissions[address] = false
         }
+
     }
 
     fun resumeDevice(address: String) {
