@@ -203,58 +203,64 @@ fun CameraDeviceManager(
                     )
                 }
             } else {
-                EnhancedLocationPermissionBox {
-                    DeviceDetailScreen(
-                        device = selectedDevice!!,
-                        deviceManager = deviceManager,
-                        associationId = deviceManager.getAssociatedDevices(adapter)
-                            .find { it.address == selectedDevice?.address }?.id!!,
-                        onDisassociate = { device ->
-                            associatedDevices.find { ass -> ass.address == device.address }
-                                ?.let { foundDevice ->
-                                    Timber.i("Disassociating device: ${foundDevice.name} (${foundDevice.address})")
-                                    scope.launch {
+                deviceManager.getAssociatedDevices(adapter)
+                    .find { it.address == selectedDevice?.address }?.id?.let {
+                        EnhancedLocationPermissionBox {
+                            DeviceDetailScreen(
+                                device = selectedDevice!!,
+                                deviceManager = deviceManager,
+                                associationId = it,
+                                onDisassociate = { device ->
+                                    associatedDevices.find { ass -> ass.address == device.address }
+                                        ?.let { foundDevice ->
+                                            Timber.i("Disassociating device: ${foundDevice.name} (${foundDevice.address})")
+                                            scope.launch {
 
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
-                                            deviceManager.stopObservingDevicePresence(
-                                                ObservingDevicePresenceRequest.Builder()
-                                                    .setAssociationId(foundDevice.id).build()
-                                            )
-                                        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                            @Suppress("DEPRECATION")
-                                            deviceManager.stopObservingDevicePresence(foundDevice.address)
+                                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+                                                    deviceManager.stopObservingDevicePresence(
+                                                        ObservingDevicePresenceRequest.Builder()
+                                                            .setAssociationId(foundDevice.id)
+                                                            .build()
+                                                    )
+                                                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                                    @Suppress("DEPRECATION")
+                                                    deviceManager.stopObservingDevicePresence(
+                                                        foundDevice.address
+                                                    )
+                                                }
+
+                                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                                    deviceManager.disassociate(foundDevice.id)
+                                                } else {
+                                                    @Suppress("DEPRECATION")
+                                                    deviceManager.disassociate(foundDevice.address)
+                                                }
+
+                                                val serviceIntent = Intent(
+                                                    context.applicationContext,
+                                                    LocationSenderService::class.java
+                                                ).apply {
+                                                    action =
+                                                        SonyBluetoothConstants.ACTION_REQUEST_SHUTDOWN
+                                                }
+                                                serviceIntent.putExtra(
+                                                    "address",
+                                                    foundDevice.address.uppercase()
+                                                )
+                                                context.startService(serviceIntent)
+
+                                                devicesDao.deleteDevice(CameraDevice(foundDevice.address.uppercase()))
+
+                                                associatedDevices =
+                                                    deviceManager.getAssociatedDevices(adapter)
+                                            }
+                                            selectedDevice = null
                                         }
-
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                            deviceManager.disassociate(foundDevice.id)
-                                        } else {
-                                            @Suppress("DEPRECATION")
-                                            deviceManager.disassociate(foundDevice.address)
-                                        }
-
-                                        val serviceIntent = Intent(
-                                            context.applicationContext,
-                                            LocationSenderService::class.java
-                                        ).apply {
-                                            action = SonyBluetoothConstants.ACTION_REQUEST_SHUTDOWN
-                                        }
-                                        serviceIntent.putExtra(
-                                            "address",
-                                            foundDevice.address.uppercase()
-                                        )
-                                        context.startService(serviceIntent)
-
-                                        devicesDao.deleteDevice(CameraDevice(foundDevice.address.uppercase()))
-
-                                        associatedDevices =
-                                            deviceManager.getAssociatedDevices(adapter)
-                                    }
-                                    selectedDevice = null
-                                }
-                        },
-                        onClose = { selectedDevice = null }
-                    )
-                }
+                                },
+                                onClose = { selectedDevice = null }
+                            )
+                        }
+                    }
             }
         }
         if (isReviewFlowActive) {
