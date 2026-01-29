@@ -7,7 +7,7 @@ plugins {
     id("androidx.room")
     id("com.google.devtools.ksp")
 
-    id("io.sentry.android.gradle") version "5.12.2"
+    id("io.sentry.android.gradle") version "6.0.0"
 }
 
 android {
