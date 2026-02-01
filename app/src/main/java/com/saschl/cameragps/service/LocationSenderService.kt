@@ -10,8 +10,11 @@ import android.bluetooth.BluetoothGattService
 import android.bluetooth.BluetoothManager
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
 import android.os.Build
 import android.os.Looper
 import androidx.annotation.RequiresPermission
@@ -21,6 +24,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -101,6 +106,15 @@ class LocationSenderService : LifecycleService() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
 
+    // Fallback location provider
+    private var locationManager: LocationManager? = null
+    private var locationListener: LocationListener? = null
+    private var usePlayServices: Boolean = true
+
+    // Periodic location transmission for fallback
+    private var fallbackLocationHandler: android.os.Handler? = null
+    private var fallbackLocationRunnable: Runnable? = null
+
     //private var cameraGatt: BluetoothGatt? = null
     private var locationResult: Location = Location("")
 
@@ -131,26 +145,230 @@ class LocationSenderService : LifecycleService() {
 
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     private fun startLocationTransmission() {
+        if (!hasLocationPermissions()) {
+            Timber.e("Location permissions missing, cannot start location transmission")
+            return
+        }
+        if (!hasAnyLocationProviderEnabled()) {
+            Timber.e("No location providers enabled, cannot start location transmission")
+            return
+        }
         if (!isLocationTransmitting) {
             Timber.i("Starting location transmission")
 
-            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                if (location != null) {
-                    locationResult = location
-                    Timber.d("Sending initial location to all active connections")
-                    cameraConnectionManager.getActiveConnections().forEach { device ->
-                        sendData(device.gatt, device.writeCharacteristic, device.locationDataConfig)
+            //  lifecycleScope.launch {
+            // Add delay to ensure Play Services is ready
+            // delay(50)
+
+            try {
+                if (usePlayServices) {
+                    startPlayServicesLocationUpdates()
+                } else {
+                    startFallbackLocationUpdates()
+                }
+                isLocationTransmitting = true
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to start location transmission")
+                // Try fallback if Play Services failed
+                if (usePlayServices) {
+                    Timber.w("Attempting to use fallback LocationManager")
+                    usePlayServices = false
+                    try {
+                        startFallbackLocationUpdates()
+                        isLocationTransmitting = true
+                    } catch (fallbackError: Exception) {
+                        Timber.e(fallbackError, "Fallback location provider also failed")
                     }
                 }
             }
-            fusedLocationClient.requestLocationUpdates(
-                LocationRequest.Builder(
-                    Priority.PRIORITY_HIGH_ACCURACY,
-                    SonyBluetoothConstants.LOCATION_UPDATE_INTERVAL_MS,
-                ).build(), locationCallback, Looper.getMainLooper()
-            )
-            isLocationTransmitting = true;
         }
+        //  }
+    }
+
+    @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
+    private fun startPlayServicesLocationUpdates() {
+        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            if (location != null) {
+                locationResult = location
+                Timber.d("Sending initial location to all active connections")
+                cameraConnectionManager.getActiveConnections().forEach { device ->
+                    sendData(device.gatt, device.writeCharacteristic, device.locationDataConfig)
+                }
+            }
+        }.addOnFailureListener { e ->
+            Timber.e(e, "Failed to get last location from Play Services")
+        }
+
+        fusedLocationClient.requestLocationUpdates(
+            LocationRequest.Builder(
+                Priority.PRIORITY_HIGH_ACCURACY,
+                SonyBluetoothConstants.LOCATION_UPDATE_INTERVAL_MS,
+            ).build(),
+            locationCallback,
+            Looper.getMainLooper()
+        )
+    }
+
+    @SuppressLint("MissingPermission")
+    @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
+    private fun startFallbackLocationUpdates() {
+        val locManager = locationManager ?: run {
+            Timber.e("LocationManager not initialized")
+            return
+        }
+
+        // Get last known location
+        val lastKnownLocation = locManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+            ?: locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+
+        if (lastKnownLocation != null) {
+            locationResult = lastKnownLocation
+            Timber.d("Sending initial location from fallback provider to all active connections")
+            cameraConnectionManager.getActiveConnections().forEach { device ->
+                sendData(device.gatt, device.writeCharacteristic, device.locationDataConfig)
+            }
+        }
+
+        // Create location listener
+        val listener = object : LocationListener {
+            override fun onLocationChanged(location: Location) {
+                Timber.d("Got a new location from fallback provider")
+                if (shouldUpdateLocation(location)) {
+                    locationResult = location
+                    /* Timber.d("Will update cameras with new location")
+                     cameraConnectionManager.getActiveConnections().forEach {
+                         Timber.d("Sending location to camera ${it.gatt.device.name}")
+                         sendData(it.gatt, it.writeCharacteristic, it.locationDataConfig)
+                     }*/
+                }
+            }
+
+            override fun onProviderEnabled(provider: String) {
+                Timber.i("Location provider enabled: $provider")
+            }
+
+            override fun onProviderDisabled(provider: String) {
+                Timber.w("Location provider disabled: $provider")
+            }
+        }
+
+        locationListener = listener
+
+        // Use fused provider on Android 12+ (API 31), otherwise use GPS with Network as fallback
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // Android 12+ has fused location provider built into the platform
+            if (locManager.isProviderEnabled(LocationManager.FUSED_PROVIDER)) {
+                locManager.requestLocationUpdates(
+                    LocationManager.FUSED_PROVIDER,
+                    SonyBluetoothConstants.LOCATION_UPDATE_INTERVAL_MS,
+                    0f,
+                    listener,
+                    Looper.getMainLooper()
+                )
+                Timber.i("Started location updates from FUSED provider (Android 12+)")
+            } else {
+                Timber.w("FUSED provider not available, falling back to GPS")
+                requestGpsLocationUpdates(locManager, listener)
+            }
+        } else {
+            // Pre-Android 12: use GPS as primary
+            requestGpsLocationUpdates(locManager, listener)
+        }
+
+        // Start periodic transmission handler to ensure updates even when stationary
+        startFallbackPeriodicTransmission()
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun requestGpsLocationUpdates(locManager: LocationManager, listener: LocationListener) {
+        if (locManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            locManager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER,
+                SonyBluetoothConstants.LOCATION_UPDATE_INTERVAL_MS,
+                0f,
+                listener,
+                Looper.getMainLooper()
+            )
+            Timber.i("Started location updates from GPS provider")
+        } else if (locManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+            // Use Network provider as fallback if GPS is disabled
+            locManager.requestLocationUpdates(
+                LocationManager.NETWORK_PROVIDER,
+                SonyBluetoothConstants.LOCATION_UPDATE_INTERVAL_MS,
+                0f,
+                listener,
+                Looper.getMainLooper()
+            )
+            Timber.i("GPS disabled, using Network provider as fallback")
+        } else {
+            Timber.e("No location providers available")
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun startFallbackPeriodicTransmission() {
+        // Create handler on main looper
+        val handler = android.os.Handler(Looper.getMainLooper())
+
+        val runnable = object : Runnable {
+            override fun run() {
+                if (isLocationTransmitting && !usePlayServices) {
+                    // Send last known location to all active cameras
+                    if (locationResult.provider?.isNotEmpty() == true) {
+                        Timber.d("Periodic fallback: Sending last known location to cameras")
+                        cameraConnectionManager.getActiveConnections().forEach {
+                            sendData(it.gatt, it.writeCharacteristic, it.locationDataConfig)
+                        }
+                    } else {
+                        Timber.w("Periodic fallback: No location available to send")
+                    }
+
+                    // Schedule next run
+                    handler.postDelayed(this, SonyBluetoothConstants.LOCATION_UPDATE_INTERVAL_MS)
+                }
+            }
+        }
+
+        fallbackLocationHandler = handler
+        fallbackLocationRunnable = runnable
+
+        // Start periodic updates
+        handler.postDelayed(runnable, SonyBluetoothConstants.LOCATION_UPDATE_INTERVAL_MS)
+        Timber.i("Started periodic fallback location transmission every ${SonyBluetoothConstants.LOCATION_UPDATE_INTERVAL_MS}ms")
+    }
+
+    private fun stopFallbackPeriodicTransmission() {
+        fallbackLocationRunnable?.let { runnable ->
+            fallbackLocationHandler?.removeCallbacks(runnable)
+        }
+
+        fallbackLocationHandler = null
+        fallbackLocationRunnable = null
+        Timber.d("Stopped periodic fallback location transmission")
+    }
+
+    private fun shouldUpdateLocation(newLocation: Location): Boolean {
+        // Any location is better than none initially
+        if (locationResult.provider?.isEmpty() == true) {
+            return true
+        }
+
+        val accuracyDifference = newLocation.accuracy - locationResult.accuracy
+
+        // If new location is significantly less accurate
+        if (accuracyDifference > SonyBluetoothConstants.ACCURACY_THRESHOLD_METERS) {
+            val timeDifference = newLocation.time - locationResult.time
+
+            Timber.w("New location is way less accurate than the old one, will only update if the last location is older than 5 minutes")
+
+            // Only update if the current location is very old
+            if (timeDifference > SonyBluetoothConstants.OLD_LOCATION_THRESHOLD_MS) {
+                Timber.d("Last accurate location is older than 5 minutes, updating anyway")
+                return true
+            }
+            return false
+        }
+        return true
     }
 
     @SuppressLint("MissingPermission")
@@ -175,6 +393,7 @@ class LocationSenderService : LifecycleService() {
         }
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun handleGattConnectionFailure(startId: Int, cameraDevice: CameraDevice) {
         Timber.e("Failed to connect to device ${cameraDevice.deviceName}, bluetooth is likely disabled")
     }
@@ -323,8 +542,23 @@ class LocationSenderService : LifecycleService() {
     }
 
     private fun initializeLocationServices() {
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        locationCallback = LocationUpdateHandler()
+        // Check if Google Play Services is available
+        val availability = GoogleApiAvailability.getInstance()
+        val resultCode = availability.isGooglePlayServicesAvailable(this)
+
+        if (resultCode != ConnectionResult.SUCCESS) {
+            Timber.w("Google Play Services unavailable (code: $resultCode), will use fallback LocationManager")
+            usePlayServices = false
+            locationManager = getSystemService(LocationManager::class.java)
+            locationCallback = LocationUpdateHandler() // Still need this for the structure
+        } else {
+            Timber.i("Google Play Services available, using FusedLocationProviderClient")
+            usePlayServices = true
+            fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+            locationCallback = LocationUpdateHandler()
+            // Initialize fallback as backup
+            locationManager = getSystemService(LocationManager::class.java)
+        }
     }
 
     private fun initializeLogging() {
@@ -341,6 +575,7 @@ class LocationSenderService : LifecycleService() {
     }
 
     private inner class LocationUpdateHandler : LocationCallback() {
+        @SuppressLint("MissingPermission")
         override fun onLocationResult(fetchedLocation: LocationResult) {
             val lastLocation = fetchedLocation.lastLocation ?: return
             Timber.d("Got a new location")
@@ -354,30 +589,6 @@ class LocationSenderService : LifecycleService() {
                     sendData(it.gatt, it.writeCharacteristic, it.locationDataConfig)
                 }
             }
-        }
-
-        private fun shouldUpdateLocation(newLocation: Location): Boolean {
-            // Any location is better than none initially
-            if (locationResult.provider?.isEmpty() == true) {
-                return true
-            }
-
-            val accuracyDifference = newLocation.accuracy - locationResult.accuracy
-
-            // If new location is significantly less accurate
-            if (accuracyDifference > SonyBluetoothConstants.ACCURACY_THRESHOLD_METERS) {
-                val timeDifference = newLocation.time - locationResult.time
-
-                Timber.w("New location is way less accurate than the old one, will only update if the last location is older than 5 minutes")
-
-                // Only update if the current location is very old
-                if (timeDifference > SonyBluetoothConstants.OLD_LOCATION_THRESHOLD_MS) {
-                    Timber.d("Last accurate location is older than 5 minutes, updating anyway")
-                    return true
-                }
-                return false
-            }
-            return true
         }
     }
 
@@ -423,10 +634,15 @@ class LocationSenderService : LifecycleService() {
                 notification
             )
             Timber.d("No active cameras remaining, stopping location updates")
-            if (::locationCallback.isInitialized) {
+            if (::locationCallback.isInitialized && usePlayServices) {
                 fusedLocationClient.removeLocationUpdates(locationCallback)
-                isLocationTransmitting = false
             }
+            locationListener?.let { listener ->
+                locationManager?.removeUpdates(listener)
+                locationListener = null
+            }
+            stopFallbackPeriodicTransmission()
+            isLocationTransmitting = false
         } else {
             Timber.d("Active cameras remaining, updating notification")
             val notification = NotificationsHelper.buildNotification(
@@ -691,7 +907,7 @@ class LocationSenderService : LifecycleService() {
                 )
             ) {
 
-                val locEnabled = gatt.readCharacteristic(locationEnabledCharacteristic);
+                val locEnabled = gatt.readCharacteristic(locationEnabledCharacteristic)
 
                 Timber.i("Read request for location enabled characteristic: ${locEnabled}")
                 if (locEnabled) {
@@ -741,9 +957,14 @@ class LocationSenderService : LifecycleService() {
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     private fun requestShutdown(startId: Int? = null) {
         activeTransmissions.clear()
-        if (::locationCallback.isInitialized) {
+        if (::locationCallback.isInitialized && usePlayServices) {
             fusedLocationClient.removeLocationUpdates(locationCallback)
         }
+        locationListener?.let { listener ->
+            locationManager?.removeUpdates(listener)
+            locationListener = null
+        }
+        stopFallbackPeriodicTransmission()
         isLocationTransmitting = false
         isInitialized = false
         cameraConnectionManager.disconnectAll()
@@ -752,6 +973,27 @@ class LocationSenderService : LifecycleService() {
         } else {
             stopSelf()
         }
+    }
+
+    private fun hasLocationPermissions(): Boolean {
+        val fine = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        val coarse = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        return fine || coarse
+    }
+
+    private fun hasAnyLocationProviderEnabled(): Boolean {
+        val manager = locationManager ?: getSystemService(LocationManager::class.java).also {
+            locationManager = it
+        }
+        val gpsEnabled = manager?.isProviderEnabled(LocationManager.GPS_PROVIDER) == true
+        val networkEnabled = manager?.isProviderEnabled(LocationManager.NETWORK_PROVIDER) == true
+        return gpsEnabled || networkEnabled
     }
 
 }
