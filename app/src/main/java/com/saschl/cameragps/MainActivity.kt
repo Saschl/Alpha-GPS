@@ -2,7 +2,6 @@ package com.saschl.cameragps
 
 import android.content.Intent
 import android.os.Bundle
-import android.os.PowerManager
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -14,7 +13,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.getSystemService
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ProcessLifecycleOwner
@@ -109,8 +107,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Check if battery optimization dialog should be shown
-        val powerManager = context.getSystemService<PowerManager>()
 
         var showSentryDialog by remember {
             mutableStateOf(

@@ -18,6 +18,8 @@
     <string name="step2_granted">&#10003; Freigegeben</string>
     <string name="view_logs">Zeige Logs</string>
     <string name="camera_gps_permissions">Alpha GPS Berechtigungen</string>
+    <string name="permissions_missing_title">Fehlende Berechtigungen</string>
+    <string name="permissions_missing_description">"Einige Features funktionieren möglicherweise nicht, bis folgende Berechtigungen erteilt wurden: "</string>
     <string name="continue_button">Weiter</string>
     <string name="dismiss_button">Beenden</string>
     <string name="cancel_button">Abbrechen</string>
@@ -53,6 +55,7 @@
     <string name="location_bluetooth_benefit_1">• Verbinde dich mit Bluetooth zur Sony Kamera</string>
     <string name="location_bluetooth_benefit_2">• Zugriff auf Standortdaten zur Übermittlung an die Kamera</string>
 
+    <string name="enable_auto_start">Starte App nach Geräteneustart</string>
     <string name="enable_app_description">Aktiviert die Funktionalität zur Übertragung des Standorts</string>
     <string name="unknown_error">Unbekannter Fehler</string>
     <string name="welcome_get_started_button">Los geht\'s</string>

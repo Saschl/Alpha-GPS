@@ -249,6 +249,7 @@ fun SettingsScreen(
                                         )
                                         toast.show()
                                         PreferencesManager.showFirstLaunch(context)
+                                        PreferencesManager.setPermissionsIgnored(context, false)
                                     },
                                 ) {
                                     Text(text = stringResource(R.string.reset_welcome))

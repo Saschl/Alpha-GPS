@@ -16,6 +16,7 @@ object PreferencesManager {
     private const val KEY_LOG_LEVEL = "log_level"
     private const val KEY_REVIEW_HINT_LAST_SHOWN = "review_hint_last_shown"
     private const val KEY_REVIEW_HINT_SHOWN_TIMES = "review_hint_shown_times"
+    private const val KEY_IGNORE_PERMISSIONS = "ignore_permissions"
 
     private fun getPreferences(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -174,6 +175,16 @@ object PreferencesManager {
     fun setSentryConsentDialogDismissed(context: Context, dismissed: Boolean) {
         getPreferences(context).edit {
             putBoolean("sentry_consent_dialog_dismissed", dismissed)
+        }
+    }
+
+    fun isPermissionsIgnored(context: Context): Boolean {
+        return getPreferences(context).getBoolean(KEY_IGNORE_PERMISSIONS, false)
+    }
+
+    fun setPermissionsIgnored(context: Context, ignored: Boolean) {
+        getPreferences(context).edit {
+            putBoolean(KEY_IGNORE_PERMISSIONS, ignored)
         }
     }
 }

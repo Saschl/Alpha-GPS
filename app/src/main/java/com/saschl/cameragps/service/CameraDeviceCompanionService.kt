@@ -39,6 +39,14 @@ class CameraDeviceCompanionService : CompanionDeviceService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU || missingPermissions()) {
             return
         }
+        if (
+            ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS,
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            Timber.w("Cannot post notifications, App may not work as expected")
+        }
         Timber.i("Device appeared oldest API: $address")
 
         startLocationSenderService(address)
@@ -62,9 +70,20 @@ class CameraDeviceCompanionService : CompanionDeviceService() {
     @SuppressLint("MissingPermission")
     override fun onDevicePresenceEvent(event: DevicePresenceEvent) {
         super.onDevicePresenceEvent(event)
+
+        // when bluetooth is not permitted, we're done
         if (missingPermissions()) {
-            Timber.e(CameraDeviceCompanionService::class.java.toString(), "Missing permissions")
+            Timber.e("Missing bluetooth permissions in  ${CameraDeviceCompanionService::class.java}")
             return
+        }
+
+        if (
+            ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS,
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            Timber.w("Cannot post notifications, App may not work as expected")
         }
 
         val associationId = event.associationId
@@ -150,10 +169,6 @@ class CameraDeviceCompanionService : CompanionDeviceService() {
     private fun missingPermissions(): Boolean = ActivityCompat.checkSelfPermission(
         this,
         Manifest.permission.BLUETOOTH_CONNECT,
-    ) != PackageManager.PERMISSION_GRANTED ||
-            ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.POST_NOTIFICATIONS,
-            ) != PackageManager.PERMISSION_GRANTED
+    ) != PackageManager.PERMISSION_GRANTED
 
 }

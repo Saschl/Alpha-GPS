@@ -25,6 +25,8 @@
     <string name="grant_permissions">Grant permissions</string>
     <string name="permissions_required_title">Permissions required by the sample</string>
     <string name="permissions_required_message">The sample requires the following permissions to work:\n %1$s</string>
+    <string name="permissions_missing_title">Permissions missing</string>
+    <string name="permissions_missing_description">Some features may not work until these permissions are granted:\n%1$s</string>
     <string name="continue_button">Continue</string>
     <string name="dismiss_button">Dismiss</string>
     <string name="cancel_button">Cancel</string>
@@ -227,7 +229,7 @@
     <string name="try_again">Try again</string>
     <string name="continue_label">Continue</string>
     <string name="cancel">Cancel</string>
-    <string name="enable_auto_start_description">Auto starts the app after a device reboot for configured \"Always On\" devices.</string>
+    <string name="enable_auto_start_description">Auto starts the app after a device reboot for configured "Always On" devices.</string>
     <string name="hint_if_issues_after_switching">Note: Due to recent changes in the app, you may need to perform a one-time action if you encounter issues after disabling Always On mode. Simply deactivate and reactivate the device once in these settings. This is only needed once after the app update – subsequent mode changes will work immediately.</string>
 
     <!-- Sentry Consent Dialog -->
@@ -238,4 +240,5 @@
     <string name="sentry_consent_dont_show">Don\'t show again</string>
     <string name="notification_channel_name">Transmission state</string>
     <string name="disconnect_notification_channel_name">device disconnected</string>
+    <string name="continue_anyway">Continue anyway</string>
 </resources>

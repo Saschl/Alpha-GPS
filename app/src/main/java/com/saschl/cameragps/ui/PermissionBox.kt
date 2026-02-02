@@ -1,7 +1,10 @@
 package com.saschl.cameragps.ui
 
 import android.Manifest
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,6 +41,7 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 import com.saschl.cameragps.R
+import com.saschl.cameragps.utils.PreferencesManager
 
 
 /**
@@ -60,6 +64,9 @@ fun PermissionBox(
     var errorText by remember {
         mutableStateOf("")
     }
+    var ignorePermissions by remember {
+        mutableStateOf(PreferencesManager.isPermissionsIgnored(context))
+    }
 
     val permissionState = rememberMultiplePermissionsState(permissions = permissions) { map ->
         val rejectedPermissions = map.filterValues { !it }.keys
@@ -75,17 +82,19 @@ fun PermissionBox(
     val allRequiredPermissionsGranted =
         permissionState.revokedPermissions.none { it.permission in requiredPermissions }
 
+    val shouldAllowContent = allRequiredPermissionsGranted || ignorePermissions
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .then(modifier),
-        contentAlignment = if (allRequiredPermissionsGranted) {
+        contentAlignment = if (shouldAllowContent) {
             contentAlignment
         } else {
             Alignment.Center
         },
     ) {
-        if (allRequiredPermissionsGranted) {
+        if (shouldAllowContent) {
             onGranted(
                 permissionState.permissions
                     .filter { it.status.isGranted }
@@ -96,6 +105,10 @@ fun PermissionBox(
                 permissionState,
                 description,
                 errorText,
+                onContinueAnyway = {
+                    ignorePermissions = true
+                    PreferencesManager.setPermissionsIgnored(context, true)
+                },
             )
 
          /*   FloatingActionButton(
@@ -125,7 +138,9 @@ private fun PermissionScreen(
     state: MultiplePermissionsState,
     description: String?,
     errorText: String,
+    onContinueAnyway: () -> Unit,
 ) {
+    val context = LocalContext.current
     var showRationale by remember(state) {
         mutableStateOf(false)
     }
@@ -176,6 +191,20 @@ private fun PermissionScreen(
                 style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier.padding(16.dp),
             )
+            Button(
+                onClick = {
+                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.fromParts("package", context.packageName, null)
+                    }
+                    context.startActivity(intent)
+                },
+                modifier = Modifier.padding(bottom = 16.dp),
+            ) {
+                Text(text = stringResource(R.string.app_settings))
+            }
+            TextButton(onClick = onContinueAnyway) {
+                Text(text = stringResource(R.string.continue_anyway))
+            }
         }
     }
     if (showRationale) {
@@ -225,6 +254,9 @@ fun EnhancedLocationPermissionBox(
 ) {
     val context = LocalContext.current
     var errorText by remember { mutableStateOf("") }
+    var ignorePermissions by remember {
+        mutableStateOf(PreferencesManager.isPermissionsIgnored(context))
+    }
 
     // Foreground location permissions
     val foregroundLocationPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -271,25 +303,30 @@ fun EnhancedLocationPermissionBox(
     val allForegroundGranted = foregroundPermissionState.allPermissionsGranted
     val backgroundGranted = backgroundLocationPermission.status.isGranted
     val allPermissionsGranted = allForegroundGranted && backgroundGranted
+    val shouldAllowContent = allPermissionsGranted || ignorePermissions
 
     Box(
             modifier = Modifier
                 .fillMaxSize()
                 .then(modifier),
-            contentAlignment = if (allPermissionsGranted) {
+        contentAlignment = if (shouldAllowContent) {
                 contentAlignment
             } else {
                 Alignment.Center
             },
         ) {
-            if (allPermissionsGranted) {
+        if (shouldAllowContent) {
                 onAllPermissionsGranted()
             } else {
                 EnhancedPermissionScreen(
                     foregroundPermissionState = foregroundPermissionState,
                     backgroundLocationPermission = backgroundLocationPermission,
                     allForegroundGranted = allForegroundGranted,
-                    errorText = errorText
+                    errorText = errorText,
+                    onContinueAnyway = {
+                        ignorePermissions = true
+                        PreferencesManager.setPermissionsIgnored(context, true)
+                    },
                 )
             }
         }
@@ -301,8 +338,10 @@ private fun EnhancedPermissionScreen(
     foregroundPermissionState: MultiplePermissionsState,
     backgroundLocationPermission: PermissionState,
     allForegroundGranted: Boolean,
-    errorText: String
+    errorText: String,
+    onContinueAnyway: () -> Unit,
 ) {
+    val context = LocalContext.current
     var showForegroundRationale by remember { mutableStateOf(false) }
     var showBackgroundRationale by remember { mutableStateOf(false) }
 
@@ -409,14 +448,12 @@ private fun EnhancedPermissionScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     if (!backgroundLocationPermission.status.isGranted) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                             Text(
                                 text = stringResource(R.string.step2_android10_warning),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.tertiary,
                                 modifier = Modifier.padding(bottom = 12.dp)
                             )
-                        }
 
                         Button(
                             onClick = {
@@ -447,6 +484,20 @@ private fun EnhancedPermissionScreen(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.error,
             )
+            Button(
+                onClick = {
+                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.fromParts("package", context.packageName, null)
+                    }
+                    context.startActivity(intent)
+                },
+                modifier = Modifier.padding(top = 12.dp),
+            ) {
+                Text(text = stringResource(R.string.app_settings))
+            }
+            TextButton(onClick = onContinueAnyway) {
+                Text(text = stringResource(R.string.continue_anyway))
+            }
         }
     }
 
