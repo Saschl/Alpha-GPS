@@ -16,6 +16,7 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Build
+import android.os.Handler
 import android.os.Looper
 import androidx.annotation.RequiresPermission
 import androidx.compose.runtime.mutableStateMapOf
@@ -110,12 +111,9 @@ class LocationSenderService : LifecycleService() {
     private var locationManager: LocationManager? = null
     private var locationListener: LocationListener? = null
     private var usePlayServices: Boolean = true
-
-    // Periodic location transmission for fallback
-    private var fallbackLocationHandler: android.os.Handler? = null
+    private var fallbackLocationHandler: Handler? = null
     private var fallbackLocationRunnable: Runnable? = null
 
-    //private var cameraGatt: BluetoothGatt? = null
     private var locationResult: Location = Location("")
 
     private lateinit var cameraConnectionManager: CameraConnectionManager
@@ -167,6 +165,8 @@ class LocationSenderService : LifecycleService() {
                     startFallbackLocationUpdates()
                 }
                 isLocationTransmitting = true
+                // Start periodic transmission handler to ensure updates even when stationary
+                startFallbackPeriodicTransmission()
             } catch (e: Exception) {
                 Timber.e(e, "Failed to start location transmission")
                 // Try fallback if Play Services failed
@@ -274,9 +274,6 @@ class LocationSenderService : LifecycleService() {
             // Pre-Android 12: use GPS as primary
             requestGpsLocationUpdates(locManager, listener)
         }
-
-        // Start periodic transmission handler to ensure updates even when stationary
-        startFallbackPeriodicTransmission()
     }
 
     @SuppressLint("MissingPermission")
@@ -308,19 +305,19 @@ class LocationSenderService : LifecycleService() {
     @SuppressLint("MissingPermission")
     private fun startFallbackPeriodicTransmission() {
         // Create handler on main looper
-        val handler = android.os.Handler(Looper.getMainLooper())
+        val handler = Handler(Looper.getMainLooper())
 
         val runnable = object : Runnable {
             override fun run() {
-                if (isLocationTransmitting && !usePlayServices) {
+                if (isLocationTransmitting) {
                     // Send last known location to all active cameras
                     if (locationResult.provider?.isNotEmpty() == true) {
-                        Timber.d("Periodic fallback: Sending last known location to cameras")
+                        Timber.d("Periodic: Sending last known location to cameras")
                         cameraConnectionManager.getActiveConnections().forEach {
                             sendData(it.gatt, it.writeCharacteristic, it.locationDataConfig)
                         }
                     } else {
-                        Timber.w("Periodic fallback: No location available to send")
+                        Timber.w("Periodic: No location available to send")
                     }
 
                     // Schedule next run
@@ -582,12 +579,6 @@ class LocationSenderService : LifecycleService() {
 
             if (shouldUpdateLocation(lastLocation)) {
                 locationResult = lastLocation
-                Timber.d("Will update cameras with new location")
-
-                cameraConnectionManager.getActiveConnections().forEach {
-                    Timber.d("Sending location to camera ${it.gatt.device.name}")
-                    sendData(it.gatt, it.writeCharacteristic, it.locationDataConfig)
-                }
             }
         }
     }
