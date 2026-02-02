@@ -19,7 +19,7 @@
     <string name="view_logs">Zeige Logs</string>
     <string name="camera_gps_permissions">Alpha GPS Berechtigungen</string>
     <string name="permissions_missing_title">Fehlende Berechtigungen</string>
-    <string name="permissions_missing_description">"Einige Features funktionieren möglicherweise nicht, bis folgende Berechtigungen erteilt wurden: "</string>
+    <string name="permissions_missing_description">Einige Features funktionieren möglicherweise nicht, bis folgende Berechtigungen erteilt wurden:\n%1$s</string>
     <string name="continue_button">Weiter</string>
     <string name="dismiss_button">Beenden</string>
     <string name="cancel_button">Abbrechen</string>
