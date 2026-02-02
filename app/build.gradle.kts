@@ -2,25 +2,29 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("androidx.room")
     id("com.google.devtools.ksp")
-
     id("io.sentry.android.gradle") version "6.0.0"
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
 }
 
 android {
     namespace = "com.saschl.cameragps"
-    compileSdk = 36
+    compileSdk {
+        version = release(36) {
+            minorApiLevel = 1
+        }
+    }
 
     androidResources {
         generateLocaleConfig = true
     }
 
-    room {
-        schemaDirectory("$projectDir/schemas")
-    }
+
 
     defaultConfig {
         applicationId = "com.saschl.cameragps"
