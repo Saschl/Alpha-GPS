@@ -32,6 +32,7 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.location.Priority
 import com.saschl.cameragps.R
 import com.saschl.cameragps.database.LogDatabase
@@ -84,7 +85,7 @@ object SonyBluetoothConstants {
     val GPS_ENABLE_COMMAND = byteArrayOf(0x01)
 
     // Location update interval
-    const val LOCATION_UPDATE_INTERVAL_MS = 5000L
+    const val LOCATION_UPDATE_INTERVAL_MS = 10000L
 
     // Accuracy threshold for location updates
     const val ACCURACY_THRESHOLD_METERS = 200.0
@@ -114,7 +115,7 @@ class LocationSenderService : LifecycleService() {
     private var fallbackLocationHandler: Handler? = null
     private var fallbackLocationRunnable: Runnable? = null
 
-    private var locationResult: Location = Location("")
+    private var locationResult: Location? = null
 
     private lateinit var cameraConnectionManager: CameraConnectionManager
 
@@ -199,14 +200,31 @@ class LocationSenderService : LifecycleService() {
             Timber.e(e, "Failed to get last location from Play Services")
         }
 
-        fusedLocationClient.requestLocationUpdates(
-            LocationRequest.Builder(
-                Priority.PRIORITY_HIGH_ACCURACY,
-                SonyBluetoothConstants.LOCATION_UPDATE_INTERVAL_MS,
-            ).build(),
-            locationCallback,
-            Looper.getMainLooper()
+        val locationRequest = LocationRequest.Builder(
+            Priority.PRIORITY_HIGH_ACCURACY,
+            SonyBluetoothConstants.LOCATION_UPDATE_INTERVAL_MS,
         )
+            .setWaitForAccurateLocation(false)
+            .build()
+
+        val locationSettings = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
+
+        LocationServices.getSettingsClient(this).checkLocationSettings(locationSettings.build())
+            .addOnSuccessListener {
+                Timber.d("Location Settings are satisfied, starting location request")
+
+                fusedLocationClient.requestLocationUpdates(
+                    locationRequest,
+                    locationCallback,
+                    Looper.getMainLooper()
+                )
+            }.addOnFailureListener { exception ->
+            Timber.e(
+                exception,
+                "Location settings are not satisfied, cannot start location updates"
+            )
+        }
+
     }
 
     @SuppressLint("MissingPermission")
@@ -311,7 +329,7 @@ class LocationSenderService : LifecycleService() {
             override fun run() {
                 if (isLocationTransmitting) {
                     // Send last known location to all active cameras
-                    if (locationResult.provider?.isNotEmpty() == true) {
+                    if (locationResult != null) {
                         Timber.d("Periodic: Sending last known location to cameras")
                         cameraConnectionManager.getActiveConnections().forEach {
                             sendData(it.gatt, it.writeCharacteristic, it.locationDataConfig)
@@ -346,15 +364,15 @@ class LocationSenderService : LifecycleService() {
 
     private fun shouldUpdateLocation(newLocation: Location): Boolean {
         // Any location is better than none initially
-        if (locationResult.provider?.isEmpty() == true) {
+        if (locationResult == null) {
             return true
         }
 
-        val accuracyDifference = newLocation.accuracy - locationResult.accuracy
+        val accuracyDifference = newLocation.accuracy - locationResult!!.accuracy
 
         // If new location is significantly less accurate
         if (accuracyDifference > SonyBluetoothConstants.ACCURACY_THRESHOLD_METERS) {
-            val timeDifference = newLocation.time - locationResult.time
+            val timeDifference = newLocation.time - locationResult!!.time
 
             Timber.w("New location is way less accurate than the old one, will only update if the last location is older than 5 minutes")
 
@@ -574,8 +592,10 @@ class LocationSenderService : LifecycleService() {
     private inner class LocationUpdateHandler : LocationCallback() {
         @SuppressLint("MissingPermission")
         override fun onLocationResult(fetchedLocation: LocationResult) {
+            super.onLocationResult(fetchedLocation)
+            Timber.d("Got a new location, is ${fetchedLocation.lastLocation ?: "empty"}")
+
             val lastLocation = fetchedLocation.lastLocation ?: return
-            Timber.d("Got a new location")
 
             if (shouldUpdateLocation(lastLocation)) {
                 locationResult = lastLocation
@@ -932,7 +952,7 @@ class LocationSenderService : LifecycleService() {
         }
 
         val locationPacket =
-            LocationDataConverter.buildLocationDataPacket(locationDataConfig, locationResult)
+            LocationDataConverter.buildLocationDataPacket(locationDataConfig, locationResult!!)
 
         if (!BluetoothGattUtils.writeCharacteristic(gatt, characteristic, locationPacket)) {
             Timber.e("Failed to send location data to camera")
