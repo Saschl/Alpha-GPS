@@ -86,6 +86,9 @@ fun SettingsScreen(
     var debugPanelCounter by remember {
         mutableIntStateOf(0)
     }
+    var locationProvider by remember {
+        mutableStateOf(PreferencesManager.getLocationProvider(context))
+    }
 
     Scaffold(
         topBar = {
@@ -258,6 +261,107 @@ fun SettingsScreen(
 
 
                         }
+                    }
+                }
+            }
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.location_provider_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant
+                        )
+
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        locationProvider =
+                                            PreferencesManager.LocationProvider.PLAY_SERVICES
+                                        PreferencesManager.setLocationProvider(
+                                            context,
+                                            locationProvider
+                                        )
+                                    },
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = locationProvider == PreferencesManager.LocationProvider.PLAY_SERVICES,
+                                    onClick = {
+                                        locationProvider =
+                                            PreferencesManager.LocationProvider.PLAY_SERVICES
+                                        PreferencesManager.setLocationProvider(
+                                            context,
+                                            locationProvider
+                                        )
+                                    }
+                                )
+                                Text(
+                                    text = stringResource(R.string.location_provider_play_services),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.padding(start = 8.dp)
+                                )
+                            }
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        locationProvider =
+                                            PreferencesManager.LocationProvider.PLATFORM
+                                        PreferencesManager.setLocationProvider(
+                                            context,
+                                            locationProvider
+                                        )
+                                    },
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = locationProvider == PreferencesManager.LocationProvider.PLATFORM,
+                                    onClick = {
+                                        locationProvider =
+                                            PreferencesManager.LocationProvider.PLATFORM
+                                        PreferencesManager.setLocationProvider(
+                                            context,
+                                            locationProvider
+                                        )
+                                    }
+                                )
+                                Text(
+                                    text = stringResource(R.string.location_provider_platform),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.padding(start = 8.dp)
+                                )
+                            }
+                        }
+
+                        Text(
+                            text = stringResource(R.string.location_provider_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = stringResource(R.string.location_provider_restart_required),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
                 }
             }

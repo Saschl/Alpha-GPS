@@ -17,6 +17,14 @@ object PreferencesManager {
     private const val KEY_REVIEW_HINT_LAST_SHOWN = "review_hint_last_shown"
     private const val KEY_REVIEW_HINT_SHOWN_TIMES = "review_hint_shown_times"
     private const val KEY_IGNORE_PERMISSIONS = "ignore_permissions"
+    private const val KEY_LOCATION_PROVIDER = "location_provider"
+    private const val LOCATION_PROVIDER_PLAY_SERVICES = "play_services"
+    private const val LOCATION_PROVIDER_PLATFORM = "platform"
+
+    enum class LocationProvider {
+        PLAY_SERVICES,
+        PLATFORM
+    }
 
     private fun getPreferences(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -47,37 +55,11 @@ object PreferencesManager {
         }
     }
 
-    /*    fun isDeviceEnabled(context: Context, deviceAddress: String): Boolean {
-            return getPreferences(context).getBoolean(KEY_DEVICE_ENABLED_PREFIX + deviceAddress, true)
-        }*/
-
-    /*
-        fun setDeviceEnabled(context: Context, deviceAddress: String, enabled: Boolean) {
-            getPreferences(context).edit {
-                putBoolean(KEY_DEVICE_ENABLED_PREFIX + deviceAddress, enabled)
-            }
-        }
-    */
-
-    fun isBatteryOptimizationDialogDismissed(context: Context): Boolean {
-        return getPreferences(context).getBoolean(KEY_BATTERY_OPTIMIZATION_DIALOG_DISMISSED, false)
-    }
-
     fun setBatteryOptimizationDialogDismissed(context: Context, dismissed: Boolean) {
         getPreferences(context).edit {
             putBoolean(KEY_BATTERY_OPTIMIZATION_DIALOG_DISMISSED, dismissed)
         }
     }
-
-    /*    fun isKeepAliveEnabled(context: Context, deviceAddress: String): Boolean {
-            return getPreferences(context).getBoolean(KEY_DEVICE_KEEPALIVE_PREFIX + deviceAddress, false)
-        }
-
-        fun setKeepAliveEnabled(context: Context, deviceAddress: String, enabled: Boolean) {
-            getPreferences(context).edit {
-                putBoolean(KEY_DEVICE_KEEPALIVE_PREFIX + deviceAddress, enabled)
-            }
-        }*/
 
     fun reviewHintLastShownDaysAgo(context: Context, initialize: Boolean = false): Long {
         val lastShown = getPreferences(context).getLong(KEY_REVIEW_HINT_LAST_SHOWN, 0L)
@@ -185,6 +167,29 @@ object PreferencesManager {
     fun setPermissionsIgnored(context: Context, ignored: Boolean) {
         getPreferences(context).edit {
             putBoolean(KEY_IGNORE_PERMISSIONS, ignored)
+        }
+    }
+
+    fun getLocationProvider(context: Context): LocationProvider {
+        val stored = getPreferences(context).getString(
+            KEY_LOCATION_PROVIDER,
+            LOCATION_PROVIDER_PLAY_SERVICES
+        )
+        return if (stored == LOCATION_PROVIDER_PLATFORM) {
+            LocationProvider.PLATFORM
+        } else {
+            LocationProvider.PLAY_SERVICES
+        }
+    }
+
+    fun setLocationProvider(context: Context, provider: LocationProvider) {
+        val stored = if (provider == LocationProvider.PLATFORM) {
+            LOCATION_PROVIDER_PLATFORM
+        } else {
+            LOCATION_PROVIDER_PLAY_SERVICES
+        }
+        getPreferences(context).edit {
+            putString(KEY_LOCATION_PROVIDER, stored)
         }
     }
 }

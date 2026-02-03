@@ -155,10 +155,6 @@ class LocationSenderService : LifecycleService() {
         if (!isLocationTransmitting) {
             Timber.i("Starting location transmission")
 
-            //  lifecycleScope.launch {
-            // Add delay to ensure Play Services is ready
-            // delay(50)
-
             try {
                 if (usePlayServices) {
                     startPlayServicesLocationUpdates()
@@ -170,24 +166,24 @@ class LocationSenderService : LifecycleService() {
                 startFallbackPeriodicTransmission()
             } catch (e: Exception) {
                 Timber.e(e, "Failed to start location transmission")
-                // Try fallback if Play Services failed
-                if (usePlayServices) {
-                    Timber.w("Attempting to use fallback LocationManager")
-                    usePlayServices = false
-                    try {
-                        startFallbackLocationUpdates()
-                        isLocationTransmitting = true
-                    } catch (fallbackError: Exception) {
-                        Timber.e(fallbackError, "Fallback location provider also failed")
-                    }
-                }
+                isLocationTransmitting = false
             }
         }
-        //  }
     }
 
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     private fun startPlayServicesLocationUpdates() {
+        val availability = GoogleApiAvailability.getInstance()
+        val resultCode = availability.isGooglePlayServicesAvailable(this)
+        if (resultCode != ConnectionResult.SUCCESS) {
+            Timber.w("Google Play Services unavailable (code: $resultCode). Check location provider setting.")
+            return
+        }
+        if (!::fusedLocationClient.isInitialized) {
+            Timber.e("FusedLocationProviderClient not initialized")
+            return
+        }
+
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
             if (location != null) {
                 locationResult = location
@@ -349,7 +345,7 @@ class LocationSenderService : LifecycleService() {
 
         // Start periodic updates
         handler.postDelayed(runnable, SonyBluetoothConstants.LOCATION_UPDATE_INTERVAL_MS)
-        Timber.i("Started periodic fallback location transmission every ${SonyBluetoothConstants.LOCATION_UPDATE_INTERVAL_MS}ms")
+        Timber.i("Started periodic location transmission every ${SonyBluetoothConstants.LOCATION_UPDATE_INTERVAL_MS}ms")
     }
 
     private fun stopFallbackPeriodicTransmission() {
@@ -359,7 +355,7 @@ class LocationSenderService : LifecycleService() {
 
         fallbackLocationHandler = null
         fallbackLocationRunnable = null
-        Timber.d("Stopped periodic fallback location transmission")
+        Timber.d("Stopped periodic location transmission")
     }
 
     private fun shouldUpdateLocation(newLocation: Location): Boolean {
@@ -557,21 +553,23 @@ class LocationSenderService : LifecycleService() {
     }
 
     private fun initializeLocationServices() {
-        // Check if Google Play Services is available
-        val availability = GoogleApiAvailability.getInstance()
-        val resultCode = availability.isGooglePlayServicesAvailable(this)
+        val provider = PreferencesManager.getLocationProvider(this)
+        usePlayServices = provider == PreferencesManager.LocationProvider.PLAY_SERVICES
+        locationCallback = LocationUpdateHandler()
 
-        if (resultCode != ConnectionResult.SUCCESS) {
-            Timber.w("Google Play Services unavailable (code: $resultCode), will use fallback LocationManager")
-            usePlayServices = false
-            locationManager = getSystemService(LocationManager::class.java)
-            locationCallback = LocationUpdateHandler() // Still need this for the structure
-        } else {
-            Timber.i("Google Play Services available, using FusedLocationProviderClient")
-            usePlayServices = true
+        if (usePlayServices) {
             fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-            locationCallback = LocationUpdateHandler()
-            // Initialize fallback as backup
+            locationManager = getSystemService(LocationManager::class.java)
+
+            val availability = GoogleApiAvailability.getInstance()
+            val resultCode = availability.isGooglePlayServicesAvailable(this)
+            if (resultCode != ConnectionResult.SUCCESS) {
+                Timber.w("Google Play Services unavailable (code: $resultCode). Check location provider setting.")
+            } else {
+                Timber.i("Google Play Services available, using FusedLocationProviderClient")
+            }
+        } else {
+            Timber.i("Using platform LocationManager provider")
             locationManager = getSystemService(LocationManager::class.java)
         }
     }

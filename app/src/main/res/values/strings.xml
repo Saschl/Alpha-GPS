@@ -77,11 +77,15 @@
     <string name="app_controls">App Controls</string>
     <string name="enable_app">Enable App</string>
     <string name="enable_auto_start">Start App on Device boot</string>
-
     <string name="enable_app_description">Allow the app to run and sync GPS data with connected cameras</string>
     <string name="log_settings">Log Settings</string>
     <string name="log_level">Log Level</string>
     <string name="log_level_description">Minimum log level to record</string>
+    <string name="location_provider_title">Location Provider</string>
+    <string name="location_provider_play_services">Google Play Services (recommended)</string>
+    <string name="location_provider_platform">Android platform (LocationManager)</string>
+    <string name="location_provider_hint">If Google Play Services are missing or unreliable on your device, switch to the platform provider.</string>
+    <string name="location_provider_restart_required">Restart the app and turn off the camera to apply this change. If always on mode is active, turn it off beforehand</string>
 
     <!-- Sentry Settings -->
     <string name="sentry_settings">Error Reporting Settings</string>
