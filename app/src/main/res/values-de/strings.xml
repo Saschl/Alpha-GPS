@@ -193,4 +193,12 @@
     <string name="sentry_consent_decline">Ablehnen</string>
     <string name="sentry_consent_dont_show">Nicht mehr anzeigen</string>
     <string name="notification_channel_name">Transmission state</string>
+    <string name="grant_permissions">Berechtigugnen erteilen</string>
+    <string name="location_provider_title">Standortanbieter</string>
+    <string name="location_provider_play_services">Google Play Services (empfohlen)</string>
+    <string name="location_provider_platform">Android Platform (LocationManager)</string>
+    <string name="location_provider_hint">Falls dein Gerät keine Google Play Services unterstützt oder die Standorterfassung unzuverlässig ist, wechsle zum Platform Provider.</string>
+    <string name="location_provider_restart_required">Schalte die Kamera aus und starte die App neu um die Änderungen durchzuführen. Falls der \"Always On\" Modus aktiv ist, deaktiviere diesen zuerst</string>
+    <string name="disconnect_notification_channel_name">Gerät nicht verbunden</string>
+    <string name="continue_anyway">Trotzdem fortfahren</string>
 </resources>
