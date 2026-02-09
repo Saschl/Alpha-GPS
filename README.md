@@ -25,7 +25,7 @@ OR
 
 ## How can I contribute?
 As the project is open source, contributions are welcome! Just check out the repo, open Android Studio and create a Pull Request.
-If you wish to improve the translations, the project is also in Weblate. Check it out (here)[https://hosted.weblate.org/engage/alpha-gps/]
+If you wish to improve the translations, the project is also in Weblate. Check it out [here](https://hosted.weblate.org/engage/alpha-gps/)
 
 ## How does it work?
 
