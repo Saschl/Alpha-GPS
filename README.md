@@ -1,3 +1,7 @@
+<a href="https://hosted.weblate.org/engage/alpha-gps/">
+<img src="https://hosted.weblate.org/widget/alpha-gps/svg-badge.svg" alt="Übersetzungsstatus" />
+</a>
+
 ## What is it?
 
 App for transmitting location data to sony cameras. I was fed up with the official app and found a python script (https://github.com/anoulis/sony_camera_bluetooth_external_gps) that got the protocol right, so I thought let's make a better app.
@@ -18,6 +22,10 @@ OR
 
  Get the APK from the releases and install it directly on your phone. Or use Obtainium and enter the repo URL for a more seamless experience.
   
+
+## How can I contribute?
+As the project is open source, contributions are welcome! Just check out the repo, open Android Studio and create a Pull Request.
+If you wish to improve the translations, the project is also in Weblate. Check it out (here)[https://hosted.weblate.org/engage/alpha-gps/]
 
 ## How does it work?
 
