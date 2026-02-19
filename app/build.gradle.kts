@@ -5,7 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     id("androidx.room")
     id("com.google.devtools.ksp")
-    id("io.sentry.android.gradle") version "6.0.0"
+    id("io.sentry.android.gradle") version "6.1.0"
 }
 
 room {
