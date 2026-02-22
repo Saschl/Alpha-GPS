@@ -4,7 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -27,9 +27,14 @@ import com.saschl.cameragps.ui.device.CameraDeviceManager
 import com.saschl.cameragps.ui.theme.CameraGpsTheme
 import com.saschl.cameragps.utils.PreferencesManager
 import com.saschl.cameragps.utils.SentryInit
+import kotlinx.serialization.Serializable
 import timber.log.Timber
+import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.NavDisplay
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -64,23 +69,28 @@ class MainActivity : AppCompatActivity() {
     @Composable
     private fun AppContent() {
         val context = LocalContext.current
-        var showWelcome by remember { mutableStateOf(PreferencesManager.isFirstLaunch(context)) }
-        var showSettings by remember { mutableStateOf(false) }
         val cameraDeviceDAO = LogDatabase.getDatabase(context).cameraDeviceDao()
-
         val lifecycleState by ProcessLifecycleOwner.get().lifecycle.currentStateFlow.collectAsState()
+
+        val startDestination = remember {
+            if (PreferencesManager.isFirstLaunch(context)) {
+                AppDestination.Welcome
+            } else {
+                AppDestination.Devices
+            }
+        }
+        val backStack = rememberNavBackStack(startDestination)
 
         LaunchedEffect(lifecycleState) {
             Timber.d("Lifecycle state changed: $lifecycleState")
             when (lifecycleState) {
                 Lifecycle.State.RESUMED -> {
-                    showWelcome = PreferencesManager.isFirstLaunch(context)
-                    if (showWelcome) {
-                        showSettings = false
+                    if (PreferencesManager.isFirstLaunch(context)) {
+                        backStack.clear()
+                        backStack.add(AppDestination.Welcome)
                     }
                 }
-                else -> { /* No action needed */
-                }
+                else -> { /* No action needed */ }
             }
         }
 
@@ -102,11 +112,9 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                else -> { /* No action needed */
-                }
+                else -> { /* No action needed */ }
             }
         }
-
 
         var showSentryDialog by remember {
             mutableStateOf(
@@ -114,48 +122,74 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
-        when {
-            showWelcome -> {
-                WelcomeScreen(
-                    onGetStarted = {
-                        PreferencesManager.setFirstLaunchCompleted(context)
-                        showWelcome = false
-                        Timber.i("Welcome screen completed, navigating to main app")
-                    }
-                )
+        NavDisplay(
+            backStack = backStack,
+            onBack = {
+                backStack.removeAt(backStack.lastIndex)
             }
-
-            showSettings -> {
-                SettingsScreen(
-                    onBackClick = {
-                        showSettings = false
+        ) { destination ->
+            when (destination) {
+                AppDestination.Welcome -> {
+                    NavEntry(AppDestination.Welcome) {
+                        WelcomeScreen(
+                            onGetStarted = {
+                                PreferencesManager.setFirstLaunchCompleted(context)
+                                backStack.clear()
+                                backStack.add(AppDestination.Devices)
+                                Timber.i("Welcome screen completed, navigating to main app")
+                            }
+                        )
                     }
-                )
-            }
-
-            else -> {
-                LaunchedEffect(Unit) {
-
-                    // Update dialog visibility based on current status
-                    showSentryDialog =
-                        !PreferencesManager.isSentryConsentDialogDismissed(context)
                 }
 
-                // Show the main camera device manager
-                CameraDeviceManager(
-                    onSettingsClick = {
-                        showSettings = true
+                AppDestination.Settings -> {
+                    NavEntry(AppDestination.Settings) {
+                        SettingsScreen(
+                            onBackClick = {
+                                backStack.removeAt(backStack.lastIndex)
+                            }
+                        )
                     }
-                )
+                }
 
-                if (showSentryDialog) {
-                    SentryConsentDialog(
-                        onDismiss = {
-                            showSentryDialog = false
+                AppDestination.Devices -> {
+                    NavEntry(AppDestination.Devices) {
+                        LaunchedEffect(Unit) {
+                            showSentryDialog =
+                                !PreferencesManager.isSentryConsentDialogDismissed(context)
                         }
-                    )
+
+                        CameraDeviceManager(
+                            onSettingsClick = {
+                                backStack.add(AppDestination.Settings)
+                            }
+                        )
+
+                        if (showSentryDialog) {
+                            SentryConsentDialog(
+                                onDismiss = {
+                                    showSentryDialog = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                else -> {
+                    NavEntry(destination) {
+                        // Unknown destination fallback
+                    }
                 }
             }
         }
     }
+}
+
+private sealed interface AppDestination : NavKey {
+    @Serializable
+    data object Welcome : AppDestination
+    @Serializable
+    data object Devices : AppDestination
+    @Serializable
+    data object Settings : AppDestination
 }

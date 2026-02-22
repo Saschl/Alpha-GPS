@@ -1,5 +1,5 @@
 [versions]
-agp = "9.1.0-rc01"
+agp = "9.0.1"
 kotlin = "2.3.10"
 coreKtx = "1.17.0"
 junit = "4.13.2"
@@ -17,6 +17,9 @@ runtimeLivedata = "1.10.3"
 coreSplashscreen = "1.2.0"
 lifecycle = "2.10.0"
 workRuntimeKtx = "2.11.1"
+navigation3 = "1.0.1"
+kotlinxSerializationCore = "1.10.0"
+kotlinSerialization = "2.3.10"
 
 
 [libraries]
@@ -51,10 +54,14 @@ accompanist-permissions = { module = "com.google.accompanist:accompanist-permiss
 google-play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "googlePlayServicesLocation" }
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-lifecycle-service = { group = "androidx.lifecycle", name = "lifecycle-service", version.ref = "lifecycle" }
+androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "navigation3" }
+androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "navigation3" }
+kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerializationCore" }
 
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+jetbrains-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlinSerialization"}
 

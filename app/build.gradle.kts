@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.jetbrains.kotlin.serialization)
     id("androidx.room")
     id("com.google.devtools.ksp")
     id("io.sentry.android.gradle") version "6.1.0"
@@ -117,6 +118,10 @@ dependencies {
     ksp(libs.androidx.room.compiler)
 
     //implementation(libs.androidx.work.runtime.ktx)
+
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.navigation3.ui)
+    implementation(libs.kotlinx.serialization.core)
 }
 
 

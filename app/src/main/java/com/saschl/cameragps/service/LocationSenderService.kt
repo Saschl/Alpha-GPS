@@ -45,10 +45,9 @@ import com.saschl.cameragps.service.SonyBluetoothConstants.locationTransmissionN
 import com.saschl.cameragps.utils.PreferencesManager
 import com.saschl.cameragps.utils.SentryInit
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -131,7 +130,22 @@ class LocationSenderService : LifecycleService() {
         return value.size >= 5 && (value[4].toInt() and 0x02) != 0
     }
 
-    private val commandMutex = Mutex()
+    private data class CommandData(val intent: Intent?, val startId: Int)
+
+    private val commandChannel = Channel<CommandData>(Channel.UNLIMITED)
+
+    init {
+        lifecycleScope.launch {
+            for (command in commandChannel) {
+                handleStartCommand(command.intent, command.startId)
+                Timber.i(
+                    "processed start command ${command.startId} with intent action ${command.intent?.action} and address ${
+                        command.intent?.getStringExtra("address")
+                    }"
+                )
+            }
+        }
+    }
 
     private lateinit var bluetoothStateReceiver: BluetoothStateBroadcastReceiver
 
@@ -449,25 +463,7 @@ class LocationSenderService : LifecycleService() {
             return START_NOT_STICKY
         }
 
-        /**
-         *  TODO maybe handle with commandqueue to avoid blocking the main thread (although all operations finish rather quickly)
-         *
-         * val commandQueue = Channel<CommandData>(Channel.UNLIMITED)
-         *  data class CommandData(val intent: Intent?, val startId: Int)
-         */
-
-        lifecycleScope.launch {
-            commandMutex.withLock {
-                handleStartCommand(intent, startId)
-                Timber.i(
-                    "processed start command $startId with intent action ${intent?.action} and address ${
-                        intent?.getStringExtra(
-                            "address"
-                        )
-                    }"
-                )
-            }
-        }
+        commandChannel.trySend(CommandData(intent, startId))
 
         return START_REDELIVER_INTENT
     }
