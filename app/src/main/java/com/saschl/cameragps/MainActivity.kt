@@ -21,7 +21,7 @@ import com.saschl.cameragps.service.FileTree
 import com.saschl.cameragps.service.GlobalExceptionHandler
 import com.saschl.cameragps.service.LocationSenderService
 import com.saschl.cameragps.ui.SentryConsentDialog
-import com.saschl.cameragps.ui.SettingsScreen
+import com.saschl.cameragps.ui.settings.SettingsScreen
 import com.saschl.cameragps.ui.WelcomeScreen
 import com.saschl.cameragps.ui.device.CameraDeviceManager
 import com.saschl.cameragps.ui.theme.CameraGpsTheme
