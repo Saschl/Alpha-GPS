@@ -44,8 +44,8 @@ import com.saschl.cameragps.service.SonyBluetoothConstants.CHARACTERISTIC_READ_U
 import com.saschl.cameragps.service.SonyBluetoothConstants.locationTransmissionNotificationId
 import com.saschl.cameragps.utils.PreferencesManager
 import com.saschl.cameragps.utils.SentryInit
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import timber.log.Timber
@@ -130,23 +130,6 @@ class LocationSenderService : LifecycleService() {
         return value.size >= 5 && (value[4].toInt() and 0x02) != 0
     }
 
-    private data class CommandData(val intent: Intent?, val startId: Int)
-
-    private val commandChannel = Channel<CommandData>(Channel.UNLIMITED)
-
-    init {
-        lifecycleScope.launch {
-            for (command in commandChannel) {
-                handleStartCommand(command.intent, command.startId)
-                Timber.i(
-                    "processed start command ${command.startId} with intent action ${command.intent?.action} and address ${
-                        command.intent?.getStringExtra("address")
-                    }"
-                )
-            }
-        }
-    }
-
     private lateinit var bluetoothStateReceiver: BluetoothStateBroadcastReceiver
 
     private val gattErrorCount = AtomicInteger(0)
@@ -155,6 +138,11 @@ class LocationSenderService : LifecycleService() {
     companion object {
         val activeTransmissions = mutableStateMapOf<String, Boolean>()
     }
+
+    private val commandChannel = Channel<CommandData>(Channel.UNLIMITED)
+
+    data class CommandData(val intent: Intent?, val startId: Int)
+
 
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     private fun startLocationTransmission() {
@@ -198,7 +186,7 @@ class LocationSenderService : LifecycleService() {
             return
         }
 
-        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+        fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).addOnSuccessListener { location ->
             if (location != null) {
                 locationResult = location
                 Timber.d("Sending initial location to all active connections")
@@ -207,7 +195,7 @@ class LocationSenderService : LifecycleService() {
                 }
             }
         }.addOnFailureListener { e ->
-            Timber.e(e, "Failed to get last location from Play Services")
+            Timber.e(e, "Failed to get initial location from Play Services")
         }
 
         val locationRequest = LocationRequest.Builder(
@@ -229,11 +217,11 @@ class LocationSenderService : LifecycleService() {
                     Looper.getMainLooper()
                 )
             }.addOnFailureListener { exception ->
-            Timber.e(
-                exception,
-                "Location settings are not satisfied, cannot start location updates"
-            )
-        }
+                Timber.e(
+                    exception,
+                    "Location settings are not satisfied, cannot start location updates"
+                )
+            }
 
     }
 
@@ -463,7 +451,27 @@ class LocationSenderService : LifecycleService() {
             return START_NOT_STICKY
         }
 
+        /**
+         *  TODO maybe handle with commandqueue to avoid blocking the main thread (although all operations finish rather quickly)
+         *
+         * val commandQueue = Channel<CommandData>(Channel.UNLIMITED)
+         *  data class CommandData(val intent: Intent?, val startId: Int)
+         */
+
         commandChannel.trySend(CommandData(intent, startId))
+
+       /* lifecycleScope.launch {
+            commandMutex.withLock {
+                handleStartCommand(intent, startId)
+                Timber.i(
+                    "processed start command $startId with intent action ${intent?.action} and address ${
+                        intent?.getStringExtra(
+                            "address"
+                        )
+                    }"
+                )
+            }
+        }*/
 
         return START_REDELIVER_INTENT
     }
@@ -546,6 +554,13 @@ class LocationSenderService : LifecycleService() {
         initializeLocationServices()
         cameraConnectionManager =
             CameraConnectionManager(this, bluetoothManager, bluetoothGattCallback)
+
+        lifecycleScope.launch {
+            for (command in commandChannel) {
+                handleStartCommand(command.intent, command.startId)
+                Timber.i("processed start command ${command.startId}")
+            }
+        }
     }
 
     private fun initializeLocationServices() {
@@ -737,9 +752,9 @@ class LocationSenderService : LifecycleService() {
                 writeLocationCharacteristic
             )
 
-            lifecycleScope.launch {
-                handleServicesDiscovered(gatt, service)
-            }
+           // lifecycleScope.launch {
+            handleServicesDiscovered(gatt, service)
+          //  }
         }
 
         @SuppressLint("MissingPermission")
@@ -950,12 +965,6 @@ class LocationSenderService : LifecycleService() {
 
         if (!BluetoothGattUtils.writeCharacteristic(gatt, characteristic, locationPacket)) {
             Timber.e("Failed to send location data to camera")
-            /* val currentErrorCount = gattErrorCount.incrementAndGet()
-             if (currentErrorCount > 50) {
-                 Timber.e("Too many GATT errors, disconnecting from device")
-                 cameraConnectionManager.pauseDevice(gatt.device.address.uppercase())
-                 cancelLocationTransmission()
-             }*/
         }
     }
 
