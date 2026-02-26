@@ -156,8 +156,8 @@ class CameraDeviceCompanionService : CompanionDeviceService() {
             action = ACTION_REQUEST_SHUTDOWN
 
         }
-        shutdownIntent.putExtra("address", "all")
-        startService(shutdownIntent)
+     //   shutdownIntent.putExtra("address", "all")
+      //  startService(shutdownIntent)
         return super.onUnbind(intent)
     }
 

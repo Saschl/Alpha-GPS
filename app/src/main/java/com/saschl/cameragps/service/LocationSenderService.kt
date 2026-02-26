@@ -44,10 +44,11 @@ import com.saschl.cameragps.service.SonyBluetoothConstants.CHARACTERISTIC_READ_U
 import com.saschl.cameragps.service.SonyBluetoothConstants.locationTransmissionNotificationId
 import com.saschl.cameragps.utils.PreferencesManager
 import com.saschl.cameragps.utils.SentryInit
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -134,14 +135,18 @@ class LocationSenderService : LifecycleService() {
 
     private val gattErrorCount = AtomicInteger(0)
 
+    private val commandMutex = Mutex()
+
 
     companion object {
         val activeTransmissions = mutableStateMapOf<String, Boolean>()
     }
 
-    private val commandChannel = Channel<CommandData>(Channel.UNLIMITED)
+   // private val commandChannel = Channel<CommandData>(Channel.UNLIMITED)
 
-    data class CommandData(val intent: Intent?, val startId: Int)
+    //data class CommandData(val intent: Intent?, val startId: Int)
+
+
 
 
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
@@ -458,9 +463,9 @@ class LocationSenderService : LifecycleService() {
          *  data class CommandData(val intent: Intent?, val startId: Int)
          */
 
-        commandChannel.trySend(CommandData(intent, startId))
+        //commandChannel.trySend(CommandData(intent, startId))
 
-       /* lifecycleScope.launch {
+        lifecycleScope.launch {
             commandMutex.withLock {
                 handleStartCommand(intent, startId)
                 Timber.i(
@@ -471,7 +476,7 @@ class LocationSenderService : LifecycleService() {
                     }"
                 )
             }
-        }*/
+        }
 
         return START_REDELIVER_INTENT
     }
@@ -540,6 +545,17 @@ class LocationSenderService : LifecycleService() {
         }.onFailure { e ->
             Timber.e(e, "Failed to unregister Bluetooth state receiver")
         }
+        activeTransmissions.clear()
+        if (::locationCallback.isInitialized && usePlayServices) {
+            fusedLocationClient.removeLocationUpdates(locationCallback)
+        }
+        locationListener?.let { listener ->
+            locationManager?.removeUpdates(listener)
+            locationListener = null
+        }
+        stopFallbackPeriodicTransmission()
+        isLocationTransmitting = false
+        isInitialized = false
         cameraConnectionManager.disconnectAll()
         Timber.i("Destroyed service")
     }
@@ -555,12 +571,12 @@ class LocationSenderService : LifecycleService() {
         cameraConnectionManager =
             CameraConnectionManager(this, bluetoothManager, bluetoothGattCallback)
 
-        lifecycleScope.launch {
+        /*lifecycleScope.launch {
             for (command in commandChannel) {
                 handleStartCommand(command.intent, command.startId)
                 Timber.i("processed start command ${command.startId}")
             }
-        }
+        }*/
     }
 
     private fun initializeLocationServices() {
@@ -970,18 +986,6 @@ class LocationSenderService : LifecycleService() {
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     private fun requestShutdown(startId: Int? = null) {
-        activeTransmissions.clear()
-        if (::locationCallback.isInitialized && usePlayServices) {
-            fusedLocationClient.removeLocationUpdates(locationCallback)
-        }
-        locationListener?.let { listener ->
-            locationManager?.removeUpdates(listener)
-            locationListener = null
-        }
-        stopFallbackPeriodicTransmission()
-        isLocationTransmitting = false
-        isInitialized = false
-        cameraConnectionManager.disconnectAll()
         if (startId != null) {
             stopSelf(startId)
         } else {
