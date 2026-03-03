@@ -555,7 +555,7 @@ class LocationSenderService : LifecycleService() {
         }
         stopFallbackPeriodicTransmission()
         isLocationTransmitting = false
-        isInitialized = false
+
         cameraConnectionManager.disconnectAll()
         Timber.i("Destroyed service")
     }
@@ -986,6 +986,7 @@ class LocationSenderService : LifecycleService() {
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     private fun requestShutdown(startId: Int? = null) {
+        isInitialized = false
         if (startId != null) {
             stopSelf(startId)
         } else {
