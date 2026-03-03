@@ -161,6 +161,12 @@ class LocationSenderService : LifecycleService() {
         }
         if (!isLocationTransmitting) {
             Timber.i("Starting location transmission")
+            if (locationResult != null) {
+                Timber.i("Sending last known location to all active connections")
+                cameraConnectionManager.getActiveConnections().forEach { device ->
+                    sendData(device.gatt, device.writeCharacteristic, device.locationDataConfig)
+                }
+            }
 
             try {
                 if (usePlayServices) {
@@ -437,10 +443,8 @@ class LocationSenderService : LifecycleService() {
             return
         }
 
-        delay(1000)
-
-        if (cameraConnectionManager.getActiveCameras().isEmpty()) {
-            Timber.d("No connected cameras remaining, shutting down service")
+        if (cameraConnectionManager.getActiveCameras().isEmpty() && deviceDao.getAlwaysOnEnabledDeviceCount() == 0) {
+            Timber.d("No connected or always on cameras remaining, shutting down service")
             requestShutdown(startId)
         }
     }
@@ -938,10 +942,7 @@ class LocationSenderService : LifecycleService() {
             val locationEnabledCharacteristic =
                 service?.getCharacteristic(CHARACTERISTIC_LOCATION_ENABLED_IN_CAMERA)
 
-            if (locationEnabledCharacteristic != null && characteristic.uuid.equals(
-                    CHARACTERISTIC_READ_UUID
-                )
-            ) {
+            if (locationEnabledCharacteristic != null && characteristic.uuid.equals(CHARACTERISTIC_READ_UUID)) {
 
                 val locEnabled = gatt.readCharacteristic(locationEnabledCharacteristic)
 
