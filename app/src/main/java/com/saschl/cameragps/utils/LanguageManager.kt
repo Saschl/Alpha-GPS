@@ -14,7 +14,8 @@ object LanguageManager {
     enum class SupportedLanguage(val locale: Locale, val displayName: String) {
         ENGLISH(Locale.ENGLISH, "English"),
         GERMAN(Locale.GERMAN, "Deutsch"),
-        CHINESE(Locale.SIMPLIFIED_CHINESE, "中文");
+        CHINESE(Locale.SIMPLIFIED_CHINESE, "中文"),
+        SPANISH(Locale.forLanguageTag("es-*"), "Español");
 
         companion object {
             fun getSupportedLocales(): List<Locale> {
