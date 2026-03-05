@@ -25,6 +25,11 @@ android {
         generateLocaleConfig = true
     }
 
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
 
 
     defaultConfig {
@@ -122,6 +127,7 @@ dependencies {
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.kotlinx.serialization.core)
+    implementation(libs.androidx.appcompat)
 }
 
 
