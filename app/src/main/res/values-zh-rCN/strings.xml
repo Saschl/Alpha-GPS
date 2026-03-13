@@ -13,7 +13,7 @@
     <string name="step1_granted">✓ 已授权</string>
     <string name="step2_title">步骤2：后台位置权限</string>
     <string name="step2_desc">允许应用在后台或屏幕关闭时持续向相机同步GPS数据。</string>
-    <string name="step2_android10_warning">在下一个对话框中，您需要选择"始终允许"</string>
+    <string name="step2_android10_warning">在下一个对话框中，您需要选择始终允许</string>
     <string name="step2_grant">授予后台位置权限</string>
     <string name="step2_granted">✓ 已授权</string>
     <string name="view_logs">查看日志</string>
@@ -39,7 +39,7 @@
     <string name="background_location_benefit_1">• 应用最小化时持续GPS同步</string>
     <string name="background_location_benefit_2">• 屏幕关闭时也能跟踪位置</string>
     <string name="background_location_benefit_3">• 长时间拍摄时无缝照片地理标记</string>
-    <string name="background_location_instruction">请在下一个对话框中选择"始终允许"。</string>
+    <string name="background_location_instruction">请在下一个对话框中选择始终允许。</string>
     <!-- Error messages -->
     <string name="permissions_required_app_error">应用正常运行需要 %s 权限</string>
     <string name="background_location_required_error">应用不在前台时需要后台位置权限来持续GPS同步</string>
@@ -93,11 +93,11 @@
     <string name="help_need_more_description">查看顶部菜单中的应用日志以获取故障排除信息，或检查您的设备设置以确保已授予所有权限。</string>
     <!-- FAQ Questions -->
     <string name="faq_connect_camera_question">如何将相机连接到应用？</string>
-    <string name="faq_connect_camera_answer">1. 确保您的相机支持蓝牙连接和GPS标记\n2. 在手机上启用蓝牙\n3. 点击"添加相机设备"开始配对过程\n4. 按照屏幕说明配对您的相机。首次配对完成后重启相机。</string>
+    <string name="faq_connect_camera_answer">1. 确保您的相机支持蓝牙连接和GPS标记\n2. 在手机上启用蓝牙\n3. 点击添加相机设备开始配对过程\n4. 按照屏幕说明配对您的相机。首次配对完成后重启相机。</string>
     <string name="faq_camera_not_appearing_question">为什么我的相机没有出现在列表中？</string>
     <string name="faq_camera_not_appearing_answer">• 确保相机处于配对/蓝牙模式\n• 检查相机是否支持所需的蓝牙配置文件\n• 确保您在范围内（通常为10米）\n• 尝试重启手机蓝牙</string>
     <string name="faq_enable_service_question">如何让该服务保持常驻？它好像运行一段时间后就会自动停止</string>
-    <string name="faq_enable_service_answer">请访问应用设置，尝试电池和后台部分的选项。或者尝试以下方法：\n要保持GPS数据与相机同步：\n1. 进入设备设置 &gt; 应用\n2. 在应用列表中找到"Alpha GPS"\n3. 点击并选择"电池"\n4. 选择"不优化"或"允许后台活动"\n5. 这可防止系统停止GPS服务\n\n您也可以通过应用中的设备详情页面访问此设置。</string>
+    <string name="faq_enable_service_answer">请访问应用设置，尝试电池和后台部分的选项。或者尝试以下方法：\n要保持GPS数据与相机同步：\n1. 进入设备设置 &gt; 应用\n2. 在应用列表中找到Alpha GPS\n3. 点击并选择电池\n4. 选择不优化或允许后台活动\n5. 这可防止系统停止GPS服务\n\n您也可以通过应用中的设备详情页面访问此设置。</string>
     <string name="faq_camera_not_connecting_question">我的相机无法自动连接，该怎么办？</string>
     <string name="faq_camera_not_connecting_answer">不幸的是，可能会出现自动连接不工作的情况。如果遇到问题，请执行以下操作：在主屏幕上，点击您的相机打开详情屏幕。在那里您可以启用始终开启模式，这将保持应用在前台。\n或者尝试关闭再打开蓝牙，或在应用中移除该设备后重新配对。</string>
     <string name="faq_permissions_question">应用需要哪些权限？</string>
@@ -133,18 +133,18 @@
     <string name="battery_optimization_dont_show">不再显示</string>
     <!-- Xiaomi-specific battery optimization strings -->
     <string name="battery_optimization_xiaomi_title">小米电池优化</string>
-    <string name="battery_optimization_xiaomi_message">小米设备需要额外步骤以确保应用在后台可靠工作：\n\n1. 打开电池优化设置\n2. 将此应用设置为"不优化"\n3. 进入设置 &gt; 应用 &gt; 应用管理\n4. 找到此应用并启用"自启动"\n5. 将"后台应用限制"设置为"无限制"</string>
+    <string name="battery_optimization_xiaomi_message">小米设备需要额外步骤以确保应用在后台可靠工作：\n\n1. 打开电池优化设置\n2. 将此应用设置为不优化\n3. 进入设置 &gt; 应用 &gt; 应用管理\n4. 找到此应用并启用自启动\n5. 将后台应用限制设置为无限制</string>
     <string name="battery_optimization_xiaomi_autostart">打开自启动设置</string>
     <string name="battery_optimization_xiaomi_battery">打开电池设置</string>
     <!-- Oppo-specific battery optimization strings -->
     <string name="battery_optimization_oppo_title">OPPO电池优化</string>
-    <string name="battery_optimization_oppo_message">OPPO设备（包括真我和一加）需要额外步骤以确保应用在后台可靠工作：\n\n1. 打开电池优化设置\n2. 允许此应用在后台运行\n3. 为此应用启用"自启动"\n4. 为此应用禁用"电池优化"\n5. 将"后台应用管理"设置为允许无限制后台活动</string>
+    <string name="battery_optimization_oppo_message">OPPO设备（包括真我和一加）需要额外步骤以确保应用在后台可靠工作：\n\n1. 打开电池优化设置\n2. 允许此应用在后台运行\n3. 为此应用启用自启动\n4. 为此应用禁用电池优化\n5. 将后台应用管理设置为允许无限制后台活动</string>
     <string name="battery_optimization_oppo_autostart">打开自启动设置</string>
     <string name="battery_optimization_oppo_battery">打开电池设置</string>
     <!-- Battery optimization settings screen strings -->
     <string name="battery_optimization_settings_title">电池和后台设置</string>
     <string name="battery_optimization_settings_short"><![CDATA[如果应用在后台无法可靠运行，请调整这些设置。<b>注意：这不会改变应用本身的行为，只是尝试防止被系统终止。仅在遇到问题时使用。</b>]]></string>
-    <string name="battery_optimization_settings_description">某些制造商需要额外的后台活动权限。如果第一个选项不起作用，请点击"打开设置"按钮。导航到电池/电源部分，尝试将应用排除在优化之外。</string>
+    <string name="battery_optimization_settings_description">某些制造商需要额外的后台活动权限。如果第一个选项不起作用，请点击打开设置按钮。导航到电池/电源部分，尝试将应用排除在优化之外。</string>
     <string name="learn_more">了解更多</string>
     <string name="show_less">收起</string>
     <string name="battery_optimization_open_settings">禁用电池优化</string>
@@ -152,11 +152,11 @@
     <string name="battery_optimization_open_app_settings">打开应用设置</string>
     <string name="battery_optimization_open_failed">无法打开设置</string>
     <string name="not_paired_tap_to_pair_again">未配对，请在蓝牙设置中配对设备</string>
-    <string name="to_pair_with_your_camera_please">要与相机"%1$s"配对，请：</string>
+    <string name="to_pair_with_your_camera_please">要与相机%1$s配对，请：</string>
     <string name="_1_turn_on_your_camera">\n1. 打开相机</string>
     <string name="_2_go_to_camera_settings_and_enable_bluetooth_pairing_mode">2. 进入相机设置并启用蓝牙/配对模式</string>
     <string name="_3_make_sure_the_camera_is_discoverable">3. 确保相机可被发现</string>
-    <string name="once_your_camera_is_ready_tap_continue_to_start_pairing">\n相机准备就绪后，点击"继续"开始配对。</string>
+    <string name="once_your_camera_is_ready_tap_continue_to_start_pairing">\n相机准备就绪后，点击继续开始配对。</string>
     <string name="android_12_requires_keep_alive">运行Android 11及以下版本的设备必须启用保持活跃模式。点击设备并启用该设置</string>
     <string name="always_on_description">在前台运行应用。如果在有激进省电措施的设备上无法可靠建立连接，这会很有用（例如小米等机型）</string>
     <string name="quick_start_feature_title">快速开始</string>
@@ -179,7 +179,7 @@
     <string name="delete">删除</string>
     <string name="always_on_enabled">始终开启已启用</string>
     <string name="enable_auto_start_description">在设备重启后，为已配置始终开启模式的设备自动启动此应用。</string>
-    <string name="hint_if_issues_after_switching">注意：由于应用近期的更新，在禁用"始终开启"模式后如遇到问题，您可能需要执行一次性操作。只需在此设置中将设备停用再重新启用一次即可。这仅在应用更新后需要操作一次，之后的模式切换将立即生效。</string>
+    <string name="hint_if_issues_after_switching">注意：由于应用近期的更新，在禁用始终开启模式后如遇到问题，您可能需要执行一次性操作。只需在此设置中将设备停用再重新启用一次即可。这仅在应用更新后需要操作一次，之后的模式切换将立即生效。</string>
     <!-- Pairing dialog strings -->
     <string name="pairing_camera_title">正在配对相机</string>
     <string name="pairing_complete_title">配对完成</string>
@@ -209,4 +209,6 @@
     <string name="disconnect_notification_channel_name">设备已断开</string>
     <string name="continue_anyway">仍然继续</string>
     <string name="permissions_missing_description">需开启以下权限以确保功能完整：\n%1$s</string>
+    <string name="app_name" translatable="false"></string>
+    <string name="app_name_ui" translatable="false"></string>
 </resources>
