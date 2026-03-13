@@ -15,7 +15,8 @@ object LanguageManager {
         ENGLISH(Locale.ENGLISH, "English"),
         GERMAN(Locale.GERMAN, "Deutsch"),
         CHINESE(Locale.SIMPLIFIED_CHINESE, "中文"),
-        SPANISH(Locale.forLanguageTag("es-*"), "Español");
+        SPANISH(Locale.forLanguageTag("es-*"), "Español"),
+        JAPANESE(Locale.JAPANESE, "日本語");
 
         companion object {
             fun getSupportedLocales(): List<Locale> {
