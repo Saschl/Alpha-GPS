@@ -19,10 +19,7 @@
     <string name="view_logs">查看日志</string>
     <string name="camera_gps_permissions">Alpha GPS 权限</string>
     <!-- Permission request strings -->
-    <string name="sample_requires_permissions">应用需要以下权限：</string>
     <string name="grant_permissions">授予权限</string>
-    <string name="permissions_required_title">应用所需权限</string>
-    <string name="permissions_required_message">应用需要以下权限才能正常工作：\n %1$s</string>
     <string name="continue_button">继续</string>
     <string name="dismiss_button">关闭</string>
     <string name="cancel_button">取消</string>

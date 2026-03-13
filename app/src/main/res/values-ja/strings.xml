@@ -17,7 +17,6 @@
     <string name="view_logs">ログを参照</string>
     <string name="camera_gps_permissions">Alpha GPSの権限</string>
     <string name="grant_permissions">権限を付与</string>
-    <string name="permissions_required_title">サンプルに必要な権限</string>
     <string name="permissions_missing_title">権限なし</string>
     <string name="continue_button">進む</string>
     <string name="cancel_button">キャンセル</string>
