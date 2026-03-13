@@ -21,10 +21,7 @@
     <string name="camera_gps_permissions">Alpha GPS Permissions</string>
 
     <!-- Permission request strings -->
-    <string name="sample_requires_permissions">Sample requires permission/s:</string>
     <string name="grant_permissions">Grant permissions</string>
-    <string name="permissions_required_title">Permissions required by the sample</string>
-    <string name="permissions_required_message">The sample requires the following permissions to work:\n %1$s</string>
     <string name="permissions_missing_title">Permissions missing</string>
     <string name="permissions_missing_description">Some features may not work until these permissions are granted:\n%1$s</string>
     <string name="continue_button">Continue</string>
