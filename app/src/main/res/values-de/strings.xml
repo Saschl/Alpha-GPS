@@ -7,14 +7,14 @@
     <string name="permission_bluetooth">Erlaube der App Bluetooth Verbindungen herzustellen</string>
     <string name="permission_notifications">Erlaube der App Benachrichtigungen anzuzeigen</string>
     <string name="step1_title">Schritt 1: Bluetooth und Standortzugriff</string>
-    <string name="step1_desc">Benötigt, damit eine Verbindung zur Kamera hergestellt werden kann und der Standort gesendet wird</string>
+    <string name="step1_desc">Benötigt, damit eine Verbindung zur Kamera hergestellt werden kann und der Standort gesendet wird.</string>
     <string name="step1_missing">Fehlende Berechtigungen:</string>
     <string name="step1_grant">Erlaube Standort &amp; Bluetooth Zugriff</string>
     <string name="step1_granted">✓ Freigegeben</string>
     <string name="step2_title">Schritt 2: Erlaube Standortzugriff im Hintergrund</string>
-    <string name="step2_desc">Ermöglicht kontinuierliche Übertragung der Standortdaten, auch im Hintergrund</string>
-    <string name="step2_android10_warning">Im nächsten Dialog musst du \"Immer erlauben\" auswählen, damit die App korrekt funktioniert.</string>
-    <string name="step2_grant">Erlaube Standortzugriff im Hintergrund.</string>
+    <string name="step2_desc">Ermöglicht kontinuierliche Übertragung der Standortdaten, auch im Hintergrund.</string>
+    <string name="step2_android10_warning">Im nächsten Dialog musst du \"Immer erlauben\" auswählen, damit die App korrekt funktioniert</string>
+    <string name="step2_grant">Erlaube Standortzugriff im Hintergrund</string>
     <string name="step2_granted">✓ Freigegeben</string>
     <string name="view_logs">Zeige Logs</string>
     <string name="camera_gps_permissions">Alpha GPS Berechtigungen</string>
@@ -98,7 +98,7 @@
     <!-- Device detail screen strings -->
     <string name="back">Zurück</string>
     <string name="enable_device">Gerät aktivieren</string>
-    <string name="enableConstantly">Always On (dauerbetrieb)</string>
+    <string name="enableConstantly">Always On (Dauerbetrieb)</string>
     <!-- Device limitation hint -->
     <string name="single_device_limitation_hint">Derzeit wird nur eine Kamera gleichzeitig unterstützt. Unterstützung für mehrere Geräte wird in einem zukünftigen Update hinzugefügt.</string>
     <string name="android_12_requires_keep_alive">Smartphones mit Android 11 oder niedriger müssen den Immer An Modus aktivieren. Tippen sie auf die Kamera und aktivieren sie die Einstellung</string>
@@ -164,7 +164,7 @@
     <string name="welcome_feature_gps_sync_title">Echtzeit Standortübertragung</string>
     <string name="welcome_feature_connect_title">Verbinde die Kamera</string>
     <string name="how_about_privacy">Wie sieht es mit dem Datenschutz aus?</string>
-    <string name="how_about_privacy_answer">Die App überträgt keine personenbezogenen Daten an den Entwickler und/oder Drittparteien. Sämtliche erhobenen Informationen (Standortdaten) werden nur für die Übertragung der Standortdaten zu der verbundenen Kamera verwendet und nicht dauerhaft gespeichert. Die Standorterfassung wird beendet, sobald die Verbindung zur Kamera getrennt wird. Zur Analyse von Problemen und Abstürzen können anonymisierte Logs an den FehlerberichtsDienst Sentry gesendet werden. Sie können diese Funktion jederzeit in den AppEinstellungen unter „Fehlerberichterstattung Einstellungen“ deaktivieren. Bei Fragen und Bedenken melden Sie sich bitte bei der oben genannten EMailAdresse.</string>
+    <string name="how_about_privacy_answer">Die App überträgt keine personenbezogenen Daten an den Entwickler und/oder Drittparteien. Sämtliche erhobenen Informationen (Standortdaten) werden nur für die Übertragung der Standortdaten zu der verbundenen Kamera verwendet und nicht dauerhaft gespeichert. Die Standorterfassung wird beendet, sobald die Verbindung zur Kamera getrennt wird. Zur Analyse von Problemen und Abstürzen können anonymisierte Logs an Sentry gesendet werden. Sie können diese Funktion jederzeit in den App-Einstellungen unter „Fehlerberichterstattung Einstellungen“ deaktivieren. Bei Fragen und Bedenken melden Sie sich bitte bei der oben genannten E-Mail-Adresse.</string>
     <!-- Device management strings -->
     <string name="device_management">Geräteverwaltung</string>
     <string name="no_devices_found">Keine Geräte gefunden</string>
