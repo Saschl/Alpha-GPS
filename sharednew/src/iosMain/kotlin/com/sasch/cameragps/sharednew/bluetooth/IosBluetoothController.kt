@@ -1,6 +1,7 @@
 package com.sasch.cameragps.sharednew.bluetooth
 
 import com.sasch.cameragps.sharednew.bluetooth.IosBluetoothController.ensureInitialized
+import com.sasch.cameragps.sharednew.bluetooth.IosBluetoothController.retryAfterPairing
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCSignatureOverride
@@ -23,6 +24,8 @@ import platform.CoreBluetooth.CBCentralManagerDelegateProtocol
 import platform.CoreBluetooth.CBCentralManagerOptionRestoreIdentifierKey
 import platform.CoreBluetooth.CBCentralManagerRestoredStatePeripheralsKey
 import platform.CoreBluetooth.CBCharacteristic
+import platform.CoreBluetooth.CBCharacteristicPropertyIndicate
+import platform.CoreBluetooth.CBCharacteristicPropertyNotify
 import platform.CoreBluetooth.CBCharacteristicWriteWithResponse
 import platform.CoreBluetooth.CBManagerStatePoweredOn
 import platform.CoreBluetooth.CBPeripheral
@@ -42,6 +45,7 @@ import platform.Foundation.NSCalendarUnitSecond
 import platform.Foundation.NSCalendarUnitYear
 import platform.Foundation.NSData
 import platform.Foundation.NSError
+import platform.Foundation.NSLog
 import platform.Foundation.NSNumber
 import platform.Foundation.NSUUID
 import platform.Foundation.NSUserDefaults
@@ -136,7 +140,16 @@ object IosBluetoothController : BluetoothController {
 
             didDiscoverCharacteristicsForService.characteristics?.forEach { characteristicAny ->
                 val characteristic = characteristicAny as CBCharacteristic
-                when (characteristic.UUID.UUIDString.uppercase()) {
+                val uuid = characteristic.UUID.UUIDString.uppercase()
+                NSLog(
+                    "  Discovered characteristic $uuid  props=0x${
+                        characteristic.properties.toString(
+                            16
+                        )
+                    }"
+                )
+
+                when (uuid) {
                     SonyBleConstants.LOCATION_CHARACTERISTIC_UUID_STRING -> session.locationWriteCharacteristic =
                         characteristic
 
@@ -151,25 +164,38 @@ object IosBluetoothController : BluetoothController {
 
                     SonyBleConstants.TIME_SYNC_CHARACTERISTIC_UUID_STRING -> session.timeSyncCharacteristic =
                         characteristic
+
+                    SonyBleConstants.LOCATION_ENABLED_CHARACTERISTIC_UUID_STRING -> session.locationEnabledCharacteristic =
+                        characteristic
+                }
+
+                // Collect every characteristic that supports notifications/indications
+                // so we can pick the best one for pairing.
+                val supportsNotify =
+                    (characteristic.properties and CBCharacteristicPropertyNotify) != 0uL ||
+                            (characteristic.properties and CBCharacteristicPropertyIndicate) != 0uL
+                if (supportsNotify) {
+                    session.notifiableCharacteristics.add(characteristic)
                 }
             }
 
-            when {
-                session.locationConfig == null && session.readCharacteristic != null && session.phase == PeripheralPhase.Connected -> {
-                    session.phase = PeripheralPhase.ReadingConfig
-                    peripheral.readValueForCharacteristic(session.readCharacteristic!!)
-                }
+            // Trigger pairing by subscribing to notifications.
+            // The CCCD descriptor write that setNotifyValue triggers often requires
+            // authentication on BLE peripherals, which prompts the iOS system
+            // pairing dialog for unpaired devices.
+            // We only try characteristics that actually support notifications.
+            /*if (session.phase == PeripheralPhase.Connected) {
+                val pairingTarget = session.notifiableCharacteristics.firstOrNull()
 
-                session.locationConfig == null && session.readCharacteristic == null && session.phase == PeripheralPhase.Connected -> {
-                    session.locationConfig =
-                        LocationTransmissionConfig(shouldSendTimeZoneAndDst = false)
-                    beginGpsEnable(session)
+                if (pairingTarget != null) {
+                    session.phase = PeripheralPhase.WaitingForPairing
+                    NSLog("Subscribing to notifications on ${pairingTarget.UUID.UUIDString} (props=0x${pairingTarget.properties.toString(16)}) to trigger pairing")
+                    peripheral.setNotifyValue(true, forCharacteristic = pairingTarget)
+                } else {
+                    NSLog("No notifiable characteristic discovered yet – proceeding with normal flow (pairing will be attempted on first encrypted read/write)")
+                    proceedAfterPairing(session, peripheral)
                 }
-
-                session.locationConfig != null && session.phase == PeripheralPhase.Connected -> {
-                    beginGpsEnable(session)
-                }
-            }
+            }*/
         }
 
         @ObjCSignatureOverride
@@ -179,7 +205,22 @@ object IosBluetoothController : BluetoothController {
             error: NSError?,
         ) {
             val session = sessions[peripheral.identifier.UUIDString] ?: return
+
+            // iOS triggers the system pairing dialog automatically when an
+            // encrypted characteristic is read, but the callback still fires
+            // with an authentication error. Retry after a delay so the user
+            // has time to accept the pairing dialog.
+            if (isAuthenticationError(error)) {
+                retryAfterPairing(session) {
+                    peripheral.readValueForCharacteristic(didUpdateValueForCharacteristic)
+                }
+                return
+            }
+
             val value = didUpdateValueForCharacteristic.value?.toByteArray() ?: return
+
+            // Pairing succeeded (or was not needed) – reset the retry counter.
+            session.pairingRetryCount = 0
 
             if (didUpdateValueForCharacteristic.UUID.UUIDString.uppercase() == SonyBleConstants.READ_CHARACTERISTIC_UUID_STRING) {
                 session.locationConfig = LocationTransmissionConfig(
@@ -196,6 +237,26 @@ object IosBluetoothController : BluetoothController {
             error: NSError?,
         ) {
             val session = sessions[peripheral.identifier.UUIDString] ?: return
+
+            // Handle pairing-related authentication errors. iOS shows the
+            // system pairing dialog automatically; we restart the GPS-enable
+            // flow after a delay so the user has time to accept.
+            if (isAuthenticationError(error)) {
+                retryAfterPairing(session) {
+                    // Reset phase so beginGpsEnable's guard doesn't skip it.
+                    session.phase = PeripheralPhase.Connected
+                    beginGpsEnable(session)
+                }
+                return
+            }
+
+            if (error != null) {
+                NSLog("BLE write failed for ${didWriteValueForCharacteristic.UUID.UUIDString}: ${error.localizedDescription}")
+                return
+            }
+
+            // Write succeeded – reset the pairing retry counter.
+            session.pairingRetryCount = 0
 
             when (didWriteValueForCharacteristic.UUID.UUIDString.uppercase()) {
                 SonyBleConstants.ENABLE_UNLOCK_GPS_UUID_STRING -> {
@@ -217,6 +278,59 @@ object IosBluetoothController : BluetoothController {
                     session
                 )
             }
+        }
+
+        /**
+         * Called after [CBPeripheral.setNotifyValue] completes. We use this as
+         * the pairing trigger: subscribing to notifications writes the CCCD
+         * descriptor, which on many BLE peripherals requires authentication.
+         * If the device is not yet paired iOS shows the system pairing dialog
+         * automatically and – on success – retries the write internally, so
+         * this callback fires once with `error == null`.
+         *
+         * If pairing is rejected the callback fires with an authentication
+         * error and we retry with [retryAfterPairing].
+         */
+        @ObjCSignatureOverride
+        override fun peripheral(
+            peripheral: CBPeripheral,
+            didUpdateNotificationStateForCharacteristic: CBCharacteristic,
+            error: NSError?,
+        ) {
+            val session = sessions[peripheral.identifier.UUIDString] ?: return
+
+            // Ignore callbacks that arrive when we're no longer waiting for
+            // pairing (e.g. the unsubscribe we issue after pairing succeeds).
+            if (session.phase != PeripheralPhase.WaitingForPairing) return
+
+            if (isAuthenticationError(error)) {
+                retryAfterPairing(session) {
+                    peripheral.setNotifyValue(
+                        true,
+                        forCharacteristic = didUpdateNotificationStateForCharacteristic,
+                    )
+                }
+                return
+            }
+
+            // Subscription succeeded (pairing done or wasn't needed) or failed
+            // with a non-auth error (e.g. notifications not supported). Either
+            // way, reset the retry counter and continue with the normal flow.
+            session.pairingRetryCount = 0
+
+            if (error != null) {
+                NSLog("Notification subscription failed (non-auth, code=${error.code}): ${error.localizedDescription} – continuing anyway")
+            } else {
+                NSLog("Notification subscription succeeded – device is paired")
+                // Unsubscribe; we only needed the CCCD write for pairing.
+                peripheral.setNotifyValue(
+                    false,
+                    forCharacteristic = didUpdateNotificationStateForCharacteristic,
+                )
+            }
+
+            // Proceed to the normal config-read / GPS-enable flow.
+            proceedAfterPairing(session, peripheral)
         }
     }
 
@@ -343,7 +457,7 @@ object IosBluetoothController : BluetoothController {
 
             // Re-issue the connection request for persisted devices so
             // CoreBluetooth keeps retrying in the background.
-            if (id in autoReconnectIds) {
+            if (id in autoReconnectIds && central.state == CBManagerStatePoweredOn) {
                 central.connectPeripheral(didFailToConnectPeripheral, options = null)
             }
         }
@@ -364,7 +478,7 @@ object IosBluetoothController : BluetoothController {
             // disconnect()), queue a new connection attempt. CoreBluetooth will
             // keep retrying silently in the background until the device is found –
             // even across app kills, thanks to state preservation.
-            if (id in autoReconnectIds) {
+            if (id in autoReconnectIds && central.state == CBManagerStatePoweredOn) {
                 central.connectPeripheral(didDisconnectPeripheral, options = null)
             }
 
@@ -393,12 +507,19 @@ object IosBluetoothController : BluetoothController {
     }
 
     override suspend fun stopScan() {
-        central.stopScan()
+        if (central.state == CBManagerStatePoweredOn) {
+            central.stopScan()
+        }
     }
 
     override suspend fun connect(identifier: String): Boolean {
         val peripheral = discovered[identifier] ?: return false
         if (connected.containsKey(identifier)) return true
+
+        if (central.state != CBManagerStatePoweredOn) {
+            NSLog("Cannot connect: CBCentralManager is not powered on (state=${central.state})")
+            return false
+        }
 
         return suspendCancellableCoroutine { cont ->
             connectCallbacks[identifier] = { success ->
@@ -408,7 +529,9 @@ object IosBluetoothController : BluetoothController {
 
             cont.invokeOnCancellation {
                 connectCallbacks.remove(identifier)
-                central.cancelPeripheralConnection(peripheral)
+                if (central.state == CBManagerStatePoweredOn) {
+                    central.cancelPeripheralConnection(peripheral)
+                }
             }
         }
     }
@@ -419,6 +542,15 @@ object IosBluetoothController : BluetoothController {
         removePersistedPeripheral(identifier)
 
         val peripheral = connected[identifier] ?: discovered[identifier] ?: return
+
+        if (central.state != CBManagerStatePoweredOn) {
+            // Can't send the cancel command – just clean up local state.
+            connected.remove(identifier)
+            sessions.remove(identifier)
+            updateLocationTracking()
+            refreshDeviceList()
+            return
+        }
 
         suspendCancellableCoroutine<Unit> { cont ->
             disconnectCallbacks[identifier] = {
@@ -436,8 +568,71 @@ object IosBluetoothController : BluetoothController {
     // Helpers
     // ---------------------------------------------------------------------------
 
+    /**
+     * Returns `true` when the Core Bluetooth ATT error indicates that the
+     * peripheral requires pairing / bonding before the operation can succeed.
+     * iOS shows the system pairing dialog automatically, but the original
+     * operation's callback still receives one of these errors.
+     */
+    private fun isAuthenticationError(error: NSError?): Boolean {
+        NSLog("error, if any: ${error?.code} / ${error?.localizedDescription}")
+        if (error == null) return false
+        return error.code == SonyBleConstants.ATT_ERROR_INSUFFICIENT_AUTHENTICATION ||
+                error.code == SonyBleConstants.ATT_ERROR_INSUFFICIENT_ENCRYPTION
+    }
+
+    /**
+     * Schedules [operation] to run after a delay, giving the user time to
+     * accept the iOS system pairing dialog. If the maximum number of retries
+     * has been reached the peripheral is disconnected instead.
+     */
+    private fun retryAfterPairing(
+        session: PeripheralSession,
+        operation: () -> Unit,
+    ) {
+        if (session.pairingRetryCount >= SonyBleConstants.MAX_PAIRING_RETRIES) {
+            NSLog("Pairing failed after ${SonyBleConstants.MAX_PAIRING_RETRIES} retries, disconnecting ${session.peripheral.name}")
+            if (central.state == CBManagerStatePoweredOn) {
+                central.cancelPeripheralConnection(session.peripheral)
+            }
+            return
+        }
+        session.pairingRetryCount++
+        session.phase = PeripheralPhase.WaitingForPairing
+        NSLog("Authentication error – iOS pairing may be in progress (attempt ${session.pairingRetryCount}/${SonyBleConstants.MAX_PAIRING_RETRIES}), retrying in ${SonyBleConstants.PAIRING_RETRY_DELAY_MS}ms")
+        controllerScope.launch {
+            delay(SonyBleConstants.PAIRING_RETRY_DELAY_MS)
+            operation()
+        }
+    }
+
+    /**
+     * Continues the normal connection flow after the pairing step
+     * (notification subscription) has completed or been skipped.
+     */
+    private fun proceedAfterPairing(session: PeripheralSession, peripheral: CBPeripheral) {
+        when {
+            session.locationConfig == null && session.readCharacteristic != null -> {
+                session.phase = PeripheralPhase.ReadingConfig
+                peripheral.readValueForCharacteristic(session.readCharacteristic!!)
+            }
+
+            session.locationConfig == null -> {
+                session.locationConfig =
+                    LocationTransmissionConfig(shouldSendTimeZoneAndDst = false)
+                session.phase = PeripheralPhase.Connected
+                beginGpsEnable(session)
+            }
+
+            else -> {
+                session.phase = PeripheralPhase.Connected
+                beginGpsEnable(session)
+            }
+        }
+    }
+
     private fun beginGpsEnable(session: PeripheralSession) {
-        if (session.phase == PeripheralPhase.EnablingGps || session.phase == PeripheralPhase.LockingGps || session.phase == PeripheralPhase.SyncingTime || session.phase == PeripheralPhase.Ready) {
+        if (session.phase == PeripheralPhase.EnablingGps || session.phase == PeripheralPhase.LockingGps || session.phase == PeripheralPhase.SyncingTime || session.phase == PeripheralPhase.Ready || session.phase == PeripheralPhase.WaitingForPairing) {
             return
         }
 
@@ -582,7 +777,7 @@ object IosBluetoothController : BluetoothController {
             discovered.map { (id, peripheral) ->
                 BluetoothDeviceInfo(
                     identifier = id,
-                    name = peripheral.name ?: "Unknown Device",
+                    name = peripheral.name ?: "Unknown device",
                     isConnected = connected.containsKey(id),
                 )
             }
@@ -611,6 +806,7 @@ object IosBluetoothController : BluetoothController {
 private enum class PeripheralPhase {
     Connected,
     ReadingConfig,
+    WaitingForPairing,
     EnablingGps,
     LockingGps,
     SyncingTime,
@@ -625,8 +821,11 @@ private data class PeripheralSession(
     var unlockGpsCharacteristic: CBCharacteristic? = null,
     var lockGpsCharacteristic: CBCharacteristic? = null,
     var timeSyncCharacteristic: CBCharacteristic? = null,
+    var locationEnabledCharacteristic: CBCharacteristic? = null,
     var locationConfig: LocationTransmissionConfig? = null,
     var phase: PeripheralPhase = PeripheralPhase.Connected,
+    var pairingRetryCount: Int = 0,
+    val notifiableCharacteristics: MutableList<CBCharacteristic> = mutableListOf(),
 )
 
 private data class LocationTransmissionConfig(
@@ -652,11 +851,12 @@ private data class LocationTransmissionConfig(
 private object SonyBleConstants {
     const val LOCATION_SERVICE_UUID_STRING = "8000DD00-DD00-FFFF-FFFF-FFFFFFFFFFFF"
     const val CONTROL_SERVICE_UUID_STRING = "8000CC00-CC00-FFFF-FFFF-FFFFFFFFFFFF"
-    const val LOCATION_CHARACTERISTIC_UUID_STRING = "0000DD11-0000-1000-8000-00805F9B34FB"
-    const val READ_CHARACTERISTIC_UUID_STRING = "0000DD21-0000-1000-8000-00805F9B34FB"
-    const val ENABLE_UNLOCK_GPS_UUID_STRING = "0000DD30-0000-1000-8000-00805F9B34FB"
-    const val ENABLE_LOCK_GPS_UUID_STRING = "0000DD31-0000-1000-8000-00805F9B34FB"
-    const val TIME_SYNC_CHARACTERISTIC_UUID_STRING = "0000CC13-0000-1000-8000-00805F9B34FB"
+    const val LOCATION_CHARACTERISTIC_UUID_STRING = "DD11"
+    const val READ_CHARACTERISTIC_UUID_STRING = "DD21"
+    const val ENABLE_UNLOCK_GPS_UUID_STRING = "DD30"
+    const val ENABLE_LOCK_GPS_UUID_STRING = "DD31"
+    const val TIME_SYNC_CHARACTERISTIC_UUID_STRING = "CC13"
+    const val LOCATION_ENABLED_CHARACTERISTIC_UUID_STRING = "DD01"
 
     val locationServiceUuid: CBUUID = CBUUID.UUIDWithString(LOCATION_SERVICE_UUID_STRING)
     val controlServiceUuid: CBUUID = CBUUID.UUIDWithString(CONTROL_SERVICE_UUID_STRING)
@@ -664,6 +864,16 @@ private object SonyBleConstants {
     const val locationUpdateIntervalMs = 10_000L
     const val accuracyThresholdMeters = 200.0
     const val oldLocationThresholdMs = 5 * 60 * 1000.0
+
+    // ATT error codes that indicate the device requires pairing/bonding.
+    // iOS shows the system pairing dialog automatically when an encrypted
+    // characteristic is accessed, but the read/write callback still fires
+    // with one of these errors. We retry after a short delay so that the
+    // user has time to accept the dialog.
+    const val ATT_ERROR_INSUFFICIENT_AUTHENTICATION = 5L
+    const val ATT_ERROR_INSUFFICIENT_ENCRYPTION = 15L
+    const val MAX_PAIRING_RETRIES = 3
+    const val PAIRING_RETRY_DELAY_MS = 3_000L
 }
 
 private fun hasTimeZoneDstFlag(value: ByteArray): Boolean {
