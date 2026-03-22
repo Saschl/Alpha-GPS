@@ -204,4 +204,13 @@
     <string name="location_provider_restart_required">Schalte die Kamera aus und starte die App neu um die Änderungen durchzuführen. Falls der \"Always On\" Modus aktiv ist, deaktiviere diesen zuerst</string>
     <string name="disconnect_notification_channel_name">Gerät nicht verbunden</string>
     <string name="continue_anyway">Trotzdem fortfahren</string>
+
+    <!-- Tip Jar -->
+    <string name="tip_jar">Trinkgeld</string>
+    <string name="tip_jar_description">Gefällt dir die App? Trinkgelder helfen dabei, die Apple-Entwicklergebühr (99 $/Jahr) zu decken, die benötigt wird, um diese App im App Store zu halten. Es ist vollkommen optional – danke, dass du Alpha GPS verwendest! ❤️</string>
+    <string name="tip_jar_loading">Wird geladen…</string>
+    <string name="tip_jar_thank_you">Vielen Dank für deine Unterstützung! ❤️</string>
+    <string name="tip_jar_unavailable">Tipp-Optionen sind gerade nicht verfügbar.</string>
+    <string name="tip_jar_error_prefix">Ein Fehler ist aufgetreten:</string>
+    <string name="tip_jar_dismiss">Schließen</string>
 </resources>

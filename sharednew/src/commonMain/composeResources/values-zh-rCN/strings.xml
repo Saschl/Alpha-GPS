@@ -207,4 +207,13 @@
     <string name="disconnect_notification_channel_name">设备已断开</string>
     <string name="continue_anyway">仍然继续</string>
     <string name="permissions_missing_description">需开启以下权限以确保功能完整：\n%1$s</string>
+
+    <!-- Tip Jar -->
+    <string name="tip_jar">打赏</string>
+    <string name="tip_jar_description">喜欢这款应用？打赏有助于支付 Apple 开发者计划费用（每年 99 美元），让这款应用继续留在 App Store 上。这完全是自愿的——感谢使用 Alpha GPS！❤️</string>
+    <string name="tip_jar_loading">加载中…</string>
+    <string name="tip_jar_thank_you">非常感谢您的支持！❤️</string>
+    <string name="tip_jar_unavailable">打赏选项暂时不可用。</string>
+    <string name="tip_jar_error_prefix">出现错误：</string>
+    <string name="tip_jar_dismiss">关闭</string>
 </resources>

@@ -8,7 +8,6 @@
         <array>
             <string>location</string>
             <string>bluetooth-central</string>
-            <string>processing</string>
         </array>
     </dict>
 </plist>

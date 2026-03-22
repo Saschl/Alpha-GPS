@@ -257,4 +257,13 @@
     <string name="notification_channel_name">Transmission state</string>
     <string name="disconnect_notification_channel_name">device disconnected</string>
     <string name="continue_anyway">Continue anyway</string>
+
+    <!-- Tip Jar -->
+    <string name="tip_jar">Tip Jar</string>
+    <string name="tip_jar_description">Enjoying the app? Tips help cover the Apple Developer Program fee ($99/year) required to keep this app on the App Store. It\'s completely optional — thank you for using Alpha GPS! ❤️</string>
+    <string name="tip_jar_loading">Loading…</string>
+    <string name="tip_jar_thank_you">Thank you so much for your support! ❤️</string>
+    <string name="tip_jar_unavailable">Tip options are not available right now.</string>
+    <string name="tip_jar_error_prefix">Something went wrong:</string>
+    <string name="tip_jar_dismiss">Dismiss</string>
 </resources>
