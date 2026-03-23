@@ -19,6 +19,9 @@
     <string name="step2_grant">Grant Background Location</string>
     <string name="step2_granted">&#10003; Granted</string>
     <string name="view_logs">View logs</string>
+    <string name="logs_title">Logs</string>
+    <string name="logs_clear_all">Clear all logs</string>
+    <string name="logs_empty">No logs available yet. Logs will appear here as the app runs.</string>
     <string name="camera_gps_permissions">Alpha GPS Permissions</string>
 
     <!-- Permission request strings -->

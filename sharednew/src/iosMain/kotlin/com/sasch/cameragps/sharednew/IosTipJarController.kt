@@ -1,5 +1,6 @@
 package com.sasch.cameragps.sharednew
 
+import com.diamondedge.logging.logging
 import com.sasch.cameragps.sharednew.IosTipJarController.fetchProducts
 import com.sasch.cameragps.sharednew.IosTipJarController.products
 import com.sasch.cameragps.sharednew.IosTipJarController.purchase
@@ -164,7 +165,7 @@ internal object IosTipJarController {
 
                 _products.update { tipProducts }
                 _isLoadingProducts.update { false }
-                NSLog("TipJar: loaded ${tipProducts.size} products")
+                logging().i(msg = { "TipJar: loaded ${tipProducts.size} products" })
             }
 
             @ObjCSignatureOverride

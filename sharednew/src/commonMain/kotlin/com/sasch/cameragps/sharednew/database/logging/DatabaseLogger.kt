@@ -7,7 +7,7 @@ class DatabaseLogger(private val logRepository: LogRepository) : Logger {
     override fun verbose(tag: String, msg: String) {
         logRepository.insertLog(
             timestamp = Clock.System.now().toEpochMilliseconds(),
-            priority = 1,
+            priority = 2,
             tag = tag,
             message = msg,
             exception = null
@@ -17,7 +17,7 @@ class DatabaseLogger(private val logRepository: LogRepository) : Logger {
     override fun debug(tag: String, msg: String) {
         logRepository.insertLog(
             timestamp = Clock.System.now().toEpochMilliseconds(),
-            priority = 2, // INFO
+            priority = 3,
             tag = tag,
             message = msg,
             exception = null
@@ -27,7 +27,7 @@ class DatabaseLogger(private val logRepository: LogRepository) : Logger {
     override fun info(tag: String, msg: String) {
         logRepository.insertLog(
             timestamp = Clock.System.now().toEpochMilliseconds(),
-            priority = 3,
+            priority = 4,
             tag = tag,
             message = msg,
             exception = null
@@ -37,7 +37,7 @@ class DatabaseLogger(private val logRepository: LogRepository) : Logger {
     override fun warn(tag: String, msg: String, t: Throwable?) {
         logRepository.insertLog(
             timestamp = Clock.System.now().toEpochMilliseconds(),
-            priority = 4,
+            priority = 5,
             tag = tag,
             message = msg,
             exception = null
@@ -47,7 +47,7 @@ class DatabaseLogger(private val logRepository: LogRepository) : Logger {
     override fun error(tag: String, msg: String, t: Throwable?) {
         logRepository.insertLog(
             timestamp = Clock.System.now().toEpochMilliseconds(),
-            priority = 5,
+            priority = 6,
             tag = tag,
             message = msg,
             exception = null
@@ -63,4 +63,5 @@ class DatabaseLogger(private val logRepository: LogRepository) : Logger {
     override fun isLoggingWarning(): Boolean = true
 
     override fun isLoggingError(): Boolean = true
+
 }

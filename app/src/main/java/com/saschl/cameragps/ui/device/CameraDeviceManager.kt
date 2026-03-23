@@ -52,7 +52,8 @@ import timber.log.Timber
 @Composable
 fun CameraDeviceManager(
     onSettingsClick: () -> Unit = {},
-    onHelpClick: () -> Unit = {}
+    onHelpClick: () -> Unit = {},
+    onLogsClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -203,7 +204,8 @@ fun CameraDeviceManager(
                             selectedDevice = device
                         },
                         onSettingsClick = onSettingsClick,
-                        onHelpClick = onHelpClick
+                        onHelpClick = onHelpClick,
+                        onLogsClick = onLogsClick
                     )
                 }
             } else {

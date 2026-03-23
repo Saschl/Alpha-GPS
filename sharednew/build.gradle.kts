@@ -92,6 +92,7 @@ kotlin {
                 implementation(libs.androidx.activity.compose)
                 implementation(libs.androidx.sqlite.bundled)
                 implementation("com.diamondedge:logging:2.1.0")
+                implementation(libs.kotlinx.datetime)
 
             }
         }

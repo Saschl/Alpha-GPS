@@ -22,6 +22,8 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.sasch.cameragps.sharednew.database.LogDatabase
 import com.sasch.cameragps.sharednew.database.getDatabaseBuilder
+import com.sasch.cameragps.sharednew.database.logging.LogRepository
+import com.sasch.cameragps.sharednew.ui.logs.SharedLogViewerScreen
 import com.saschl.cameragps.service.FileTree
 import com.saschl.cameragps.service.GlobalExceptionHandler
 import com.saschl.cameragps.service.LocationSenderService
@@ -73,6 +75,7 @@ class MainActivity : AppCompatActivity() {
         val context = LocalContext.current
         val cameraDeviceDAO =
             LogDatabase.getRoomDatabase(getDatabaseBuilder(context)).cameraDeviceDao()
+        val logRepository = remember(context) { LogRepository(getDatabaseBuilder(context)) }
         val lifecycleState by ProcessLifecycleOwner.get().lifecycle.currentStateFlow.collectAsState()
 
         val startDestination = remember {
@@ -178,6 +181,9 @@ class MainActivity : AppCompatActivity() {
                             },
                             onHelpClick = {
                                 backStack.add(AppDestination.Help)
+                            },
+                            onLogsClick = {
+                                backStack.add(AppDestination.Logs)
                             }
                         )
 
@@ -188,6 +194,17 @@ class MainActivity : AppCompatActivity() {
                                 }
                             )
                         }
+                    }
+                }
+
+                AppDestination.Logs -> {
+                    NavEntry(AppDestination.Logs) {
+                        SharedLogViewerScreen(
+                            logRepository = logRepository,
+                            onBackClick = {
+                                backStack.removeAt(backStack.lastIndex)
+                            }
+                        )
                     }
                 }
 
@@ -211,4 +228,7 @@ private sealed interface AppDestination : NavKey {
 
     @Serializable
     data object Help : AppDestination
+
+    @Serializable
+    data object Logs : AppDestination
 }

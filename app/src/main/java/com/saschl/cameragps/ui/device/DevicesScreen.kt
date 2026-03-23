@@ -36,7 +36,6 @@ import com.sasch.cameragps.sharednew.ui.device.SharedDevicesScreen
 import com.saschl.cameragps.R
 import com.saschl.cameragps.service.AssociatedDeviceCompat
 import com.saschl.cameragps.ui.AssociatedDevicesList
-import com.saschl.cameragps.ui.LogViewerActivity
 import com.saschl.cameragps.ui.getPermissionDescription
 import com.saschl.cameragps.ui.pairing.PairingManager
 import timber.log.Timber
@@ -52,7 +51,8 @@ fun DevicesScreen(
     onDeviceAssociated: (AssociatedDeviceCompat) -> Unit,
     onConnect: (AssociatedDeviceCompat) -> Unit,
     onSettingsClick: () -> Unit = {},
-    onHelpClick: () -> Unit = {}
+    onHelpClick: () -> Unit = {},
+    onLogsClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
     // State for managing pairing after association
@@ -93,15 +93,11 @@ fun DevicesScreen(
                 )
             }
             IconButton(
-                onClick = {
-                    context.startActivity(
-                        Intent(context, LogViewerActivity::class.java)
-                    )
-                }
+                onClick = onLogsClick
             ) {
                 Icon(
                     painterResource(R.drawable.baseline_view_list_24),
-                    contentDescription = "View Logs",
+                    contentDescription = stringResource(R.string.view_logs),
                     tint = MaterialTheme.colorScheme.onSurface
                 )
             }

@@ -1,9 +1,5 @@
-package com.saschl.cameragps.ui
+package com.sasch.cameragps.sharednew.ui.logs
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,71 +19,66 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.saschl.cameragps.R
-import com.saschl.cameragps.service.FileTree
-import com.saschl.cameragps.ui.theme.CameraGpsTheme
+import cameragps.sharednew.generated.resources.Res
+import cameragps.sharednew.generated.resources.arrow_back_24px
+import cameragps.sharednew.generated.resources.back
+import cameragps.sharednew.generated.resources.logs_clear_all
+import cameragps.sharednew.generated.resources.logs_empty
+import cameragps.sharednew.generated.resources.logs_title
+import com.sasch.cameragps.sharednew.database.logging.LogEntry
+import com.sasch.cameragps.sharednew.database.logging.LogRepository
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.format.FormatStringsInDatetimeFormats
+import kotlinx.datetime.format.byUnicodePattern
+import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
+import kotlin.time.Instant
 
-class LogViewerActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            CameraGpsTheme {
-                LogViewerScreen() {
-                    finish()
-                }
-            }
-        }
-    }
+@OptIn(FormatStringsInDatetimeFormats::class)
+private val LOG_TIMESTAMP_FORMAT = LocalDateTime.Format {
+    byUnicodePattern("dd-MM-yyyy HH:mm:ss.SSS")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LogViewerScreen(
-    onClose: () -> Unit,
+fun SharedLogViewerScreen(
+    logRepository: LogRepository,
+    onBackClick: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    var isRefreshing by remember { mutableStateOf(false) }
-
-    val logs by remember { FileTree.getLogs() }.observeAsState(emptyList())
+    val logs by remember(logRepository) { logRepository.getRecentLogs() }.collectAsState(emptyList())
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = stringResource(R.string.app_name_ui),
-                        //  style = MaterialTheme.typography.headlineSmall,
+                        text = stringResource(Res.string.logs_title),
                         fontWeight = FontWeight.SemiBold
                     )
                 },
-
                 navigationIcon = {
-                    IconButton(
-                        onClick = onClose
-                    ) {
+                    IconButton(onClick = onBackClick) {
                         Icon(
-                            painterResource(R.drawable.arrow_back_24px),
-                            contentDescription = stringResource(R.string.back)
+                            painter = painterResource(Res.drawable.arrow_back_24px),
+                            contentDescription = stringResource(Res.string.back)
                         )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
                 )
@@ -101,41 +92,39 @@ private fun LogViewerScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Clear logs button
             Button(
                 onClick = {
                     scope.launch {
-                        try {
-                            FileTree.clearLogs()
-                            // refreshLogs()
-                        } catch (e: Exception) {
-                            //logs = listOf("Error clearing logs: ${e.message}")
-                        }
+                        logRepository.clearAllLogs()
                     }
-                },
-                //modifier = Modifier.fillMaxWidth()
+                }
             ) {
-                Text("Clear All Logs")
+                Text(stringResource(Res.string.logs_clear_all))
             }
 
-            // Log content
-            SelectionContainer {
+            SelectionContainer(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f)
                         .verticalScroll(rememberScrollState())
                 ) {
-                    if (logs.isEmpty() && !isRefreshing) {
+                    if (logs.isEmpty()) {
                         Text(
-                            text = "No logs available yet. Logs will appear here as the app runs.\n\n",
+                            text = stringResource(Res.string.logs_empty),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(16.dp)
                         )
-                    } else if (logs.isNotEmpty()) {
+                    } else {
+                        val logText = remember(logs) {
+                            logs.joinToString("\n\n") { it.toDisplayString() }
+                        }
                         Text(
-                            text = logs.joinToString("\n\n"),
+                            text = logText,
                             style = MaterialTheme.typography.bodySmall.copy(
                                 fontFamily = FontFamily.Monospace,
                                 fontSize = 12.sp
@@ -148,3 +137,28 @@ private fun LogViewerScreen(
         }
     }
 }
+
+private fun LogEntry.toDisplayString(): String {
+    val exceptionText = if (exception.isNullOrBlank()) "" else "\n$exception"
+    return "[${timestamp.toDisplayTimestamp()}] [${priority.toDisplayPriority()}] ${tag ?: "App"}: $message$exceptionText"
+}
+
+private fun Long.toDisplayTimestamp(): String {
+    val localDateTime =
+        Instant.fromEpochMilliseconds(this).toLocalDateTime(TimeZone.currentSystemDefault())
+    return LOG_TIMESTAMP_FORMAT.format(localDateTime)
+}
+
+private fun Int.toDisplayPriority(): String = when (this) {
+    1, 2 -> "V"
+    3 -> "D"
+    4 -> "I"
+    5 -> "W"
+    6 -> "E"
+    7 -> "A"
+    else -> toString()
+}
+
+
+
+
