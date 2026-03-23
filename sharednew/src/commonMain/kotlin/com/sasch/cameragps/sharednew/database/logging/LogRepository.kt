@@ -1,18 +1,24 @@
-package com.saschl.cameragps.database.logging
+package com.sasch.cameragps.sharednew.database.logging
 
-import android.content.Context
-import com.sasch.cameragps.sharednew.database.logging.LogEntry
-import com.saschl.cameragps.database.LogDatabase
+import androidx.room.RoomDatabase
+import com.sasch.cameragps.sharednew.database.LogDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
-class LogRepository(context: Context) {
-    private val logDao = LogDatabase.getDatabase(context).logDao()
+class LogRepository(databaseBuilder: RoomDatabase.Builder<LogDatabase>) {
+    private val logDao = LogDatabase.Companion.getRoomDatabase(databaseBuilder).logDao()
     private val scope = CoroutineScope(Dispatchers.IO)
 
-    fun insertLog(timestamp: Long, priority: Int, tag: String?, message: String, exception: String?) {
+    fun insertLog(
+        timestamp: Long,
+        priority: Int,
+        tag: String?,
+        message: String,
+        exception: String?
+    ) {
         scope.launch {
             val logEntry = LogEntry(
                 timestamp = timestamp,

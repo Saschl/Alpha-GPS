@@ -34,8 +34,9 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.android.play.core.review.ReviewException
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.google.android.play.core.review.model.ReviewErrorCode
+import com.sasch.cameragps.sharednew.database.LogDatabase
 import com.sasch.cameragps.sharednew.database.devices.CameraDevice
-import com.saschl.cameragps.database.LogDatabase
+import com.sasch.cameragps.sharednew.database.getDatabaseBuilder
 import com.saschl.cameragps.service.AssociatedDeviceCompat
 import com.saschl.cameragps.service.BluetoothStateBroadcastReceiver
 import com.saschl.cameragps.service.LocationSenderService
@@ -56,7 +57,9 @@ fun CameraDeviceManager(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val deviceManager = context.getSystemService<CompanionDeviceManager>()
-    val devicesDao = LogDatabase.getDatabase(context).cameraDeviceDao()
+    val devicesDao = LogDatabase.getRoomDatabase(
+        getDatabaseBuilder(context)
+    ).cameraDeviceDao()
     val adapter = context.getSystemService<BluetoothManager>()?.adapter
     val locationManager = context.getSystemService<LocationManager>()
     var selectedDevice by remember {

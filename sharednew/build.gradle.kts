@@ -5,6 +5,9 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.jetbrains.compose)
 
+    id("androidx.room")
+    id("com.google.devtools.ksp")
+
 }
 
 compose.resources {
@@ -82,9 +85,14 @@ kotlin {
                 implementation(libs.compose.foundation.multiplatform)
                 implementation(libs.compose.material3.multiplatform)
                 //     implementation(libs.components.resources)
+
+                //implementation(libs.androidx.sqlite.bundled)
                 implementation(libs.androidx.room.runtime)
                 implementation(compose.components.resources)
                 implementation(libs.androidx.activity.compose)
+                implementation(libs.androidx.sqlite.bundled)
+                implementation("com.diamondedge:logging:2.1.0")
+
             }
         }
 
@@ -123,4 +131,14 @@ kotlin {
         }
     }
 
+}
+
+dependencies {
+    add("kspAndroid", libs.androidx.room.compiler)
+    add("kspIosSimulatorArm64", libs.androidx.room.compiler)
+    add("kspIosArm64", libs.androidx.room.compiler)
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
 }

@@ -20,7 +20,8 @@ import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import com.saschl.cameragps.database.LogDatabase
+import com.sasch.cameragps.sharednew.database.LogDatabase
+import com.sasch.cameragps.sharednew.database.getDatabaseBuilder
 import com.saschl.cameragps.service.FileTree
 import com.saschl.cameragps.service.GlobalExceptionHandler
 import com.saschl.cameragps.service.LocationSenderService
@@ -70,7 +71,8 @@ class MainActivity : AppCompatActivity() {
     @Composable
     private fun AppContent() {
         val context = LocalContext.current
-        val cameraDeviceDAO = LogDatabase.getDatabase(context).cameraDeviceDao()
+        val cameraDeviceDAO =
+            LogDatabase.getRoomDatabase(getDatabaseBuilder(context)).cameraDeviceDao()
         val lifecycleState by ProcessLifecycleOwner.get().lifecycle.currentStateFlow.collectAsState()
 
         val startDestination = remember {

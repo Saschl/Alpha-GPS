@@ -2,10 +2,11 @@ package com.saschl.cameragps.service
 
 import android.content.Context
 import android.util.Log
-import androidx.lifecycle.asLiveData
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.saschl.cameragps.database.logging.LogRepository
+import androidx.lifecycle.asLiveData
+import com.sasch.cameragps.sharednew.database.getDatabaseBuilder
+import com.sasch.cameragps.sharednew.database.logging.LogRepository
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
 import java.text.SimpleDateFormat
@@ -13,7 +14,7 @@ import java.util.Date
 import java.util.Locale
 
 class FileTree(context: Context, private val minPriority: Int) : Timber.Tree() {
-    private val logRepository = LogRepository(context.applicationContext)
+    private val logRepository = LogRepository(getDatabaseBuilder(context))
 
     companion object {
         @Volatile
@@ -23,7 +24,8 @@ class FileTree(context: Context, private val minPriority: Int) : Timber.Tree() {
             if (logRepository == null) {
                 synchronized(this) {
                     if (logRepository == null) {
-                        logRepository = LogRepository(context.applicationContext)
+                        logRepository =
+                            LogRepository(getDatabaseBuilder(context.applicationContext))
                     }
                 }
             }

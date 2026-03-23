@@ -38,11 +38,12 @@ import com.sasch.cameragps.sharednew.bluetooth.SonyBluetoothConstants
 import com.sasch.cameragps.sharednew.bluetooth.SonyBluetoothConstants.CHARACTERISTIC_READ_UUID
 import com.sasch.cameragps.sharednew.bluetooth.SonyBluetoothConstants.LOCATION_UPDATE_INTERVAL_MS
 import com.sasch.cameragps.sharednew.bluetooth.SonyBluetoothConstants.locationTransmissionNotificationId
+import com.sasch.cameragps.sharednew.database.LogDatabase
 import com.sasch.cameragps.sharednew.database.devices.CameraDevice
 import com.sasch.cameragps.sharednew.database.devices.CameraDeviceDAO
+import com.sasch.cameragps.sharednew.database.getDatabaseBuilder
 import com.sasch.cameragps.sharednew.ui.settings.LocationProvider
 import com.saschl.cameragps.R
-import com.saschl.cameragps.database.LogDatabase
 import com.saschl.cameragps.notification.NotificationsHelper
 import com.saschl.cameragps.utils.PreferencesManager
 import com.saschl.cameragps.utils.SentryInit
@@ -543,7 +544,9 @@ class LocationSenderService : LifecycleService() {
         }
 
 
-        deviceDao = LogDatabase.getDatabase(this).cameraDeviceDao()
+        deviceDao = LogDatabase.getRoomDatabase(
+            getDatabaseBuilder(this)
+        ).cameraDeviceDao()
         initializeLogging()
         initializeLocationServices()
 

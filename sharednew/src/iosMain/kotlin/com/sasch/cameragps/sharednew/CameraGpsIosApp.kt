@@ -13,7 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import cameragps.sharednew.generated.resources.Res
-import cameragps.sharednew.generated.resources.app_name_ui
+import cameragps.sharednew.generated.resources.header_device_list
 import cameragps.sharednew.generated.resources.info_24px
 import cameragps.sharednew.generated.resources.settings
 import cameragps.sharednew.generated.resources.settings_24px
@@ -82,17 +82,17 @@ internal fun CameraGpsIosApp() {
 
         IosScreen.Devices -> {
             SharedDevicesScreen(
-                title = stringResource(Res.string.app_name_ui),
+                title = stringResource(Res.string.header_device_list),
                 topBarActions = {
-                    TextButton(onClick = { currentScreen = IosScreen.Settings }) {
-                        Icon(
-                            painterResource(Res.drawable.settings_24px),
-                            contentDescription = stringResource(Res.string.settings)
-                        )
-                    }
                     TextButton(onClick = { currentScreen = IosScreen.Help }) {
                         Icon(
                             painterResource(Res.drawable.info_24px),
+                            contentDescription = stringResource(Res.string.settings)
+                        )
+                    }
+                    TextButton(onClick = { currentScreen = IosScreen.Settings }) {
+                        Icon(
+                            painterResource(Res.drawable.settings_24px),
                             contentDescription = stringResource(Res.string.settings)
                         )
                     }

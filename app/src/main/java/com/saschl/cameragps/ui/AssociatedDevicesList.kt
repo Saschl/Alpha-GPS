@@ -36,9 +36,10 @@ import cameragps.sharednew.generated.resources.associated_devices
 import cameragps.sharednew.generated.resources.no_devices_message
 import cameragps.sharednew.generated.resources.no_devices_title
 import cameragps.sharednew.generated.resources.not_paired_tap_to_pair_again
+import com.sasch.cameragps.sharednew.database.LogDatabase
+import com.sasch.cameragps.sharednew.database.getDatabaseBuilder
 import com.sasch.cameragps.sharednew.ui.TransmissionDot
 import com.saschl.cameragps.R
-import com.saschl.cameragps.database.LogDatabase
 import com.saschl.cameragps.service.AssociatedDeviceCompat
 import com.saschl.cameragps.service.LocationSenderService
 import org.jetbrains.compose.resources.stringResource
@@ -51,7 +52,9 @@ fun AssociatedDevicesList(
     onConnect: (AssociatedDeviceCompat) -> Unit,
 ) {
     val context = LocalContext.current
-    val cameraDeviceDAO = LogDatabase.getDatabase(context.applicationContext).cameraDeviceDao()
+    val cameraDeviceDAO = LogDatabase.getRoomDatabase(
+        getDatabaseBuilder(context.applicationContext)
+    ).cameraDeviceDao()
 
     val enableServer = remember {
         LocationSenderService.activeTransmissions
