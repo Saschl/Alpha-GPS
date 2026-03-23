@@ -6,7 +6,6 @@ import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCSignatureOverride
 import kotlinx.cinterop.addressOf
-import kotlinx.cinterop.useContents
 import kotlinx.cinterop.usePinned
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,13 +36,6 @@ import platform.CoreBluetooth.CBUUID
 import platform.CoreLocation.CLLocation
 import platform.CoreLocation.CLLocationManager
 import platform.CoreLocation.CLLocationManagerDelegateProtocol
-import platform.Foundation.NSCalendar
-import platform.Foundation.NSCalendarUnitDay
-import platform.Foundation.NSCalendarUnitHour
-import platform.Foundation.NSCalendarUnitMinute
-import platform.Foundation.NSCalendarUnitMonth
-import platform.Foundation.NSCalendarUnitSecond
-import platform.Foundation.NSCalendarUnitYear
 import platform.Foundation.NSData
 import platform.Foundation.NSError
 import platform.Foundation.NSLog
@@ -55,7 +47,6 @@ import platform.Foundation.timeIntervalSince1970
 import platform.darwin.NSObject
 import platform.posix.memcpy
 import kotlin.coroutines.resume
-import kotlin.math.abs
 
 /**
  * iOS Bluetooth controller backed by CoreBluetooth + CoreLocation.
@@ -225,8 +216,10 @@ object IosBluetoothController : BluetoothController {
             session.pairingRetryCount = 0
 
             if (didUpdateValueForCharacteristic.UUID == IosSonyBleConstants.READ_CHARACTERISTIC_UUID_STRING) {
-                session.locationConfig = LocationTransmissionConfig(
-                    shouldSendTimeZoneAndDst = hasTimeZoneDstFlag(value),
+                session.locationConfig = SonyLocationTransmissionConfig(
+                    shouldSendTimeZoneAndDst = SonyLocationTransmissionUtils.hasTimeZoneDstFlag(
+                        value
+                    ),
                 )
                 beginGpsEnable(session)
             }
@@ -378,7 +371,9 @@ object IosBluetoothController : BluetoothController {
 
         override fun centralManagerDidUpdateState(central: CBCentralManager) {
             if (central.state == CBManagerStatePoweredOn) {
-                central.scanForPeripheralsWithServices(serviceUUIDs = null, options = null)
+                if (!central.isScanning) {
+                    central.scanForPeripheralsWithServices(serviceUUIDs = null, options = null)
+                }
                 // Re-issue pending connect requests for every peripheral the user previously
                 // connected to. CoreBluetooth will keep retrying until it succeeds or the
                 // connection is explicitly cancelled – this is what drives the "connect when
@@ -523,9 +518,9 @@ object IosBluetoothController : BluetoothController {
     // ---------------------------------------------------------------------------
 
     override suspend fun startScan() {
-        /* if (central.state == CBManagerStatePoweredOn) {
+        if (central.state == CBManagerStatePoweredOn && !central.isScanning) {
              central.scanForPeripheralsWithServices(serviceUUIDs = null, options = null)
-         }*/
+        }
     }
 
     override suspend fun stopScan() {
@@ -652,7 +647,7 @@ object IosBluetoothController : BluetoothController {
 
             session.locationConfig == null -> {
                 session.locationConfig =
-                    LocationTransmissionConfig(shouldSendTimeZoneAndDst = false)
+                    SonyLocationTransmissionConfig(shouldSendTimeZoneAndDst = false)
                 session.phase = PeripheralPhase.Connected
                 beginGpsEnable(session)
             }
@@ -687,7 +682,7 @@ object IosBluetoothController : BluetoothController {
         if (timeSyncCharacteristic != null) {
             session.phase = PeripheralPhase.SyncingTime
             session.peripheral.writeValue(
-                data = buildTimeSyncPacket().toNSData(),
+                data = SonyLocationTransmissionUtils.buildTimeSyncPacket().toNSData(),
                 forCharacteristic = timeSyncCharacteristic,
                 type = CBCharacteristicWriteWithResponse,
             )
@@ -699,6 +694,7 @@ object IosBluetoothController : BluetoothController {
     private fun markReadyForTransmission(session: PeripheralSession) {
         session.phase = PeripheralPhase.Ready
         updateLocationTracking()
+        refreshDeviceList()
         latestLocation?.let { sendLocationToPeripheral(session, it) }
     }
 
@@ -711,6 +707,7 @@ object IosBluetoothController : BluetoothController {
             }
             transmissionJob?.cancel()
             transmissionJob = null
+            refreshDeviceList()
             return
         }
 
@@ -731,6 +728,8 @@ object IosBluetoothController : BluetoothController {
                 }
             }
         }
+
+        refreshDeviceList()
     }
 
     private fun sendLocationToReadyPeripherals(location: CLLocation) {
@@ -741,9 +740,10 @@ object IosBluetoothController : BluetoothController {
 
     private fun sendLocationToPeripheral(session: PeripheralSession, location: CLLocation) {
         val characteristic = session.locationWriteCharacteristic ?: return
-        val config = session.locationConfig ?: LocationTransmissionConfig(false)
+        val config = session.locationConfig ?: SonyLocationTransmissionConfig(false)
         session.peripheral.writeValue(
-            data = buildLocationDataPacket(config, location).toNSData(),
+            data = SonyLocationTransmissionUtils.buildLocationDataPacket(config, location)
+                .toNSData(),
             forCharacteristic = characteristic,
             type = CBCharacteristicWriteWithResponse,
         )
@@ -809,11 +809,14 @@ object IosBluetoothController : BluetoothController {
     private fun refreshDeviceList() {
         _devices.update {
             discovered.map { (id, peripheral) ->
+                val session = sessions[id]
                 BluetoothDeviceInfo(
                     identifier = id,
                     name = peripheral.name ?: "Unknown device",
                     isConnected = connected.containsKey(id),
                     isSaved = id in autoReconnectIds,
+                    isTransmissionActive =
+                        session?.phase == PeripheralPhase.Ready && locationUpdatesStarted,
                 )
             }
         }
@@ -857,34 +860,14 @@ private data class PeripheralSession(
     var lockGpsCharacteristic: CBCharacteristic? = null,
     var timeSyncCharacteristic: CBCharacteristic? = null,
     var locationEnabledCharacteristic: CBCharacteristic? = null,
-    var locationConfig: LocationTransmissionConfig? = null,
+    var locationConfig: SonyLocationTransmissionConfig? = null,
     var phase: PeripheralPhase = PeripheralPhase.Connected,
     var pairingRetryCount: Int = 0,
     val notifiableCharacteristics: MutableList<CBCharacteristic> = mutableListOf(),
 )
 
-private data class LocationTransmissionConfig(
-    val shouldSendTimeZoneAndDst: Boolean,
-) {
-    val dataSize: Int = if (shouldSendTimeZoneAndDst) 95 else 91
-
-    val fixedBytes: ByteArray = byteArrayOf(
-        0x00,
-        if (shouldSendTimeZoneAndDst) 0x5D else 0x59,
-        0x08,
-        0x02,
-        0xFC.toByte(),
-        if (shouldSendTimeZoneAndDst) 0x03 else 0x00,
-        0x00,
-        0x00,
-        0x10,
-        0x10,
-        0x10,
-    )
-}
-
 private object IosSonyBleConstants {
-    val LOCATION_SERVICE_UUID = CBUUID.UUIDWithString(SonyBluetoothConstants.SERVICE_UUID);
+    val LOCATION_SERVICE_UUID = CBUUID.UUIDWithString(SonyBluetoothConstants.SERVICE_UUID)
     val CONTROL_SERVICE_UUID_STRING =
         CBUUID.UUIDWithString(SonyBluetoothConstants.CONTROL_SERVICE_UUID)
     val LOCATION_CHARACTERISTIC_UUID_STRING =
@@ -911,133 +894,6 @@ private object IosSonyBleConstants {
     const val PAIRING_RETRY_DELAY_MS = 3_000L
 }
 
-private fun hasTimeZoneDstFlag(value: ByteArray): Boolean {
-    return value.size >= 5 && (value[4].toInt() and 0x02) != 0
-}
-
-private fun buildLocationDataPacket(
-    config: LocationTransmissionConfig,
-    location: CLLocation,
-): ByteArray {
-    val locationBytes = convertCoordinates(location)
-    val dateBytes = convertUtcDate()
-    val timeZoneOffsetBytes = convertTimeZoneOffset()
-    val dstOffsetBytes = convertDstOffset()
-    val paddingBytes = ByteArray(65)
-
-    val data = ByteArray(config.dataSize)
-    var currentPosition = 0
-
-    config.fixedBytes.copyInto(data, destinationOffset = currentPosition)
-    currentPosition += config.fixedBytes.size
-
-    locationBytes.copyInto(data, destinationOffset = currentPosition)
-    currentPosition += locationBytes.size
-
-    dateBytes.copyInto(data, destinationOffset = currentPosition)
-    currentPosition += dateBytes.size
-
-    paddingBytes.copyInto(data, destinationOffset = currentPosition)
-
-    if (config.shouldSendTimeZoneAndDst) {
-        currentPosition += paddingBytes.size
-        timeZoneOffsetBytes.copyInto(data, destinationOffset = currentPosition)
-        currentPosition += timeZoneOffsetBytes.size
-        dstOffsetBytes.copyInto(data, destinationOffset = currentPosition)
-    }
-
-    return data
-}
-
-@OptIn(ExperimentalForeignApi::class)
-private fun convertCoordinates(location: CLLocation): ByteArray {
-    val latitude = (location.coordinate.useContents { latitude } * 1.0E7).toInt()
-    val longitude = (location.coordinate.useContents { longitude } * 1.0E7).toInt()
-    return latitude.toByteArray() + longitude.toByteArray()
-}
-
-private fun convertUtcDate(): ByteArray {
-    val now = platform.Foundation.NSDate()
-    val calendar = NSCalendar.currentCalendar
-    val components = calendar.components(
-        unitFlags = NSCalendarUnitYear or NSCalendarUnitMonth or NSCalendarUnitDay or NSCalendarUnitHour or NSCalendarUnitMinute or NSCalendarUnitSecond,
-        fromDate = now,
-    )
-
-    val yearBytes = components.year.toShort().toByteArray()
-    return byteArrayOf(
-        yearBytes[0],
-        yearBytes[1],
-        components.month.toByte(),
-        components.day.toByte(),
-        components.hour.toByte(),
-        components.minute.toByte(),
-        components.second.toByte(),
-    )
-}
-
-private fun convertTimeZoneOffset(): ByteArray {
-    val now = platform.Foundation.NSDate()
-    val timeZone = NSCalendar.currentCalendar.timeZone
-    val currentOffsetMinutes = timeZone.secondsFromGMTForDate(now).toInt() / 60
-    val dstOffsetMinutes = (timeZone.daylightSavingTimeOffsetForDate(now) / 60.0).toInt()
-    val standardOffsetMinutes = currentOffsetMinutes - dstOffsetMinutes
-    return standardOffsetMinutes.toShort().toByteArray()
-}
-
-private fun convertDstOffset(): ByteArray {
-    val now = platform.Foundation.NSDate()
-    val dstMinutes =
-        (NSCalendar.currentCalendar.timeZone.daylightSavingTimeOffsetForDate(now) / 60.0).toInt()
-    return dstMinutes.toShort().toByteArray()
-}
-
-private fun buildTimeSyncPacket(): ByteArray {
-    val now = platform.Foundation.NSDate()
-    val calendar = NSCalendar.currentCalendar
-    val components = calendar.components(
-        unitFlags = NSCalendarUnitYear or NSCalendarUnitMonth or NSCalendarUnitDay or NSCalendarUnitHour or NSCalendarUnitMinute or NSCalendarUnitSecond,
-        fromDate = now,
-    )
-
-    val timeZone = NSCalendar.currentCalendar.timeZone
-    val totalOffsetMinutes = timeZone.secondsFromGMTForDate(now).toInt() / 60
-    val dstMinutes = (timeZone.daylightSavingTimeOffsetForDate(now) / 60.0).toInt()
-    val standardOffsetMinutes = totalOffsetMinutes - dstMinutes
-    val hoursComponent = abs(standardOffsetMinutes / 60)
-    val offsetMinutesComponent = abs(standardOffsetMinutes % 60)
-    val signedOffsetHourByte =
-        (if (standardOffsetMinutes < 0) -hoursComponent else hoursComponent).toByte()
-    val yearBytes = components.year.toShort().toByteArray()
-
-    return ByteArray(13).apply {
-        this[0] = 12
-        this[1] = 0
-        this[2] = 0
-        this[3] = yearBytes[0]
-        this[4] = yearBytes[1]
-        this[5] = components.month.toByte()
-        this[6] = components.day.toByte()
-        this[7] = components.hour.toByte()
-        this[8] = components.minute.toByte()
-        this[9] = components.second.toByte()
-        this[10] = if (dstMinutes > 0) 1 else 0
-        this[11] = signedOffsetHourByte
-        this[12] = offsetMinutesComponent.toByte()
-    }
-}
-
-private fun Int.toByteArray(): ByteArray = byteArrayOf(
-    (this shr 24).toByte(),
-    (this shr 16).toByte(),
-    (this shr 8).toByte(),
-    this.toByte(),
-)
-
-private fun Short.toByteArray(): ByteArray = byteArrayOf(
-    (toInt() shr 8).toByte(),
-    toByte(),
-)
 
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 private fun ByteArray.toNSData(): NSData = usePinned {

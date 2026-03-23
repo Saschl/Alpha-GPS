@@ -52,8 +52,8 @@ internal object IosTipJarController {
     // These product IDs must exist in App Store Connect as consumable IAPs.
     private val tipProductIds = listOf(
         "com.saschl.cameragps.tip.small",
-        /* "com.saschl.cameragps.tip.medium",
-         "com.saschl.cameragps.tip.large",*/
+        "com.saschl.cameragps.tip.medium",
+        "com.saschl.cameragps.tip.large"
     )
 
     private val _products = MutableStateFlow<List<TipProduct>>(emptyList())

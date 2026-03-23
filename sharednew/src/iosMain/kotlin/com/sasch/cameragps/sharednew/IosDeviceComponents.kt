@@ -33,6 +33,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cameragps.sharednew.generated.resources.Res
@@ -52,7 +54,10 @@ import cameragps.sharednew.generated.resources.scanning_for_cameras
 import cameragps.sharednew.generated.resources.scanning_paused_message
 import cameragps.sharednew.generated.resources.scanning_paused_title
 import cameragps.sharednew.generated.resources.tap_to_connect
+import cameragps.sharednew.generated.resources.transmission_active
+import cameragps.sharednew.generated.resources.transmission_inactive
 import com.sasch.cameragps.sharednew.bluetooth.BluetoothDeviceInfo
+import com.sasch.cameragps.sharednew.ui.TransmissionDot
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -298,16 +303,29 @@ private fun DeviceCard(
         onClick = onConnect,
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = device.name,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-            )
-            Text(
-                text = device.identifier,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = device.name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                )
+                val isTransmissionActive = device.isTransmissionActive
+                val transmissionStatusDescription = if (isTransmissionActive) {
+                    stringResource(Res.string.transmission_active)
+                } else {
+                    stringResource(Res.string.transmission_inactive)
+                }
+                TransmissionDot(
+                    isTransmissionActive,
+                    modifier = Modifier.semantics {
+                        contentDescription = transmissionStatusDescription
+                    }
+                )
+            }
             Text(
                 text = if (device.isConnected) {
                     stringResource(Res.string.connected)
@@ -315,12 +333,12 @@ private fun DeviceCard(
                     stringResource(Res.string.tap_to_connect)
                 },
                 style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
                 color = if (device.isConnected) {
                     MaterialTheme.colorScheme.primary
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
                 },
-                fontWeight = FontWeight.SemiBold,
             )
         }
     }

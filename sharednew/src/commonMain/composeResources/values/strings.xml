@@ -107,15 +107,15 @@
     <string name="help_faq_title">Help &amp; FAQ</string>
     <string name="help_close_description">Close</string>
     <string name="help_about_title">About Alpha GPS</string>
-    <string name="help_about_description">This app provides real-time GPS coordinates to your camera via Bluetooth, allowing for automatic geotagging of your photos without needing the camera\'s built-in GPS.</string>
+    <string name="help_about_description">This app provides real-time GPS coordinates to your camera via Bluetooth, allowing for automatic geotagging of your photos without needing a camera's built-in GPS.</string>
     <string name="help_need_more_title">Need more help?</string>
     <string name="help_need_more_description">Check the app logs in the top menu for troubleshooting information, or review your device settings to ensure all permissions are granted.</string>
 
     <!-- FAQ Questions -->
     <string name="faq_connect_camera_question">How do I connect my camera to the app?</string>
-    <string name="faq_connect_camera_answer">1. Make sure your camera supports Bluetooth connectivity and GPS tagging\n2. Enable Bluetooth on your phone\n3. Tap \'Add Camera Device\' to start the pairing process\n4. Follow the on-screen instructions to pair your camera. Reboot your camera after the first pairing process.</string>
+    <string name="faq_connect_camera_answer">1. Make sure your camera supports Bluetooth connectivity and GPS tagging\n2. Enable Bluetooth on your camera and phone\n3. Put your camera in pairing mode and follow the on screen instructions</string>
 
-    <string name="faq_camera_not_appearing_question">Why isn\'t my camera appearing in the list?</string>
+    <string name="faq_camera_not_appearing_question">Why isn't my camera appearing in the list?</string>
     <string name="faq_camera_not_appearing_answer">• Ensure your camera is in pairing/Bluetooth mode\n• Check that your camera supports the required Bluetooth profile\n• Make sure you\'re within range (typically 10 meters)\n• Try restarting Bluetooth on your phone</string>
 
     <string name="faq_enable_service_question">How do I enable the service permanently? It seems to stop after a while</string>
@@ -149,6 +149,8 @@
     <string name="no_devices_message">Tap the button above to start pairing your camera device.</string>
     <string name="tap_to_connect">Tap to connect</string>
     <string name="connected">Connected</string>
+    <string name="transmission_active">Transmission active</string>
+    <string name="transmission_inactive">Transmission inactive</string>
 
     <!-- Error messages for device association -->
     <string name="the_request_was_canceled">The request was canceled</string>
@@ -223,7 +225,7 @@
     <string name="language_german">Deutsch</string>
     <string name="language_chinese">简体中文</string>
     <string name="how_about_privacy">How about privacy?</string>
-    <string name="how_about_privacy_answer">The app does not transmit any personal data to the developer or third parties. All collected information (location data) is only used to transfer GPS coordinates to your connected camera and is not permanently stored. Location collection stops as soon as the connection to the camera is disconnected. To analyze problems and crashes, anonymized logs may be sent to the Sentry error reporting service. You can disable this feature at any time in the app settings under \"Error Reporting Settings\". If you have any questions or concerns, please contact us via the email address mentioned above.</string>
+    <string name="how_about_privacy_answer">The app does not transmit any personal data to the developer or third parties. All collected information (location data) is only used to transfer GPS coordinates to your connected camera and is not permanently stored. Location collection stops as soon as the connection to the camera is disconnected. If you have any questions or concerns, please contact us via the email address mentioned above.</string>
 
     <!-- Device management strings -->
     <string name="device_management">Device Management</string>
@@ -253,7 +255,7 @@
     <string name="sentry_consent_message">Would you like to help us improve the app by sending anonymous crash reports and error logs? This information helps us identify and fix issues. No personal data or location information is transmitted. You can change this setting later in the app settings.</string>
     <string name="sentry_consent_allow">Allow</string>
     <string name="sentry_consent_decline">Decline</string>
-    <string name="sentry_consent_dont_show">Don\'t show again</string>
+    <string name="sentry_consent_dont_show">Don't show again</string>
     <string name="notification_channel_name">Transmission state</string>
     <string name="disconnect_notification_channel_name">device disconnected</string>
     <string name="continue_anyway">Continue anyway</string>

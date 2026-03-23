@@ -36,8 +36,6 @@ import cameragps.sharednew.generated.resources.faq_camera_not_appearing_answer
 import cameragps.sharednew.generated.resources.faq_camera_not_appearing_question
 import cameragps.sharednew.generated.resources.faq_connect_camera_answer
 import cameragps.sharednew.generated.resources.faq_connect_camera_question
-import cameragps.sharednew.generated.resources.faq_disconnects_answer
-import cameragps.sharednew.generated.resources.faq_disconnects_question
 import cameragps.sharednew.generated.resources.faq_gps_accuracy_answer
 import cameragps.sharednew.generated.resources.faq_gps_accuracy_question
 import cameragps.sharednew.generated.resources.faq_permissions_answer
@@ -92,11 +90,7 @@ internal fun IosHelpScreen(
         IosFaqItem(
             questionRes = Res.string.faq_gps_accuracy_question,
             answerRes = Res.string.faq_gps_accuracy_answer,
-        ),
-        IosFaqItem(
-            questionRes = Res.string.faq_disconnects_question,
-            answerRes = Res.string.faq_disconnects_answer,
-        ),
+        )
     )
 
     SharedSettingsScreen(

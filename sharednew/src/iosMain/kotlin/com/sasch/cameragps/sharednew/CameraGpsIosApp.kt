@@ -14,6 +14,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import cameragps.sharednew.generated.resources.Res
 import cameragps.sharednew.generated.resources.app_name_ui
+import cameragps.sharednew.generated.resources.info_24px
 import cameragps.sharednew.generated.resources.settings
 import cameragps.sharednew.generated.resources.settings_24px
 import cameragps.sharednew.generated.resources.welcome_get_started_button
@@ -37,7 +38,8 @@ internal enum class IosScreen {
 @Composable
 internal fun CameraGpsIosApp() {
     val bluetoothController = IosBluetoothController
-    val devices by bluetoothController.devices.collectAsState()
+    val realDevices by bluetoothController.devices.collectAsState()
+    val devices = if (SCREENSHOT_MODE) mockDevices else realDevices
     val scope = rememberCoroutineScope()
     var currentScreen by remember {
         mutableStateOf(
@@ -48,6 +50,7 @@ internal fun CameraGpsIosApp() {
     var autoScanEnabled by remember { mutableStateOf(IosAppPreferences.isAutoScanEnabled()) }
 
     LaunchedEffect(currentScreen, isAppEnabled, autoScanEnabled) {
+        if (SCREENSHOT_MODE) return@LaunchedEffect
         if (currentScreen == IosScreen.Devices && isAppEnabled && autoScanEnabled) {
             bluetoothController.startScan()
         } else {
@@ -84,6 +87,12 @@ internal fun CameraGpsIosApp() {
                     TextButton(onClick = { currentScreen = IosScreen.Settings }) {
                         Icon(
                             painterResource(Res.drawable.settings_24px),
+                            contentDescription = stringResource(Res.string.settings)
+                        )
+                    }
+                    TextButton(onClick = { currentScreen = IosScreen.Help }) {
+                        Icon(
+                            painterResource(Res.drawable.info_24px),
                             contentDescription = stringResource(Res.string.settings)
                         )
                     }
@@ -135,7 +144,7 @@ internal fun CameraGpsIosApp() {
 
         IosScreen.Help -> {
             com.sasch.cameragps.sharednew.IosHelpScreen(
-                onBackClick = { currentScreen = IosScreen.Settings }
+                onBackClick = { currentScreen = IosScreen.Devices }
             )
         }
     }
