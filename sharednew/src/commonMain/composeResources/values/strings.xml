@@ -113,7 +113,7 @@
 
     <!-- FAQ Questions -->
     <string name="faq_connect_camera_question">How do I connect my camera to the app?</string>
-    <string name="faq_connect_camera_answer">1. Make sure your camera supports Bluetooth connectivity and GPS tagging\n2. Enable Bluetooth on your camera and phone\n3. Put your camera in pairing mode and follow the on screen instructions</string>
+    <string name="faq_connect_camera_answer">1. Make sure your camera supports Bluetooth connectivity and GPS tagging\n2. Enable Bluetooth on your camera and phone\n3. Put your camera in pairing mode, click on the camera on the main screen and follow the on-screen instructions (both camera and phone) \n 4. If this fails, remove any pairing in the Bluetooth settings of the phone and camera. Then try again</string>
 
     <string name="faq_camera_not_appearing_question">Why isn't my camera appearing in the list?</string>
     <string name="faq_camera_not_appearing_answer">• Ensure your camera is in pairing/Bluetooth mode\n• Check that your camera supports the required Bluetooth profile\n• Make sure you\'re within range (typically 10 meters)\n• Try restarting Bluetooth on your phone</string>
@@ -124,7 +124,6 @@
     <string name="faq_camera_not_connecting_question">My camera does not connect automatically, what can I do?</string>
     <string name="faq_camera_not_connecting_answer">Unfortunately, there might be situations, where the automatic connection does not work. If you encounter issues please do the following:  On the main screen, tap on your camera to open the details screen. There you have an option to enable the "Always On" mode, which will keep the app in the foreground. \nOtherwise try toggling bluetooth or remove the device from the app and associate it again.</string>
 
-
     <string name="faq_permissions_question">What permissions does the app need?</string>
     <string name="faq_permissions_answer">The app requires:\n• Location permissions (for GPS data)\n• Bluetooth permissions (to connect to camera)\n• Battery optimization exemption (for continuous service)\n• Nearby devices permission (for device discovery)</string>
 
@@ -133,9 +132,6 @@
 
     <string name="faq_background_work_question">Does the app work in the background?</string>
     <string name="faq_background_work_answer">Yes, once properly configured:\n• The service runs in the background to maintain GPS sync\n• Make sure to disable battery optimization\n• The app will show a persistent notification when active\n• GPS data is continuously sent to your connected camera</string>
-
-    <string name="faq_disconnects_question">My camera disconnects frequently. What can I do?</string>
-    <string name="faq_disconnects_answer">Try these solutions:\n• Keep your phone closer to the camera\n• Disable battery optimization for the app\n• Check if your camera has power saving modes that affect Bluetooth\n• Restart both devices and re-pair if necessary</string>
 
     <!-- Help menu item -->
     <string name="help_menu_item">Help</string>
@@ -268,4 +264,9 @@
     <string name="tip_jar_unavailable">Tip options are not available right now.</string>
     <string name="tip_jar_error_prefix">Something went wrong:</string>
     <string name="tip_jar_dismiss">Dismiss</string>
+
+    <!-- Pre-connect pairing mode hint dialog (iOS) -->
+    <string name="enable_pairing_mode_title">Enable Pairing Mode</string>
+    <string name="enable_pairing_mode_message">If this is the first time connecting this camera to your phone, please make sure to enable Bluetooth pairing mode in your camera's settings before continuing. If this is not the case, simply continue</string>
+    <string name="enable_pairing_mode_continue">Continue</string>
 </resources>

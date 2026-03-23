@@ -143,7 +143,7 @@ internal fun CameraGpsIosApp() {
         }
 
         IosScreen.Help -> {
-            com.sasch.cameragps.sharednew.IosHelpScreen(
+            IosHelpScreen(
                 onBackClick = { currentScreen = IosScreen.Devices }
             )
         }

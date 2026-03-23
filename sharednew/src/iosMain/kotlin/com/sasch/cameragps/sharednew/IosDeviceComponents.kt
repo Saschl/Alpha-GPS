@@ -47,6 +47,9 @@ import cameragps.sharednew.generated.resources.delete
 import cameragps.sharednew.generated.resources.delete_24px
 import cameragps.sharednew.generated.resources.delete_device
 import cameragps.sharednew.generated.resources.delete_device_confirmation
+import cameragps.sharednew.generated.resources.enable_pairing_mode_continue
+import cameragps.sharednew.generated.resources.enable_pairing_mode_message
+import cameragps.sharednew.generated.resources.enable_pairing_mode_title
 import cameragps.sharednew.generated.resources.ios_no_devices_message
 import cameragps.sharednew.generated.resources.nearby_cameras
 import cameragps.sharednew.generated.resources.saved_devices
@@ -71,6 +74,33 @@ internal fun DeviceListContent(
     onDelete: (BluetoothDeviceInfo) -> Unit,
 ) {
     var deviceToDelete by remember { mutableStateOf<BluetoothDeviceInfo?>(null) }
+    var deviceToPair by remember { mutableStateOf<BluetoothDeviceInfo?>(null) }
+
+    // Pairing mode hint dialog for first-time connections
+    deviceToPair?.let { device ->
+        AlertDialog(
+            onDismissRequest = { deviceToPair = null },
+            title = { Text(stringResource(Res.string.enable_pairing_mode_title)) },
+            text = {
+                Text(stringResource(Res.string.enable_pairing_mode_message))
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onConnect(device)
+                        deviceToPair = null
+                    }
+                ) {
+                    Text(stringResource(Res.string.enable_pairing_mode_continue))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { deviceToPair = null }) {
+                    Text(stringResource(Res.string.cancel))
+                }
+            },
+        )
+    }
 
     deviceToDelete?.let { device ->
         AlertDialog(
@@ -184,7 +214,7 @@ internal fun DeviceListContent(
                         SectionHeader(title = stringResource(Res.string.nearby_cameras))
                     }
                     items(nearbyDevices, key = { it.identifier }) { device ->
-                        DeviceCard(device = device, onConnect = { onConnect(device) })
+                        DeviceCard(device = device, onConnect = { deviceToPair = device })
                     }
                 }
             }
