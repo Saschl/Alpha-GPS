@@ -9,5 +9,7 @@
             <string>location</string>
             <string>bluetooth-central</string>
         </array>
+        <key>ITSAppUsesNonExemptEncryption</key>
+        <false />
     </dict>
 </plist>
