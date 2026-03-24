@@ -16,16 +16,18 @@ It makes use of the companion device manager APIs of Android which *should* prov
 
 <a href="https://play.google.com/store/apps/details?id=com.saschl.cameragps"><img width="270" height="80" alt="GetItOnGooglePlay_Badge_Web_color_English" src="https://github.com/user-attachments/assets/775cb6fc-a297-4208-9249-43291c52d045" /></a>
 
-Or join the [Beta](https://play.google.com/apps/testing/com.saschl.cameragps)
 
-OR
-
- Get the APK from the releases and install it directly on your phone. Or use Obtainium and enter the repo URL for a more seamless experience.
+Get the APK from the releases and install it directly on your phone. Or use Obtainium and enter the repo URL for a more seamless experience.
   
 
 ## How can I contribute?
 As the project is open source, contributions are welcome! Just check out the repo, open Android Studio and create a Pull Request.
 If you wish to improve the translations, the project is also in Weblate. Check it out [here](https://hosted.weblate.org/engage/alpha-gps/)
+
+If you want to contribute financially, consider supporting my work via [Buy Me A Coffee](https://buymeacoffee.com/wj8tism4dq)
+
+<a href="https://buymeacoffee.com/wj8tism4dq"><img width="244" height="54" alt="bmc-brand-logo" src="https://github.com/user-attachments/assets/59ffdcd5-d287-479f-b067-d97b67519691" /></a>
+
 
 ## How does it work?
 
