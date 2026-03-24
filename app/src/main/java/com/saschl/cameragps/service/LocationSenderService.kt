@@ -117,6 +117,24 @@ class LocationSenderService : LifecycleService() {
 
     //data class CommandData(val intent: Intent?, val startId: Int)
 
+    private fun resetLocationIfTooOld() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            locationResult?.elapsedRealtimeAgeMillis?.let {
+                if (it < System.currentTimeMillis() - SonyBluetoothConstants.OLD_LOCATION_THRESHOLD_MS) {
+                    Timber.d("Last known location is older than 5 minutes, will try to get a fresh location before transmitting")
+                    locationResult = null
+                }
+            }
+        } else {
+            locationResult?.time?.let {
+                if (it < System.currentTimeMillis() - SonyBluetoothConstants.OLD_LOCATION_THRESHOLD_MS) {
+                    Timber.d("Last known location is older than 5 minutes, will try to get a fresh location before transmitting")
+                    locationResult = null
+                }
+            }
+        }
+    }
+
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     private fun startLocationTransmission() {
         if (!hasLocationPermissions()) {
@@ -127,6 +145,9 @@ class LocationSenderService : LifecycleService() {
             Timber.e("No location providers enabled, cannot start location transmission")
             return
         }
+
+        resetLocationIfTooOld()
+
         if (!isLocationTransmitting) {
             Timber.i("Starting location transmission")
             if (locationResult != null) {
@@ -179,7 +200,7 @@ class LocationSenderService : LifecycleService() {
 
         val locationRequest = LocationRequest.Builder(
             Priority.PRIORITY_HIGH_ACCURACY,
-            com.sasch.cameragps.sharednew.bluetooth.SonyBluetoothConstants.LOCATION_UPDATE_INTERVAL_MS,
+            LOCATION_UPDATE_INTERVAL_MS,
         )
             .setWaitForAccurateLocation(false)
             .build()
@@ -316,7 +337,7 @@ class LocationSenderService : LifecycleService() {
                     }
 
                     // Schedule next run
-                    handler.postDelayed(this, SonyBluetoothConstants.LOCATION_UPDATE_INTERVAL_MS)
+                    handler.postDelayed(this, LOCATION_UPDATE_INTERVAL_MS)
                 }
             }
         }
@@ -325,8 +346,8 @@ class LocationSenderService : LifecycleService() {
         fallbackLocationRunnable = runnable
 
         // Start periodic updates
-        handler.postDelayed(runnable, SonyBluetoothConstants.LOCATION_UPDATE_INTERVAL_MS)
-        Timber.i("Started periodic location transmission every ${SonyBluetoothConstants.LOCATION_UPDATE_INTERVAL_MS}ms")
+        handler.postDelayed(runnable, LOCATION_UPDATE_INTERVAL_MS)
+        Timber.i("Started periodic location transmission every ${LOCATION_UPDATE_INTERVAL_MS}ms")
     }
 
     private fun stopFallbackPeriodicTransmission() {
@@ -539,24 +560,16 @@ class LocationSenderService : LifecycleService() {
         super.onCreate()
         NotificationsHelper.createNotificationChannel(this)
 
+        deviceDao = LogDatabase.getRoomDatabase(
+            getDatabaseBuilder(this)
+        ).cameraDeviceDao()
+
         if(!startAsForegroundService()) {
             return
         }
 
-
-        deviceDao = LogDatabase.getRoomDatabase(
-            getDatabaseBuilder(this)
-        ).cameraDeviceDao()
         initializeLogging()
         initializeLocationServices()
-
-
-        /*lifecycleScope.launch {
-            for (command in commandChannel) {
-                handleStartCommand(command.intent, command.startId)
-                Timber.i("processed start command ${command.startId}")
-            }
-        }*/
     }
 
     private fun initializeLocationServices() {
@@ -683,7 +696,8 @@ class LocationSenderService : LifecycleService() {
         NotificationsHelper.showNotification(this, locationTransmissionNotificationId, notification)
 
         // value from official Sony app,  might be unused on Android >= 14
-        gatt.requestMtu(158)
+        //gatt.requestMtu(158)
+        gatt.discoverServices()
     }
 
 
@@ -714,11 +728,11 @@ class LocationSenderService : LifecycleService() {
             }
         }
 
-        @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-        override fun onMtuChanged(gatt: BluetoothGatt, mtu: Int, status: Int) {
-            super.onMtuChanged(gatt, mtu, status)
-            gatt.discoverServices()
-        }
+        /*     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+             override fun onMtuChanged(gatt: BluetoothGatt, mtu: Int, status: Int) {
+                 super.onMtuChanged(gatt, mtu, status)
+                 gatt.discoverServices()
+             }*/
 
         override fun onCharacteristicChanged(
             gatt: BluetoothGatt,
