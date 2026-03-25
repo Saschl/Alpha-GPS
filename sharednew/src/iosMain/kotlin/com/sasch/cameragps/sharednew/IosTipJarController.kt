@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import platform.Foundation.NSError
-import platform.Foundation.NSLog
 import platform.Foundation.NSNumberFormatter
 import platform.Foundation.NSNumberFormatterCurrencyStyle
 import platform.StoreKit.SKPayment
@@ -49,6 +48,8 @@ internal sealed class TipPurchaseState {
  */
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 internal object IosTipJarController {
+
+    private val logging = logging()
 
     // These product IDs must exist in App Store Connect as consumable IAPs.
     private val tipProductIds = listOf(
@@ -165,13 +166,13 @@ internal object IosTipJarController {
 
                 _products.update { tipProducts }
                 _isLoadingProducts.update { false }
-                logging().i(msg = { "TipJar: loaded ${tipProducts.size} products" })
+                logging.d(msg = { "TipJar: loaded ${tipProducts.size} products" })
             }
 
             @ObjCSignatureOverride
             override fun request(request: SKRequest, didFailWithError: NSError) {
                 _isLoadingProducts.update { false }
-                NSLog("TipJar: product fetch failed — ${didFailWithError.localizedDescription}")
+                logging.i { "TipJar: product fetch failed — ${didFailWithError.localizedDescription}" }
             }
         }
 

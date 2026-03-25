@@ -91,35 +91,9 @@ internal fun IosSettingsScreen(
                         checked = autoScanEnabled,
                         onCheckedChange = onAutoScanEnabledChange,
                     )
-                    /* SharedToggleRow(
-                         title = stringResource(Res.string.reset_welcome),
-                         description = stringResource(Res.string.show_welcome_again_description),
-                         checked = false,
-                         onCheckedChange = { if (it) onShowWelcomeAgain() },
-                         trailing = {
-                             TextButton(onClick = onShowWelcomeAgain) {
-                                 Text(stringResource(Res.string.welcome_get_started_button))
-                             }
-                         },
-                     )*/
                 }
             }
-            /* item {
-                 SharedSettingsCard(title = stringResource(Res.string.help_menu_item)) {
-                     TextButton(onClick = onOpenHelp) {
-                         Text(stringResource(Res.string.help_faq_title))
-                     }
-                 }
-             }*/
-            /*item {
-                SharedSettingsCard(title = stringResource(Res.string.is_there_documenation)) {
-                    Text(
-                        text = stringResource(Res.string.is_there_documenation_answer),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }*/
+
             item {
                 IosTipJarCard()
             }

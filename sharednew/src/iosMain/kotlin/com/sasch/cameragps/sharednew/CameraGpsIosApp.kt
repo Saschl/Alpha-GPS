@@ -102,16 +102,16 @@ internal fun CameraGpsIosApp() {
                             contentDescription = stringResource(Res.string.settings)
                         )
                     }
-                    IconButton(onClick = { currentScreen = IosScreen.Settings }) {
-                        Icon(
-                            painterResource(Res.drawable.settings_24px),
-                            contentDescription = stringResource(Res.string.settings)
-                        )
-                    }
                     IconButton(onClick = { currentScreen = IosScreen.Logs }) {
                         Icon(
                             painterResource(Res.drawable.baseline_view_list_24),
                             contentDescription = stringResource(Res.string.view_logs)
+                        )
+                    }
+                    IconButton(onClick = { currentScreen = IosScreen.Settings }) {
+                        Icon(
+                            painterResource(Res.drawable.settings_24px),
+                            contentDescription = stringResource(Res.string.settings)
                         )
                     }
                 },

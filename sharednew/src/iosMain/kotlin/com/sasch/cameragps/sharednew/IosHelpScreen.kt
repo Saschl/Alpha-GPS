@@ -50,6 +50,7 @@ import cameragps.sharednew.generated.resources.how_about_privacy
 import cameragps.sharednew.generated.resources.how_about_privacy_answer
 import cameragps.sharednew.generated.resources.is_there_documenation
 import cameragps.sharednew.generated.resources.is_there_documenation_answer
+import cameragps.sharednew.generated.resources.is_there_documenation_answer_coffee
 import com.sasch.cameragps.sharednew.ui.settings.SharedSettingsScreen
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
@@ -135,8 +136,8 @@ internal fun IosHelpScreen(
                 }
             }
 
-            items(faqItems) { faq ->
-                var expanded by remember { mutableStateOf(false) }
+            items(faqItems, key = { it.questionRes }) { faq ->
+                var expanded by remember { mutableStateOf(faq == faqItems.first()) }
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -186,6 +187,21 @@ internal fun IosHelpScreen(
                                             ),
                                         ) {
                                             append("saschl.ra@web.de")
+                                        }
+                                        append("\n\n")
+                                        append(stringResource(Res.string.is_there_documenation_answer_coffee))
+                                        withLink(
+                                            LinkAnnotation.Url(
+                                                "https://buymeacoffee.com/wj8tism4dq",
+                                                TextLinkStyles(
+                                                    style = SpanStyle(
+                                                        color = MaterialTheme.colorScheme.primary,
+                                                        textDecoration = TextDecoration.Underline
+                                                    )
+                                                )
+                                            )
+                                        ) {
+                                            append("Buy Me A Coffee")
                                         }
                                     },
                                     style = MaterialTheme.typography.bodyMedium,

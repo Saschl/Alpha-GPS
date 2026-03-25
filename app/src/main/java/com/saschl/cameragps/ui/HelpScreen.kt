@@ -153,8 +153,8 @@ fun HelpScreen(
             }
 
             // FAQ items
-            items(faqItems) { faq ->
-                var expanded by remember { mutableStateOf(false) }
+            items(faqItems, key = { it.questionRes }) { faq ->
+                var expanded by remember { mutableStateOf(faq == faqItems.first()) }
 
                 Card(
                     modifier = Modifier
@@ -208,6 +208,22 @@ fun HelpScreen(
                                         ) {
                                             append("saschl.ra@web.de")
                                         }
+                                        append("\n\n")
+                                        append(stringResource(R.string.is_there_documenation_answer_coffee))
+                                        withLink(
+                                            LinkAnnotation.Url(
+                                                "https://buymeacoffee.com/wj8tism4dq",
+                                                TextLinkStyles(
+                                                    style = SpanStyle(
+                                                        color = MaterialTheme.colorScheme.primary,
+                                                        textDecoration = TextDecoration.Underline
+                                                    )
+                                                )
+                                            )
+                                        ) {
+                                            append("Buy Me A Coffee")
+                                        }
+
                                     }
                                 )
                             } else {

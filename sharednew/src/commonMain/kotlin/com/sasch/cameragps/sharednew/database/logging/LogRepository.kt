@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 class LogRepository(databaseBuilder: RoomDatabase.Builder<LogDatabase>) {
-    private val logDao = LogDatabase.Companion.getRoomDatabase(databaseBuilder).logDao()
+    private val logDao = LogDatabase.getRoomDatabase(databaseBuilder).logDao()
     private val scope = CoroutineScope(Dispatchers.IO)
 
     fun insertLog(
@@ -36,8 +36,6 @@ class LogRepository(databaseBuilder: RoomDatabase.Builder<LogDatabase>) {
             }
         }
     }
-
-    fun getAllLogs(): Flow<List<LogEntry>> = logDao.getAllLogs()
 
     fun getRecentLogs(limit: Int = 200): Flow<List<LogEntry>> = logDao.getRecentLogs(limit)
 
