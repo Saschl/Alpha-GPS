@@ -156,6 +156,9 @@ internal fun CameraGpsIosApp() {
                 onAppEnabledChange = { enabled ->
                     isAppEnabled = enabled
                     IosAppPreferences.setAppEnabled(enabled)
+                    scope.launch {
+                        bluetoothController.applyAppEnabledState(enabled)
+                    }
                 },
                 onAutoScanEnabledChange = { enabled ->
                     autoScanEnabled = enabled

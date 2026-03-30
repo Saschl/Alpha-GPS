@@ -45,6 +45,7 @@ import platform.CoreBluetooth.CBUUID
 import platform.CoreLocation.CLLocation
 import platform.CoreLocation.CLLocationManager
 import platform.CoreLocation.CLLocationManagerDelegateProtocol
+import platform.CoreLocation.kCLAuthorizationStatusAuthorizedWhenInUse
 import platform.Foundation.NSData
 import platform.Foundation.NSDate
 import platform.Foundation.NSError
@@ -123,11 +124,18 @@ object IosBluetoothController : BluetoothController {
     private val userDefaults = NSUserDefaults.standardUserDefaults
     private val persistedPeripheralsKey = "com.saschl.cameragps.persistedPeripherals"
     private const val MAX_IMMEDIATE_FIX_AGE_SECONDS = 5 * 60L
+    private var appEnabled = IosAppPreferences.isAppEnabled()
     // ------------------------------------------------------------------------
 
     private var latestLocation: CLLocation? = null
     private var transmissionJob: Job? = null
     private var locationUpdatesStarted = false
+
+    // True once Core Location delivers a live fix in the current tracking session.
+    // A stationary user's fix never refreshes, so isFreshFix() would eventually
+    // return false even though the location is still correct. We use this flag to
+    // trust any fix that was live when we received it, regardless of its age.
+    private var hasSessionLocation = false
 
     private val peripheralDelegate = object : NSObject(), CBPeripheralDelegateProtocol {
         @ObjCSignatureOverride
@@ -365,7 +373,11 @@ object IosBluetoothController : BluetoothController {
             val location = didUpdateLocations.lastOrNull() as? CLLocation ?: return
             logging.d { "Received new location" }
 
+            if (!isAppEnabledForTransmission()) return
+
             if (!shouldUpdateLocation(location)) return
+
+            hasSessionLocation = true
 
             // send initial location immediately if none was cached yet
             if (latestLocation == null || !isFreshFix(latestLocation!!)) {
@@ -379,10 +391,13 @@ object IosBluetoothController : BluetoothController {
         }
 
         override fun locationManager(manager: CLLocationManager, didFailWithError: NSError) {
-            // Ignore location errors – a fix will arrive eventually.
+            logging.e { "Location" }
         }
 
         override fun locationManagerDidChangeAuthorization(manager: CLLocationManager) {
+            if (manager.authorizationStatus() == kCLAuthorizationStatusAuthorizedWhenInUse) {
+                manager.requestAlwaysAuthorization()
+            }
             updateLocationTracking()
         }
     }
@@ -390,7 +405,7 @@ object IosBluetoothController : BluetoothController {
     private val locationManager = CLLocationManager().apply {
         delegate = locationDelegate
         desiredAccuracy = platform.CoreLocation.kCLLocationAccuracyBest
-        distanceFilter = platform.CoreLocation.kCLDistanceFilterNone
+        distanceFilter = 10.0
 
         pausesLocationUpdatesAutomatically = false
         allowsBackgroundLocationUpdates = true
@@ -404,6 +419,12 @@ object IosBluetoothController : BluetoothController {
 
         override fun centralManagerDidUpdateState(central: CBCentralManager) {
             if (central.state == CBManagerStatePoweredOn) {
+                if (!appEnabled) {
+                    stopScanIfNeeded()
+                    cancelAllKnownConnections()
+                    refreshDeviceList()
+                    return
+                }
                 if (!central.isScanning) {
                     central.scanForPeripheralsWithServices(serviceUUIDs = null, options = null)
                 }
@@ -429,29 +450,38 @@ object IosBluetoothController : BluetoothController {
                 willRestoreState[CBCentralManagerRestoredStatePeripheralsKey] as? List<*>
                     ?: return
 
-            restoredPeripherals.forEach { any ->
-                val peripheral = any as? CBPeripheral ?: return@forEach
-                val id = peripheral.identifier.UUIDString
-                discovered[id] = peripheral
-                // Re-attach our peripheral delegate so callbacks keep working.
-                peripheral.delegate = peripheralDelegate
+            if (appEnabled) {
+                restoredPeripherals.forEach { any ->
+                    val peripheral = any as? CBPeripheral ?: return@forEach
+                    val id = peripheral.identifier.UUIDString
+                    discovered[id] = peripheral
+                    // Re-attach our peripheral delegate so callbacks keep working.
+                    peripheral.delegate = peripheralDelegate
 
-                if (peripheral.state == CBPeripheralStateConnected) {
-                    // The OS kept the connection alive – resume service discovery.
-                    connected[id] = peripheral
-                    val session = sessions.getOrPut(id) { PeripheralSession(peripheral) }
-                    session.phase = PeripheralPhase.Connected
-                    peripheral.discoverServices(
-                        listOf(
-                            CBUUID.UUIDWithString(SonyBluetoothConstants.SERVICE_UUID),
-                            CBUUID.UUIDWithString(SonyBluetoothConstants.CONTROL_SERVICE_UUID),
+                    if (peripheral.state == CBPeripheralStateConnected) {
+                        // The OS kept the connection alive – resume service discovery.
+                        connected[id] = peripheral
+                        val session = sessions.getOrPut(id) { PeripheralSession(peripheral) }
+                        session.phase = PeripheralPhase.Connected
+                        peripheral.discoverServices(
+                            listOf(
+                                CBUUID.UUIDWithString(SonyBluetoothConstants.SERVICE_UUID),
+                                CBUUID.UUIDWithString(SonyBluetoothConstants.CONTROL_SERVICE_UUID),
+                            )
                         )
-                    )
+                    }
+                    // If not yet connected, CoreBluetooth still has the pending connection
+                    // request alive and will fire didConnectPeripheral when the device is found.
                 }
-                // If not yet connected, CoreBluetooth still has the pending connection
-                // request alive and will fire didConnectPeripheral when the device is found.
+                refreshDeviceList()
+            } else {
+                restoredPeripherals.forEach { any ->
+                    val peripheral = any as? CBPeripheral ?: return@forEach
+                    if (central.state == CBManagerStatePoweredOn) {
+                        central.cancelPeripheralConnection(peripheral)
+                    }
+                }
             }
-            refreshDeviceList()
         }
 
         override fun centralManager(
@@ -507,7 +537,7 @@ object IosBluetoothController : BluetoothController {
 
             // Re-issue the connection request for persisted devices so
             // CoreBluetooth keeps retrying in the background.
-            if (id in autoReconnectIds && central.state == CBManagerStatePoweredOn) {
+            if (shouldAutoReconnect(id)) {
                 central.connectPeripheral(didFailToConnectPeripheral, options = null)
             }
         }
@@ -528,7 +558,7 @@ object IosBluetoothController : BluetoothController {
             // disconnect()), queue a new connection attempt. CoreBluetooth will
             // keep retrying silently in the background until the device is found –
             // even across app kills, thanks to state preservation.
-            if (id in autoReconnectIds && central.state == CBManagerStatePoweredOn) {
+            if (shouldAutoReconnect(id)) {
                 central.connectPeripheral(didDisconnectPeripheral, options = null)
             }
 
@@ -622,6 +652,19 @@ object IosBluetoothController : BluetoothController {
         discovered.remove(identifier)
         sessions.remove(identifier)
         refreshDeviceList()
+    }
+
+    suspend fun applyAppEnabledState(enabled: Boolean) {
+        appEnabled = enabled
+        if (enabled) {
+            startScan()
+            reconnectToPersistedPeripherals()
+            updateLocationTracking()
+            refreshDeviceList()
+            return
+        }
+
+        forceShutdownAllConnections()
     }
 
     // ---------------------------------------------------------------------------
@@ -729,21 +772,23 @@ object IosBluetoothController : BluetoothController {
         updateLocationTracking()
         refreshDeviceList()
 
+        if (!isAppEnabledForTransmission()) return
+
         latestLocation?.let {
-            if (isFreshFix(it)) {
+            if (hasSessionLocation || isFreshFix(it)) {
                 sendLocationToPeripheral(session, it)
             }
         }
     }
 
     private fun updateLocationTracking() {
+        val appEnabled = isAppEnabledForTransmission()
         val hasReadyPeripheral = sessions.values.any { it.phase == PeripheralPhase.Ready }
-        if (!hasReadyPeripheral) {
+        if (!hasReadyPeripheral || !appEnabled) {
             if (locationUpdatesStarted) {
                 locationManager.stopUpdatingLocation()
-                /* backgroundActivitySession?.invalidate()
-                 serviceSession?.invalidate()*/
                 locationUpdatesStarted = false
+                hasSessionLocation = false
             }
             transmissionJob?.cancel()
             transmissionJob = null
@@ -756,7 +801,7 @@ object IosBluetoothController : BluetoothController {
                   CLServiceSessionAuthorizationRequirementAlways
               )
               backgroundActivitySession = CLBackgroundActivitySession.backgroundActivitySession()*/
-            locationManager.requestAlwaysAuthorization()
+            locationManager.requestWhenInUseAuthorization()
             locationManager.startUpdatingLocation()
             // Prime the first fix quickly so transmission can start without waiting for the next interval.
             //locationManager.requestLocation()
@@ -795,6 +840,49 @@ object IosBluetoothController : BluetoothController {
             forCharacteristic = characteristic,
             type = CBCharacteristicWriteWithResponse,
         )
+    }
+
+    private fun forceShutdownAllConnections() {
+        stopScanIfNeeded()
+        cancelAllKnownConnections()
+
+        connectCallbacks.values.forEach { callback -> callback(false) }
+        connectCallbacks.clear()
+        disconnectCallbacks.values.forEach { callback -> callback() }
+        disconnectCallbacks.clear()
+
+        connected.clear()
+        sessions.clear()
+        latestLocation = null
+        hasSessionLocation = false
+
+        if (locationUpdatesStarted) {
+            locationManager.stopUpdatingLocation()
+            locationUpdatesStarted = false
+        }
+        transmissionJob?.cancel()
+        transmissionJob = null
+
+        refreshDeviceList()
+    }
+
+    private fun cancelAllKnownConnections() {
+        if (central.state != CBManagerStatePoweredOn) return
+
+        val peripherals = mutableMapOf<String, CBPeripheral>()
+        connected.forEach { (id, peripheral) -> peripherals[id] = peripheral }
+        discovered.forEach { (id, peripheral) -> peripherals[id] = peripheral }
+        sessions.forEach { (id, session) -> peripherals[id] = session.peripheral }
+
+        peripherals.values.forEach { peripheral ->
+            central.cancelPeripheralConnection(peripheral)
+        }
+    }
+
+    private fun stopScanIfNeeded() {
+        if (central.state == CBManagerStatePoweredOn && central.isScanning) {
+            central.stopScan()
+        }
     }
 
     // ---------------------------------------------------------------------------
@@ -872,6 +960,12 @@ object IosBluetoothController : BluetoothController {
             }
         }
     }
+
+    private fun shouldAutoReconnect(id: String): Boolean {
+        return appEnabled && id in autoReconnectIds && central.state == CBManagerStatePoweredOn
+    }
+
+    private fun isAppEnabledForTransmission(): Boolean = appEnabled
 
     private fun shouldUpdateLocation(newLocation: CLLocation): Boolean {
         val current = latestLocation ?: return true
