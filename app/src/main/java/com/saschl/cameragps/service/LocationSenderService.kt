@@ -203,6 +203,8 @@ class LocationSenderService : LifecycleService() {
             LOCATION_UPDATE_INTERVAL_MS,
         )
             .setWaitForAccurateLocation(false)
+            .setMinUpdateDistanceMeters(10f)
+            .setMaxUpdateDelayMillis(60000)
             .build()
 
         val locationSettings = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
@@ -277,7 +279,7 @@ class LocationSenderService : LifecycleService() {
                 locManager.requestLocationUpdates(
                     LocationManager.FUSED_PROVIDER,
                     LOCATION_UPDATE_INTERVAL_MS,
-                    0f,
+                    10f,
                     listener,
                     Looper.getMainLooper()
                 )
@@ -336,7 +338,6 @@ class LocationSenderService : LifecycleService() {
                         Timber.w("Periodic: No location available to send")
                     }
 
-                    // Schedule next run
                     handler.postDelayed(this, LOCATION_UPDATE_INTERVAL_MS)
                 }
             }
@@ -347,7 +348,7 @@ class LocationSenderService : LifecycleService() {
 
         // Start periodic updates
         handler.postDelayed(runnable, LOCATION_UPDATE_INTERVAL_MS)
-        Timber.i("Started periodic location transmission every ${LOCATION_UPDATE_INTERVAL_MS}ms")
+        Timber.d("Started periodic location transmission every ${LOCATION_UPDATE_INTERVAL_MS}ms")
     }
 
     private fun stopFallbackPeriodicTransmission() {
@@ -611,7 +612,7 @@ class LocationSenderService : LifecycleService() {
         @SuppressLint("MissingPermission")
         override fun onLocationResult(fetchedLocation: LocationResult) {
             super.onLocationResult(fetchedLocation)
-            Timber.d("Got a new location, is ${fetchedLocation.lastLocation ?: "empty"}")
+            Timber.i("Got a new location, is ${fetchedLocation.lastLocation ?: "empty"}")
 
             val lastLocation = fetchedLocation.lastLocation ?: return
 
@@ -625,8 +626,6 @@ class LocationSenderService : LifecycleService() {
 
         // create the notification channel
         // TODO no need to create every time
-
-
         try {
             // promote service to foreground service
             ServiceCompat.startForeground(
@@ -929,24 +928,7 @@ class LocationSenderService : LifecycleService() {
             value: ByteArray,
             gatt: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic
-        ) {/*
-            val service = gatt.services?.find { it.uuid == SonyBluetoothConstants.SERVICE_UUID }
-            val locationEnabledCharacteristic =
-                service?.getCharacteristic(CHARACTERISTIC_LOCATION_ENABLED_IN_CAMERA)
-
-            if (locationEnabledCharacteristic != null && characteristic.uuid.equals(CHARACTERISTIC_READ_UUID)) {
-
-                val locEnabled = gatt.readCharacteristic(locationEnabledCharacteristic)
-
-                Timber.i("Read request for location enabled characteristic: ${locEnabled}")
-                if (locEnabled) {
-                    return
-                }
-
-
-            } else if (characteristic.uuid.equals(CHARACTERISTIC_LOCATION_ENABLED_IN_CAMERA)) {
-                Timber.w("Received characteristic read from camera (location status): ${characteristic.uuid}, $value")
-            }*/
+        ) {
             cameraConnectionManager.setLocationDataConfig(
                 gatt.device.address.uppercase(),
                 LocationDataConfig(hasTimeZoneDstFlag(value))
@@ -954,7 +936,6 @@ class LocationSenderService : LifecycleService() {
 
             Timber.i("Characteristic read, shouldSendTimeZoneAndDst: ${hasTimeZoneDstFlag(value)}")
             enableGpsTransmission(gatt)
-
         }
     }
 
@@ -972,9 +953,8 @@ class LocationSenderService : LifecycleService() {
         val locationPacket =
             LocationDataConverter.buildLocationDataPacket(locationDataConfig, locationResult!!)
 
-        if (!BluetoothGattUtils.writeCharacteristic(gatt, characteristic, locationPacket)) {
-            //Timber.e("Failed to send location data to camera")
-        }
+        BluetoothGattUtils.writeCharacteristic(gatt, characteristic, locationPacket)
+
     }
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)

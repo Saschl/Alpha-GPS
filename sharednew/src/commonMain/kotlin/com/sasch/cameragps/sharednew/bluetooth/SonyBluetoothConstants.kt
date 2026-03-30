@@ -24,7 +24,7 @@ object SonyBluetoothConstants {
     val GPS_ENABLE_COMMAND = byteArrayOf(0x01)
 
     // Location update interval
-    const val LOCATION_UPDATE_INTERVAL_MS = 10000L
+    const val LOCATION_UPDATE_INTERVAL_MS = 5000L
 
     // Accuracy threshold for location updates
     const val ACCURACY_THRESHOLD_METERS = 200.0

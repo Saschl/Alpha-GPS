@@ -1,8 +1,15 @@
 package com.sasch.cameragps.sharednew.bluetooth
 
+import com.diamondedge.logging.KmLogging
+import com.diamondedge.logging.LogLevel
+import com.diamondedge.logging.VariableLogLevel
 import com.diamondedge.logging.logging
+import com.sasch.cameragps.sharednew.IosAppPreferences
 import com.sasch.cameragps.sharednew.bluetooth.IosBluetoothController.ensureInitialized
 import com.sasch.cameragps.sharednew.bluetooth.IosBluetoothController.retryAfterPairing
+import com.sasch.cameragps.sharednew.database.getDatabaseBuilder
+import com.sasch.cameragps.sharednew.database.logging.DatabaseLogger
+import com.sasch.cameragps.sharednew.database.logging.LogRepository
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCSignatureOverride
@@ -28,6 +35,7 @@ import platform.CoreBluetooth.CBCharacteristic
 import platform.CoreBluetooth.CBCharacteristicPropertyIndicate
 import platform.CoreBluetooth.CBCharacteristicPropertyNotify
 import platform.CoreBluetooth.CBCharacteristicWriteWithResponse
+import platform.CoreBluetooth.CBConnectPeripheralOptionNotifyOnConnectionKey
 import platform.CoreBluetooth.CBManagerStatePoweredOn
 import platform.CoreBluetooth.CBPeripheral
 import platform.CoreBluetooth.CBPeripheralDelegateProtocol
@@ -40,6 +48,7 @@ import platform.CoreLocation.CLLocationManagerDelegateProtocol
 import platform.Foundation.NSData
 import platform.Foundation.NSDate
 import platform.Foundation.NSError
+import platform.Foundation.NSLog
 import platform.Foundation.NSNumber
 import platform.Foundation.NSUUID
 import platform.Foundation.NSUserDefaults
@@ -77,6 +86,12 @@ object IosBluetoothController : BluetoothController {
         // Accessing `central` is enough – the property initialiser creates the
         // CBCentralManager and registers it for state restoration.
         central
+        KmLogging.setLoggers(
+            DatabaseLogger(
+                LogRepository(getDatabaseBuilder()),
+                VariableLogLevel(LogLevel.valueOf(IosAppPreferences.getLogLevel()))
+            )
+        )
     }
 
     private val logging = logging()
@@ -137,7 +152,7 @@ object IosBluetoothController : BluetoothController {
             didDiscoverCharacteristicsForService.characteristics?.forEach { characteristicAny ->
                 val characteristic = characteristicAny as CBCharacteristic
                 val uuid = characteristic.UUID
-                logging.d {
+                logging.v {
                     "  Discovered characteristic $uuid  props=0x${
                         characteristic.properties.toString(
                             16
@@ -212,7 +227,7 @@ object IosBluetoothController : BluetoothController {
             // encrypted characteristic is read, but the callback still fires
             // with an authentication error. Retry after a delay so the user
             // has time to accept the pairing dialog.
-            logging.d { "Read value for ${didUpdateValueForCharacteristic.UUID.UUIDString} (error=${error?.code} / ${error?.localizedDescription})" }
+            logging.v { "Read value for ${didUpdateValueForCharacteristic.UUID.UUIDString} (error=${error?.code} / ${error?.localizedDescription})" }
             if (isAuthenticationError(error)) {
                 retryAfterPairing(session) {
                     peripheral.readValueForCharacteristic(didUpdateValueForCharacteristic)
@@ -246,7 +261,7 @@ object IosBluetoothController : BluetoothController {
             // Handle pairing-related authentication errors. iOS shows the
             // system pairing dialog automatically; we restart the GPS-enable
             // flow after a delay so the user has time to accept.
-            logging.d { "Write value for ${didWriteValueForCharacteristic.UUID.UUIDString} completed (error=${error?.code} / ${error?.localizedDescription})" }
+            logging.v { "Write value for ${didWriteValueForCharacteristic.UUID.UUIDString} completed (error=${error?.code} / ${error?.localizedDescription})" }
             if (isAuthenticationError(error)) {
                 retryAfterPairing(session) {
                     // Reset phase so beginGpsEnable's guard doesn't skip it.
@@ -348,11 +363,17 @@ object IosBluetoothController : BluetoothController {
     private val locationDelegate = object : NSObject(), CLLocationManagerDelegateProtocol {
         override fun locationManager(manager: CLLocationManager, didUpdateLocations: List<*>) {
             val location = didUpdateLocations.lastOrNull() as? CLLocation ?: return
+            logging.d { "Received new location" }
+
             if (!shouldUpdateLocation(location)) return
 
             // send initial location immediately if none was cached yet
-            if (latestLocation == null) {
-                sendLocationToReadyPeripherals(location)
+            if (latestLocation == null || !isFreshFix(latestLocation!!)) {
+                runCatching {
+                    sendLocationToReadyPeripherals(location)
+                }.onFailure {
+                    logging.e(it, msg = { "Error sending location to peripherals" })
+                }
             }
             latestLocation = location
         }
@@ -370,8 +391,10 @@ object IosBluetoothController : BluetoothController {
         delegate = locationDelegate
         desiredAccuracy = platform.CoreLocation.kCLLocationAccuracyBest
         distanceFilter = platform.CoreLocation.kCLDistanceFilterNone
-        pausesLocationUpdatesAutomatically = true
+
+        pausesLocationUpdatesAutomatically = false
         allowsBackgroundLocationUpdates = true
+        //showsBackgroundLocationIndicator = true
     }
 
     // ---------------------------------------------------------------------------
@@ -612,7 +635,7 @@ object IosBluetoothController : BluetoothController {
      * operation's callback still receives one of these errors.
      */
     private fun isAuthenticationError(error: NSError?): Boolean {
-        logging.d { "error, if any: ${error?.code} / ${error?.localizedDescription}" }
+        logging.v { "error, if any: ${error?.code} / ${error?.localizedDescription}" }
 
         if (error == null) return false
         return error.code == IosSonyBleConstants.ATT_ERROR_INSUFFICIENT_AUTHENTICATION ||
@@ -718,6 +741,8 @@ object IosBluetoothController : BluetoothController {
         if (!hasReadyPeripheral) {
             if (locationUpdatesStarted) {
                 locationManager.stopUpdatingLocation()
+                /* backgroundActivitySession?.invalidate()
+                 serviceSession?.invalidate()*/
                 locationUpdatesStarted = false
             }
             transmissionJob?.cancel()
@@ -727,10 +752,14 @@ object IosBluetoothController : BluetoothController {
         }
 
         if (!locationUpdatesStarted) {
+            /*  serviceSession = CLServiceSession.sessionRequiringAuthorization(
+                  CLServiceSessionAuthorizationRequirementAlways
+              )
+              backgroundActivitySession = CLBackgroundActivitySession.backgroundActivitySession()*/
             locationManager.requestAlwaysAuthorization()
             locationManager.startUpdatingLocation()
             // Prime the first fix quickly so transmission can start without waiting for the next interval.
-            locationManager.requestLocation()
+            //locationManager.requestLocation()
             locationUpdatesStarted = true
         }
 
@@ -739,7 +768,11 @@ object IosBluetoothController : BluetoothController {
                 while (isActive) {
                     delay(SonyBluetoothConstants.LOCATION_UPDATE_INTERVAL_MS)
                     logging.d { "Periodic timer triggered – sending location to ready peripherals" }
-                    latestLocation?.let { sendLocationToReadyPeripherals(it) }
+                    runCatching {
+                        latestLocation?.let { sendLocationToReadyPeripherals(it) }
+                    }.onFailure { e ->
+                        NSLog("error, %s", e.toString())
+                    }
                 }
             }
         }
@@ -815,7 +848,10 @@ object IosBluetoothController : BluetoothController {
             val id = peripheral.identifier.UUIDString
             discovered[id] = peripheral
             if (!connected.containsKey(id)) {
-                central.connectPeripheral(peripheral, options = null)
+                central.connectPeripheral(
+                    peripheral,
+                    options = mapOf(CBConnectPeripheralOptionNotifyOnConnectionKey to true)
+                )
             }
         }
         refreshDeviceList()

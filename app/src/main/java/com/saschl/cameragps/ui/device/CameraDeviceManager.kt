@@ -209,10 +209,11 @@ fun CameraDeviceManager(
                     )
                 }
             } else {
+                EnhancedLocationPermissionBox {
                 deviceManager.getAssociatedDevices(adapter)
                     .find { it.address == selectedDevice?.address }?.id?.let {
-                        EnhancedLocationPermissionBox {
-                            DeviceDetailScreen(
+
+                    DeviceDetailScreen(
                                 device = selectedDevice!!,
                                 deviceManager = deviceManager,
                                 associationId = it,

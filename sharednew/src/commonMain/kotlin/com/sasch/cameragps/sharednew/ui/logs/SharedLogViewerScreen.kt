@@ -37,6 +37,7 @@ import cameragps.sharednew.generated.resources.logs_empty
 import cameragps.sharednew.generated.resources.logs_title
 import com.sasch.cameragps.sharednew.database.logging.LogEntry
 import com.sasch.cameragps.sharednew.database.logging.LogRepository
+import com.sasch.cameragps.sharednew.logging.LogFormatter
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -55,11 +56,12 @@ private val LOG_TIMESTAMP_FORMAT = LocalDateTime.Format {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SharedLogViewerScreen(
+    logFormatter: LogFormatter,
     logRepository: LogRepository,
     onBackClick: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    val logs by remember(logRepository) { logRepository.getRecentLogs() }.collectAsState(emptyList())
+    val logs by remember(logFormatter) { logFormatter.format() }.collectAsState(emptyList())
 
     Scaffold(
         topBar = {
@@ -120,9 +122,8 @@ fun SharedLogViewerScreen(
                             modifier = Modifier.padding(16.dp)
                         )
                     } else {
-                        val logText = remember(logs) {
-                            logs.joinToString("\n\n") { it.toDisplayString() }
-                        }
+                        val logText = logs.joinToString("\n\n")
+
                         Text(
                             text = logText,
                             style = MaterialTheme.typography.bodySmall.copy(

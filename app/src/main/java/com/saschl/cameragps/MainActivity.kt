@@ -28,6 +28,7 @@ import com.sasch.cameragps.sharednew.ui.theme.CameraGpsTheme
 import com.saschl.cameragps.service.FileTree
 import com.saschl.cameragps.service.GlobalExceptionHandler
 import com.saschl.cameragps.service.LocationSenderService
+import com.saschl.cameragps.ui.EnhancedLocationPermissionBox
 import com.saschl.cameragps.ui.HelpScreen
 import com.saschl.cameragps.ui.SentryConsentDialog
 import com.saschl.cameragps.ui.WelcomeScreen
@@ -35,6 +36,7 @@ import com.saschl.cameragps.ui.device.CameraDeviceManager
 import com.saschl.cameragps.ui.settings.SettingsScreen
 import com.saschl.cameragps.utils.PreferencesManager
 import com.saschl.cameragps.utils.SentryInit
+import com.saschl.cameragps.utils.logging.AndroidLogFormatter
 import kotlinx.serialization.Serializable
 import timber.log.Timber
 
@@ -175,17 +177,21 @@ class MainActivity : AppCompatActivity() {
                                 !PreferencesManager.isSentryConsentDialogDismissed(context)
                         }
 
-                        CameraDeviceManager(
-                            onSettingsClick = {
-                                backStack.add(AppDestination.Settings)
-                            },
-                            onHelpClick = {
-                                backStack.add(AppDestination.Help)
-                            },
-                            onLogsClick = {
-                                backStack.add(AppDestination.Logs)
-                            }
-                        )
+
+                        EnhancedLocationPermissionBox {
+                            CameraDeviceManager(
+                                onSettingsClick = {
+                                    backStack.add(AppDestination.Settings)
+                                },
+                                onHelpClick = {
+                                    backStack.add(AppDestination.Help)
+                                },
+                                onLogsClick = {
+                                    backStack.add(AppDestination.Logs)
+                                }
+                            )
+                        }
+
 
                         if (showSentryDialog) {
                             SentryConsentDialog(
@@ -199,7 +205,10 @@ class MainActivity : AppCompatActivity() {
 
                 AppDestination.Logs -> {
                     NavEntry(AppDestination.Logs) {
+                        val logFormatter =
+                            remember(logRepository) { AndroidLogFormatter(logRepository) }
                         SharedLogViewerScreen(
+                            logFormatter,
                             logRepository = logRepository,
                             onBackClick = {
                                 backStack.removeAt(backStack.lastIndex)

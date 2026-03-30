@@ -209,4 +209,10 @@
     <string name="notification_channel_name">Transmission state</string>
     <string name="disconnect_notification_channel_name">device disconnected</string>
     <string name="continue_anyway">Continue anyway</string>
+
+    <!-- Bluetooth Connect permission gate -->
+    <string name="bluetooth_connect_required_title">Bluetooth Permission Required</string>
+    <string name="bluetooth_connect_required_desc">This app requires Bluetooth Connect permission to discover and communicate with your camera device.</string>
+    <string name="bluetooth_connect_grant_button">Grant Bluetooth Permission</string>
+    <string name="bluetooth_connect_permanently_denied">Bluetooth permission has been permanently denied. Please open App Settings, navigate to Permissions → Nearby devices, and grant the permission manually.</string>
 </resources>

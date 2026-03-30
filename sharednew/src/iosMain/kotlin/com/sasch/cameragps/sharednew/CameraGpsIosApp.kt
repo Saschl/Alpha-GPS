@@ -30,6 +30,7 @@ import com.sasch.cameragps.sharednew.bluetooth.IosBluetoothController
 import com.sasch.cameragps.sharednew.database.getDatabaseBuilder
 import com.sasch.cameragps.sharednew.database.logging.DatabaseLogger
 import com.sasch.cameragps.sharednew.database.logging.LogRepository
+import com.sasch.cameragps.sharednew.logging.IosLogFormatter
 import com.sasch.cameragps.sharednew.ui.device.SharedDevicesScreen
 import com.sasch.cameragps.sharednew.ui.logs.SharedLogViewerScreen
 import com.sasch.cameragps.sharednew.ui.welcome.SharedWelcomeScreen
@@ -177,7 +178,9 @@ internal fun CameraGpsIosApp() {
         }
 
         IosScreen.Logs -> {
+            val logFormatter = remember(logRepository) { IosLogFormatter(logRepository) }
             SharedLogViewerScreen(
+                logFormatter = logFormatter,
                 logRepository = logRepository,
                 onBackClick = { currentScreen = IosScreen.Devices }
             )

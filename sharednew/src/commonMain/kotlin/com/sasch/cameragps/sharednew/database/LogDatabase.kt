@@ -54,13 +54,16 @@ abstract class LogDatabase : RoomDatabase() {
     class DeleteOldColumn : AutoMigrationSpec
 
     companion object {
+        private var instance: LogDatabase? = null
+
         fun getRoomDatabase(
             builder: Builder<LogDatabase>
         ): LogDatabase {
-            return builder
+            return instance ?: builder
                 .setDriver(BundledSQLiteDriver())
                 .setQueryCoroutineContext(Dispatchers.IO)
                 .build()
+                .also { instance = it }
         }
     }
 }

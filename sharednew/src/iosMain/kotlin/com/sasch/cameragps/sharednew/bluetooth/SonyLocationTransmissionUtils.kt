@@ -10,6 +10,8 @@ import platform.Foundation.NSCalendarUnitMinute
 import platform.Foundation.NSCalendarUnitMonth
 import platform.Foundation.NSCalendarUnitSecond
 import platform.Foundation.NSCalendarUnitYear
+import platform.Foundation.NSTimeZone
+import platform.Foundation.timeZoneForSecondsFromGMT
 import kotlin.math.abs
 
 internal data class SonyLocationTransmissionConfig(
@@ -116,6 +118,8 @@ internal object SonyLocationTransmissionUtils {
     private fun convertUtcDate(): ByteArray {
         val now = platform.Foundation.NSDate()
         val calendar = NSCalendar.currentCalendar
+
+        calendar.timeZone = NSTimeZone.timeZoneForSecondsFromGMT(0)
         val components = calendar.components(
             unitFlags = NSCalendarUnitYear or NSCalendarUnitMonth or NSCalendarUnitDay or NSCalendarUnitHour or NSCalendarUnitMinute or NSCalendarUnitSecond,
             fromDate = now,
