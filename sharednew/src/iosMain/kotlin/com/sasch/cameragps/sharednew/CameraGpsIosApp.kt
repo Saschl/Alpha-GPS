@@ -5,6 +5,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -37,6 +38,11 @@ import com.sasch.cameragps.sharednew.ui.welcome.SharedWelcomeScreen
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import platform.Foundation.NSNotificationCenter
+import platform.UIKit.UIApplication
+import platform.UIKit.UIApplicationDidBecomeActiveNotification
+import platform.UIKit.UIApplicationDidEnterBackgroundNotification
+import platform.UIKit.UIApplicationState.UIApplicationStateActive
 
 internal enum class IosScreen {
     Welcome,
@@ -60,6 +66,34 @@ internal fun CameraGpsIosApp() {
     }
     var isAppEnabled by remember { mutableStateOf(IosAppPreferences.isAppEnabled()) }
     var autoScanEnabled by remember { mutableStateOf(IosAppPreferences.isAutoScanEnabled()) }
+    var isAppInForeground by remember {
+        mutableStateOf(
+            UIApplication.sharedApplication.applicationState == UIApplicationStateActive
+        )
+    }
+
+    DisposableEffect(Unit) {
+        val center = NSNotificationCenter.defaultCenter
+        val backgroundObserver = center.addObserverForName(
+            name = UIApplicationDidEnterBackgroundNotification,
+            `object` = null,
+            queue = null
+        ) { _ ->
+            isAppInForeground = false
+        }
+        val activeObserver = center.addObserverForName(
+            name = UIApplicationDidBecomeActiveNotification,
+            `object` = null,
+            queue = null
+        ) { _ ->
+            isAppInForeground = true
+        }
+
+        onDispose {
+            center.removeObserver(backgroundObserver)
+            center.removeObserver(activeObserver)
+        }
+    }
 
     LaunchedEffect(Unit) {
         KmLogging.setLoggers(
@@ -69,9 +103,9 @@ internal fun CameraGpsIosApp() {
             )
         )
     }
-    LaunchedEffect(currentScreen, isAppEnabled, autoScanEnabled) {
+    LaunchedEffect(currentScreen, isAppEnabled, autoScanEnabled, isAppInForeground) {
         if (SCREENSHOT_MODE) return@LaunchedEffect
-        if (currentScreen == IosScreen.Devices && isAppEnabled && autoScanEnabled) {
+        if (currentScreen == IosScreen.Devices && isAppEnabled && autoScanEnabled && isAppInForeground) {
             bluetoothController.startScan()
         } else {
             bluetoothController.stopScan()
@@ -129,10 +163,11 @@ internal fun CameraGpsIosApp() {
                     isAppEnabled = isAppEnabled,
                     isScanning = autoScanEnabled,
                     onOpenSettings = { currentScreen = IosScreen.Settings },
+                    onOpenHelp = { currentScreen = IosScreen.Help },
                     onConnect = { device ->
                         scope.launch {
-                            if (device.isConnected) {
-                                bluetoothController.disconnect(device.identifier)
+                            if (!device.isConnected) {
+                                bluetoothController.connect(device.identifier)
                             }
                         }
                     },
@@ -188,5 +223,3 @@ internal fun CameraGpsIosApp() {
         }
     }
 }
-
-

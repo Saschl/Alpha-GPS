@@ -17,6 +17,8 @@ It makes use of the companion device manager APIs of Android which *should* prov
 
 Happy for any feedback!
 
+<a href="https://apps.apple.com/us/app/alpha-gps-geotagging/id6760982303"><img width="270" height="80" alt="Download_on_the_App_Store_Badge_US" src=""/></a>
+
 <a href="https://play.google.com/store/apps/details?id=com.saschl.cameragps"><img width="270" height="80" alt="GetItOnGooglePlay_Badge_Web_color_English" src="https://github.com/user-attachments/assets/775cb6fc-a297-4208-9249-43291c52d045" /></a>
 
 
@@ -25,7 +27,9 @@ Get the APK from the releases and install it directly on your phone. Or use Obta
 
 ## How can I contribute?
 As the project is open source, contributions are welcome! Just check out the repo, open Android Studio and create a Pull Request.
-If you wish to improve the translations, the project is also in Weblate. Check it out [here](https://hosted.weblate.org/engage/alpha-gps/)
+If you wish to improve the translations, the project is also in Weblate. Check it
+out [here](https://hosted.weblate.org/engage/alpha-gps/) (Currently on hold as I'm reorganizing the
+strings, but will be back soon!)
 
 If you want to contribute financially, consider supporting my work via [Buy Me A Coffee](https://buymeacoffee.com/wj8tism4dq)
 

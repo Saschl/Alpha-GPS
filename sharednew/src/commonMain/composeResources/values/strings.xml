@@ -58,6 +58,7 @@
     <string name="ios_troubleshooting_step_3_location_linking">3. On the camera, open Network/Smartphone settings and enable location information link so GPS data can be received from the phone.</string>
     <string name="ios_troubleshooting_step_4_location_permission">4. Make sure Location Services are enabled on iPhone and this app is allowed to access location.</string>
     <string name="ios_troubleshooting_got_it">Got it</string>
+    <string name="further_help">Still not working? Click here</string>
 
     <!-- Welcome screen strings -->
     <string name="welcome_title">Welcome to Alpha GPS Geotagging</string>

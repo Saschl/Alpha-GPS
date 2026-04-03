@@ -50,6 +50,7 @@ import cameragps.sharednew.generated.resources.delete_device_confirmation
 import cameragps.sharednew.generated.resources.enable_pairing_mode_continue
 import cameragps.sharednew.generated.resources.enable_pairing_mode_message
 import cameragps.sharednew.generated.resources.enable_pairing_mode_title
+import cameragps.sharednew.generated.resources.further_help
 import cameragps.sharednew.generated.resources.ios_no_devices_message
 import cameragps.sharednew.generated.resources.ios_troubleshooting_got_it
 import cameragps.sharednew.generated.resources.ios_troubleshooting_need_help
@@ -77,6 +78,7 @@ internal fun DeviceListContent(
     isAppEnabled: Boolean,
     isScanning: Boolean,
     onOpenSettings: () -> Unit,
+    onOpenHelp: () -> Unit,
     onConnect: (BluetoothDeviceInfo) -> Unit,
     onDelete: (BluetoothDeviceInfo) -> Unit,
 ) {
@@ -151,6 +153,12 @@ internal fun DeviceListContent(
                         Text(stringResource(Res.string.ios_troubleshooting_step_2_pairing_mode))
                         Text(stringResource(Res.string.ios_troubleshooting_step_3_location_linking))
                         Text(stringResource(Res.string.ios_troubleshooting_step_4_location_permission))
+                        TextButton(onClick = {
+                            showTroubleshootingDialog = false
+                            onOpenHelp()
+                        }) {
+                            Text(stringResource(Res.string.further_help))
+                        }
                     }
                 },
                 confirmButton = {

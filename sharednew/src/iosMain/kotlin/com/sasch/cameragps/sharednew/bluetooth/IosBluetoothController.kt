@@ -801,7 +801,13 @@ object IosBluetoothController : BluetoothController {
                   CLServiceSessionAuthorizationRequirementAlways
               )
               backgroundActivitySession = CLBackgroundActivitySession.backgroundActivitySession()*/
-            locationManager.requestWhenInUseAuthorization()
+            // if for some reason the user removes or denies always authorization, prompt for always again
+            if (locationManager.authorizationStatus() == kCLAuthorizationStatusAuthorizedWhenInUse) {
+                locationManager.requestAlwaysAuthorization()
+            } else {
+                // will request always authorization in callback
+                locationManager.requestWhenInUseAuthorization()
+            }
             locationManager.startUpdatingLocation()
             // Prime the first fix quickly so transmission can start without waiting for the next interval.
             //locationManager.requestLocation()
