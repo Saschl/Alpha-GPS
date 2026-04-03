@@ -85,13 +85,14 @@ kotlin {
                 implementation(libs.compose.foundation.multiplatform)
                 implementation(libs.compose.material3.multiplatform)
                 //     implementation(libs.components.resources)
+                implementation(libs.navigationevent)
 
                 //implementation(libs.androidx.sqlite.bundled)
                 implementation(libs.androidx.room.runtime)
-                implementation(compose.components.resources)
+                implementation(libs.components.resources)
                 implementation(libs.androidx.activity.compose)
                 implementation(libs.androidx.sqlite.bundled)
-                implementation("com.diamondedge:logging:2.1.0")
+                implementation(libs.logging)
                 implementation(libs.kotlinx.datetime)
 
             }

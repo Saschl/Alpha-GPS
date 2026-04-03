@@ -10,7 +10,9 @@ activityCompose = "1.13.0"
 composeBom = "2026.03.01"
 googlePlayServicesLocation = "21.3.0"
 accompanist = "0.37.3"
+logging = "2.1.0"
 material = "1.13.0"
+navigationeventVersion = "1.1.0-beta01"
 review = "2.0.2"
 reviewKtx = "2.0.2"
 room = "2.8.4"
@@ -23,6 +25,7 @@ kotlinxSerializationCore = "1.10.0"
 kotlinSerialization = "2.3.20"
 appCompat = "1.7.1"
 composeMultiplatform = "1.11.0-beta01"
+material3Multiplatform = "1.10.0-alpha05"
 coroutines = "1.10.2"
 kotlinStdlib = "2.3.20"
 kotlinTest = "2.3.20"
@@ -57,7 +60,9 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3" 
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+logging = { module = "com.diamondedge:logging", version.ref = "logging" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
+navigationevent = { module = "androidx.navigationevent:navigationevent", version.ref = "navigationeventVersion" }
 review = { module = "com.google.android.play:review", version.ref = "review" }
 review-ktx = { module = "com.google.android.play:review-ktx", version.ref = "reviewKtx" }
 timber = { group = "com.jakewharton.timber", name = "timber", version = "5.0.1" }
@@ -72,7 +77,7 @@ androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 compose-runtime-multiplatform = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "composeMultiplatform" }
 compose-foundation-multiplatform = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "composeMultiplatform" }
-compose-material3-multiplatform = { module = "org.jetbrains.compose.material3:material3", version.ref = "composeMultiplatform" }
+compose-material3-multiplatform = { module = "org.jetbrains.compose.material3:material3", version.ref = "material3Multiplatform" }
 compose-ui-multiplatform = { module = "org.jetbrains.compose.ui:ui", version.ref = "composeMultiplatform" }
 kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlinStdlib" }
 kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlinTest" }
