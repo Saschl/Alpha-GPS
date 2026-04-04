@@ -78,7 +78,9 @@ class LocationSenderService : LifecycleService() {
     private var locationResult: Location? = null
     private var hasSessionLocation: Boolean = false
 
-    private lateinit var deviceDao: CameraDeviceDAO
+    private val deviceDao: CameraDeviceDAO by lazy {
+        LogDatabase.getRoomDatabase(getDatabaseBuilder(applicationContext)).cameraDeviceDao()
+    }
 
     private val bluetoothManager: BluetoothManager by lazy {
         applicationContext.getSystemService()!!
@@ -571,11 +573,7 @@ class LocationSenderService : LifecycleService() {
         super.onCreate()
         NotificationsHelper.createNotificationChannel(this)
 
-        deviceDao = LogDatabase.getRoomDatabase(
-            getDatabaseBuilder(this)
-        ).cameraDeviceDao()
-
-        if(!startAsForegroundService()) {
+        if (!startAsForegroundService()) {
             return
         }
 
@@ -635,8 +633,6 @@ class LocationSenderService : LifecycleService() {
 
     private fun startAsForegroundService(): Boolean {
 
-        // create the notification channel
-        // TODO no need to create every time
         try {
             // promote service to foreground service
             ServiceCompat.startForeground(
