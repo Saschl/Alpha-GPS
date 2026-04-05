@@ -37,7 +37,9 @@ internal fun SentrySettingsCard() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(all = 8.dp)
             ) {
                 Text(
                     text = stringResource(Res.string.enable_sentry),

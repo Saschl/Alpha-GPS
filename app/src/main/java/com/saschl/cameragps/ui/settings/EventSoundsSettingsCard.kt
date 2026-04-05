@@ -136,6 +136,7 @@ internal fun EventSoundsSettingsCard() {
             SettingsToggleRow(
                 title = stringResource(Res.string.event_sounds_enable_all),
                 checked = enabled,
+                showDivider = false,
                 onCheckedChange = { value ->
                     enabled = value
                     PreferencesManager.setTransmissionEventSoundsEnabled(context, value)
@@ -151,12 +152,14 @@ internal fun EventSoundsSettingsCard() {
         )
 
         SettingsListGroup {
-            eventTitles.forEach { (event, title) ->
+            val eventEntries = eventTitles.entries.toList()
+            eventEntries.forEachIndexed { index, (event, title) ->
                 EventSettingsRow(
                     title = title,
                     subtitle = getModeLabel(
                         eventModeStates[event] ?: TransmissionSoundMode.DEFAULT
                     ),
+                    showDivider = index < eventEntries.lastIndex,
                     checked = eventEnabledStates[event] == true,
                     controlsEnabled = enabled,
                     onCheckedChange = { value ->
@@ -178,6 +181,7 @@ internal fun EventSoundsSettingsCard() {
         SettingsListGroup {
             SettingsActionRow(
                 title = stringResource(Res.string.event_sounds_configure_transmission_channel),
+                showDivider = true,
                 onClick = {
                     openNotificationChannelSettings(
                         context,
@@ -187,6 +191,7 @@ internal fun EventSoundsSettingsCard() {
             )
             SettingsActionRow(
                 title = stringResource(Res.string.event_sounds_configure_disconnect_channel),
+                showDivider = false,
                 onClick = {
                     openNotificationChannelSettings(
                         context,
@@ -254,6 +259,7 @@ private fun EventSettingsRow(
     title: String,
     subtitle: String,
     checked: Boolean,
+    showDivider: Boolean,
     controlsEnabled: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     onClick: () -> Unit,
@@ -276,16 +282,17 @@ private fun EventSettingsRow(
     if (controlsEnabled && checked) {
         SettingsActionRow(
             title = stringResource(Res.string.event_sounds_choose_sound),
-            onClick = onClick
+            onClick = onClick,
+            showDivider = showDivider
         )
     }
 
-    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 }
 
 @Composable
 private fun SettingsActionRow(
     title: String,
+    showDivider: Boolean = true,
     onClick: () -> Unit,
 ) {
     ListItem(
@@ -305,13 +312,16 @@ private fun SettingsActionRow(
         leadingContent = null
     )
 
-    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+    if (showDivider) {
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+    }
 }
 
 @Composable
 private fun SettingsToggleRow(
     title: String,
     checked: Boolean,
+    showDivider: Boolean = true,
     onCheckedChange: (Boolean) -> Unit,
 ) {
     ListItem(
@@ -323,7 +333,9 @@ private fun SettingsToggleRow(
             )
         }
     )
-    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+    if (showDivider) {
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+    }
 }
 
 @Composable
@@ -347,10 +359,19 @@ private fun SoundModeSelectionDialog(
         text = {
             LazyColumn {
                 items(options) { (mode, label) ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable
+                        {
+                            when (mode) {
+                                TransmissionSoundMode.DEFAULT -> onSelectDefault()
+                                TransmissionSoundMode.SILENT -> onSelectSilent()
+                                TransmissionSoundMode.CUSTOM -> onSelectCustom()
+                            }
+                        }
+                    ) {
                         RadioButton(
                             selected = mode == currentMode,
-
                             onClick = {
                                 when (mode) {
                                     TransmissionSoundMode.DEFAULT -> onSelectDefault()

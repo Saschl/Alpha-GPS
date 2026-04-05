@@ -148,7 +148,7 @@ fun ScanForDevicesMenu(
         Row {
             Text(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .padding(end = 8.dp)
                     .weight(1f),
                 text = stringResource(Res.string.scan_for_devices),
             )
