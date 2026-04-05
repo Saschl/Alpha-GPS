@@ -274,4 +274,10 @@
     <string name="tip_jar_error_prefix">Something went wrong:</string>
     <string name="tip_jar_dismiss">Dismiss</string>
 
+    <!-- Donation prompt -->
+    <string name="donation_dialog_title">Enjoying Alpha GPS?</string>
+    <string name="donation_dialog_message">If the app helps your photography, a small donation helps keep development going. It is completely optional.</string>
+    <string name="donation_dialog_confirm">Support project</string>
+    <string name="donation_dialog_dismiss">Not now</string>
+
 </resources>

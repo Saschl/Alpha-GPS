@@ -19,6 +19,8 @@ object PreferencesManager {
     private const val KEY_LOG_LEVEL = "log_level"
     private const val KEY_REVIEW_HINT_LAST_SHOWN = "review_hint_last_shown"
     private const val KEY_REVIEW_HINT_SHOWN_TIMES = "review_hint_shown_times"
+    private const val KEY_DONATION_HINT_LAST_SHOWN = "donation_hint_last_shown"
+    private const val KEY_DONATION_HINT_SHOWN_TIMES = "donation_hint_shown_times"
     private const val KEY_IGNORE_PERMISSIONS = "ignore_permissions"
     private const val KEY_LOCATION_PROVIDER = "location_provider"
     private const val KEY_TRANSMISSION_EVENT_SOUNDS_ENABLED = "transmission_event_sounds_enabled"
@@ -122,6 +124,40 @@ object PreferencesManager {
 
     fun reviewHintLastShownInstant(context: Context): Instant {
         return Instant.ofEpochSecond(getPreferences(context).getLong(KEY_REVIEW_HINT_LAST_SHOWN, 0))
+    }
+
+    fun donationHintLastShownDaysAgo(context: Context, initialize: Boolean = false): Long {
+        val lastShown = getPreferences(context).getLong(KEY_DONATION_HINT_LAST_SHOWN, 0L)
+
+        val lastShownInstant = if (lastShown == 0L && initialize) {
+            // Initialize so the donation prompt appears on a later app open, not immediately.
+            Instant.now().minus(29, ChronoUnit.DAYS).also {
+                getPreferences(context).edit {
+                    putLong(KEY_DONATION_HINT_LAST_SHOWN, it.epochSecond)
+                }
+            }
+        } else {
+            Instant.ofEpochSecond(lastShown)
+        }
+
+        return Duration.between(lastShownInstant, Instant.now()).toDays()
+    }
+
+    fun setDonationHintShownNow(context: Context) {
+        getPreferences(context).edit {
+            putLong(KEY_DONATION_HINT_LAST_SHOWN, Instant.now().epochSecond)
+        }
+    }
+
+    fun donationHintShownTimes(applicationContext: Context): Int {
+        return getPreferences(applicationContext).getInt(KEY_DONATION_HINT_SHOWN_TIMES, 0)
+    }
+
+    fun increaseDonationHintShownTimes(applicationContext: Context) {
+        val currentTimes = donationHintShownTimes(applicationContext)
+        getPreferences(applicationContext).edit {
+            putInt(KEY_DONATION_HINT_SHOWN_TIMES, currentTimes + 1)
+        }
     }
 
     fun resetReviewHintData(context: Context) {

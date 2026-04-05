@@ -1,12 +1,17 @@
 package com.sasch.cameragps.sharednew
 
 import com.diamondedge.logging.LogLevel
+import platform.Foundation.NSDate
 import platform.Foundation.NSUserDefaults
+import platform.Foundation.timeIntervalSince1970
+import kotlin.math.floor
 
 internal object IosAppPreferences {
     private const val keyShowWelcome = "ios.showWelcome"
     private const val keyAppEnabled = "ios.appEnabled"
     private const val keyAutoScanEnabled = "ios.autoScanEnabled"
+    private const val keyDonationHintLastShown = "ios.donationHintLastShown"
+    private const val keyDonationHintShownTimes = "ios.donationHintShownTimes"
 
     private const val logLevel = "ios.logLevel"
 
@@ -35,6 +40,38 @@ internal object IosAppPreferences {
 
     fun setAutoScanEnabled(enabled: Boolean) {
         defaults.setBool(enabled, forKey = keyAutoScanEnabled)
+    }
+
+    fun donationHintLastShownDaysAgo(initialize: Boolean = false): Long {
+        val hasValue = defaults.objectForKey(keyDonationHintLastShown) != null
+        val nowEpochSeconds = floor(NSDate().timeIntervalSince1970()).toLong()
+
+        val lastShownEpochSeconds = if (!hasValue && initialize) {
+            // Initialize to show the prompt on a later reopen, not right after setup.
+            val initialValue = nowEpochSeconds - (29 * 24 * 60 * 60)
+            defaults.setDouble(initialValue.toDouble(), forKey = keyDonationHintLastShown)
+            initialValue
+        } else {
+            defaults.doubleForKey(keyDonationHintLastShown).toLong()
+        }
+
+        return (nowEpochSeconds - lastShownEpochSeconds) / (24 * 60 * 60)
+    }
+
+    fun setDonationHintShownNow() {
+        val nowEpochSeconds = floor(NSDate().timeIntervalSince1970())
+        defaults.setDouble(nowEpochSeconds, forKey = keyDonationHintLastShown)
+    }
+
+    fun donationHintShownTimes(): Int {
+        return defaults.integerForKey(keyDonationHintShownTimes).toInt()
+    }
+
+    fun increaseDonationHintShownTimes() {
+        defaults.setInteger(
+            (donationHintShownTimes() + 1).toLong(),
+            forKey = keyDonationHintShownTimes
+        )
     }
 
     fun getLogLevel(): String = defaults.stringForKey(logLevel) ?: LogLevel.Info.name

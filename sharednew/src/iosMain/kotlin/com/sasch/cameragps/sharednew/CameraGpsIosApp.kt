@@ -1,9 +1,11 @@
 package com.sasch.cameragps.sharednew
 
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -71,6 +73,7 @@ internal fun CameraGpsIosApp() {
             UIApplication.sharedApplication.applicationState == UIApplicationStateActive
         )
     }
+    var showDonationDialog by remember { mutableStateOf(false) }
 
     DisposableEffect(Unit) {
         val center = NSNotificationCenter.defaultCenter
@@ -109,6 +112,21 @@ internal fun CameraGpsIosApp() {
             bluetoothController.startScan()
         } else {
             bluetoothController.stopScan()
+        }
+    }
+
+    LaunchedEffect(currentScreen, isAppInForeground, devices, showDonationDialog) {
+        if (SCREENSHOT_MODE || showDonationDialog) return@LaunchedEffect
+        if (
+            currentScreen == IosScreen.Devices &&
+            isAppInForeground &&
+            devices.isNotEmpty() &&
+            IosAppPreferences.donationHintLastShownDaysAgo(initialize = true) >= 30 &&
+            IosAppPreferences.donationHintShownTimes() < 1
+        ) {
+            IosAppPreferences.setDonationHintShownNow()
+            IosAppPreferences.increaseDonationHintShownTimes()
+            showDonationDialog = true
         }
     }
 
@@ -221,5 +239,28 @@ internal fun CameraGpsIosApp() {
                 onBackClick = { currentScreen = IosScreen.Devices }
             )
         }
+    }
+
+    if (showDonationDialog) {
+        AlertDialog(
+            onDismissRequest = { showDonationDialog = false },
+            title = { Text(text = "Enjoying Alpha GPS?") },
+            text = { Text(text = "If the app helps your photography, a small donation helps keep development going.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDonationDialog = false
+                        currentScreen = IosScreen.Settings
+                    }
+                ) {
+                    Text(text = "Support project")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDonationDialog = false }) {
+                    Text(text = "Not now")
+                }
+            }
+        )
     }
 }

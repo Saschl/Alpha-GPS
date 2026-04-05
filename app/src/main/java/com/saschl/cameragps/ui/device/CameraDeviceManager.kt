@@ -8,13 +8,16 @@ import android.companion.ObservingDevicePresenceRequest
 import android.content.Intent
 import android.content.IntentFilter
 import android.location.LocationManager
+import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -90,6 +93,7 @@ fun CameraDeviceManager(
     }
 
     var isReviewFlowActive by remember { mutableStateOf(false) }
+    var showDonationDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(associatedDevices) {
         associatedDevices.forEach {
@@ -137,6 +141,22 @@ fun CameraDeviceManager(
                     PreferencesManager.decreaseReviewHintShownTimes(context.applicationContext)
                 }
             }
+        }
+    }
+
+    LaunchedEffect(lifecycleState, associatedDevices, isReviewFlowActive) {
+        if (!isReviewFlowActive &&
+            associatedDevices.isNotEmpty() &&
+            PreferencesManager.donationHintLastShownDaysAgo(
+                context.applicationContext,
+                true
+            ) >= 30 &&
+            lifecycleState == Lifecycle.State.RESUMED &&
+            PreferencesManager.donationHintShownTimes(context.applicationContext) < 1
+        ) {
+            PreferencesManager.setDonationHintShownNow(context.applicationContext)
+            PreferencesManager.increaseDonationHintShownTimes(context.applicationContext)
+            showDonationDialog = true
         }
     }
 
@@ -279,5 +299,28 @@ fun CameraDeviceManager(
                     .clickable(enabled = false) { }
             )
         }
+
+        if (showDonationDialog) {
+            AlertDialog(
+                onDismissRequest = { showDonationDialog = false },
+                title = { Text(text = "Enjoying Alpha GPS?") },
+                text = { Text(text = "If the app helps your photography, a small donation helps keep development going.") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showDonationDialog = false
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(BUY_ME_A_COFFEE_URL))
+                            runCatching { context.startActivity(intent) }
+                                .onFailure { Timber.w(it, "Failed to open donation link") }
+                        }
+                    ) { Text(text = "Support project") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDonationDialog = false }) { Text(text = "Not now") }
+                }
+            )
+        }
     }
 }
+
+private const val BUY_ME_A_COFFEE_URL = "https://buymeacoffee.com/wj8tism4dq"
