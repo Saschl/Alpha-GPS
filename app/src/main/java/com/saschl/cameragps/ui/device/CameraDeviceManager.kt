@@ -8,7 +8,6 @@ import android.companion.ObservingDevicePresenceRequest
 import android.content.Intent
 import android.content.IntentFilter
 import android.location.LocationManager
-import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
@@ -32,8 +31,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
+import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import cameragps.sharednew.generated.resources.Res
+import cameragps.sharednew.generated.resources.donation_dialog_confirm
+import cameragps.sharednew.generated.resources.donation_dialog_dismiss
+import cameragps.sharednew.generated.resources.donation_dialog_message
+import cameragps.sharednew.generated.resources.donation_dialog_title
 import com.google.android.play.core.review.ReviewException
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.google.android.play.core.review.model.ReviewErrorCode
@@ -49,6 +54,7 @@ import com.saschl.cameragps.ui.pairing.startDevicePresenceObservation
 import com.saschl.cameragps.utils.PreferencesManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 import timber.log.Timber
 
 @SuppressLint("MissingPermission")
@@ -313,20 +319,22 @@ fun CameraDeviceManager(
         if (showDonationDialog) {
             AlertDialog(
                 onDismissRequest = { showDonationDialog = false },
-                title = { Text(text = "Enjoying Alpha GPS?") },
-                text = { Text(text = "If the app helps your photography, a small donation helps keep development going.") },
+                title = { Text(text = stringResource(Res.string.donation_dialog_title)) },
+                text = { Text(text = stringResource(Res.string.donation_dialog_message)) },
                 confirmButton = {
                     TextButton(
                         onClick = {
                             showDonationDialog = false
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(BUY_ME_A_COFFEE_URL))
+                            val intent = Intent(Intent.ACTION_VIEW, BUY_ME_A_COFFEE_URL.toUri())
                             runCatching { context.startActivity(intent) }
                                 .onFailure { Timber.w(it, "Failed to open donation link") }
                         }
-                    ) { Text(text = "Support project") }
+                    ) { Text(text = stringResource(Res.string.donation_dialog_confirm)) }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showDonationDialog = false }) { Text(text = "Not now") }
+                    TextButton(onClick = {
+                        showDonationDialog = false
+                    }) { Text(text = stringResource(Res.string.donation_dialog_dismiss)) }
                 }
             )
         }

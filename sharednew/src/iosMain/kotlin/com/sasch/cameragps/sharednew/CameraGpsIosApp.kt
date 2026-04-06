@@ -17,6 +17,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import cameragps.sharednew.generated.resources.Res
 import cameragps.sharednew.generated.resources.baseline_view_list_24
+import cameragps.sharednew.generated.resources.donation_dialog_confirm
+import cameragps.sharednew.generated.resources.donation_dialog_dismiss
+import cameragps.sharednew.generated.resources.donation_dialog_message
+import cameragps.sharednew.generated.resources.donation_dialog_title
 import cameragps.sharednew.generated.resources.header_device_list
 import cameragps.sharednew.generated.resources.info_24px
 import cameragps.sharednew.generated.resources.settings
@@ -264,8 +268,8 @@ internal fun CameraGpsIosApp() {
     if (showDonationDialog) {
         AlertDialog(
             onDismissRequest = { showDonationDialog = false },
-            title = { Text(text = "Enjoying Alpha GPS?") },
-            text = { Text(text = "If the app helps your photography, a small donation helps keep development going.") },
+            title = { Text(text = stringResource(Res.string.donation_dialog_title)) },
+            text = { Text(text = stringResource(Res.string.donation_dialog_message)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -274,12 +278,12 @@ internal fun CameraGpsIosApp() {
                         currentScreen = IosScreen.Settings
                     }
                 ) {
-                    Text(text = "Support project")
+                    Text(text = stringResource(Res.string.donation_dialog_confirm))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDonationDialog = false }) {
-                    Text(text = "Not now")
+                    Text(text = stringResource(Res.string.donation_dialog_dismiss))
                 }
             }
         )
