@@ -9,6 +9,15 @@ const issuesUrl = "https://github.com/Saschl/alpha-gps/issues";
 const weblateUrl = "https://hosted.weblate.org/engage/alpha-gps/";
 const privacyUrl = "https://github.com/Saschl/alpha-gps/blob/main/privacy.md";
 const supportUrl = "https://buymeacoffee.com/wj8tism4dq";
+const topNav = {
+  brand: "Alpha GPS",
+  homeUrl: "/",
+  logoSrc: "/icon.svg",
+  repoUrl,
+  issuesUrl,
+  starsBadgeUrl: "https://img.shields.io/github/stars/Saschl/alpha-gps?style=for-the-badge&logo=github",
+  forksBadgeUrl: "https://img.shields.io/github/forks/Saschl/alpha-gps?style=for-the-badge&logo=github"
+};
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -37,6 +46,7 @@ const jsonLd = {
   title="Alpha GPS for Geotagging"
   description="Open-source geotagging app that transmits GPS coordinates from your phone to Sony cameras on Android and iOS."
   jsonLd={jsonLd}
+  nav={topNav}
 >
   <section class="hero">
     <h1>Alpha GPS for Geotagging</h1>
@@ -116,5 +126,4 @@ const jsonLd = {
     <small>Made by Saschl and contributors.</small>
   </section>
 </BaseLayout>
-
 

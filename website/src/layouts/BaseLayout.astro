@@ -7,6 +7,15 @@ interface Props {
   image?: string;
   jsonLd?: Record<string, unknown> | Array<Record<string, unknown>>;
   noindex?: boolean;
+  nav?: {
+    brand: string;
+    homeUrl?: string;
+    logoSrc?: string;
+    repoUrl: string;
+    issuesUrl: string;
+    starsBadgeUrl: string;
+    forksBadgeUrl: string;
+  };
 }
 
 const {
@@ -14,7 +23,8 @@ const {
   description,
   image = "/seo/og-image.svg",
   jsonLd,
-  noindex = false
+  noindex = false,
+  nav
 } = Astro.props;
 
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
@@ -28,6 +38,7 @@ const ogImageUrl = new URL(image, Astro.site ?? Astro.url).toString();
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="canonical" href={canonicalUrl} />
     <meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow"} />
     <meta name="theme-color" content="#0d1117" />
@@ -48,10 +59,31 @@ const ogImageUrl = new URL(image, Astro.site ?? Astro.url).toString();
     )}
   </head>
   <body>
+    {nav && (
+      <header class="topbar-wrap">
+        <div class="topbar">
+          <a class="brand" href={nav.homeUrl ?? "/"}>
+            <img src={nav.logoSrc ?? "/logo-mark.svg"} alt="" width="50" height="50" />
+            <span>{nav.brand}</span>
+          </a>
+
+          <nav class="topbar-links" aria-label="GitHub links">
+            <a href={nav.repoUrl}>Repository</a>
+            <a href={nav.issuesUrl}>Issues</a>
+            <a href={`${nav.repoUrl}/stargazers`} aria-label="GitHub stars">
+              <img src={nav.starsBadgeUrl} alt="GitHub stars" />
+            </a>
+            <a href={`${nav.repoUrl}/forks`} aria-label="GitHub forks">
+              <img src={nav.forksBadgeUrl} alt="GitHub forks" />
+            </a>
+          </nav>
+        </div>
+      </header>
+    )}
+
     <main class="container">
       <slot />
     </main>
   </body>
 </html>
-
 
