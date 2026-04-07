@@ -1,0 +1,16 @@
+{
+  "name": "camera-gps-site",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "devDependencies": {
+    "astro": "^5.7.11",
+    "typescript": "^5.9.3"
+  }
+}
+

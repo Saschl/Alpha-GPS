@@ -1,0 +1,95 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const repoUrl = "https://github.com/Saschl/alpha-gps";
+const playStoreUrl = "https://play.google.com/store/apps/details?id=com.saschl.cameragps";
+const appStoreUrl = "https://apps.apple.com/us/app/alpha-gps-geotagging/id6760982303";
+const releasesUrl = "https://github.com/Saschl/alpha-gps/releases";
+const issuesUrl = "https://github.com/Saschl/alpha-gps/issues";
+const weblateUrl = "https://hosted.weblate.org/engage/alpha-gps/";
+const privacyUrl = "https://github.com/Saschl/alpha-gps/blob/main/privacy.md";
+const supportUrl = "https://buymeacoffee.com/wj8tism4dq";
+---
+
+<BaseLayout
+  title="Alpha GPS for Geotagging"
+  description="Open-source app to transmit GPS data from your phone to Sony cameras."
+>
+  <section class="hero">
+    <h1>Alpha GPS for Geotagging</h1>
+    <p class="lead">
+      Open-source geotagging for Sony cameras. Setup once and forget.
+    </p>
+    <div class="actions">
+      <a class="button" href={playStoreUrl}>Get it on Google Play</a>
+      <a class="button" href={appStoreUrl}>Download on the App Store</a>
+      <a class="button ghost" href={releasesUrl}>APK Releases</a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Why people use it</h2>
+    <div class="grid">
+      <article class="card">
+        <h3>Reliable background updates</h3>
+        <p>
+          Uses Android companion device APIs to keep camera location updates running
+          even when your phone screen is off.
+        </p>
+      </article>
+      <article class="card">
+        <h3>Works with supported Sony models</h3>
+        <p>
+          Built for cameras that work with Imaging Edge or Sony Creators' app,
+          with confirmed reports including A6400, A6700, A7V, ZV-E10 and more.
+        </p>
+      </article>
+      <article class="card">
+        <h3>Practical troubleshooting</h3>
+        <p>
+          Includes logs, recovery options, and an optional always-on mode for
+          tricky vendor-specific Android behavior.
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>Open source, community built</h2>
+    <p>
+      Alpha GPS is fully open source. You can inspect code, open issues, propose
+      improvements, and help localize the app.
+    </p>
+    <div class="actions">
+      <a class="button" href={repoUrl}>Source Code</a>
+      <a class="button ghost" href={issuesUrl}>Issue Tracker</a>
+      <a class="button ghost" href={weblateUrl}>Translate on Weblate</a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Privacy first</h2>
+    <ul>
+      <li>No advertising or data selling.</li>
+      <li>Location is used only for live geotag transfer to your camera.</li>
+      <li>Crash diagnostics are optional and focused on fixing technical issues.</li>
+      <li>You can disable troubleshooting reporting in app settings at any time.</li>
+    </ul>
+    <p class="muted">
+      Full details: <a href={privacyUrl}>Privacy Policy</a>
+    </p>
+  </section>
+
+  <section>
+    <h2>Support the project</h2>
+    <p>
+      If Alpha GPS helps your photo workflow, support ongoing development and
+      maintenance.
+    </p>
+    <div class="actions">
+      <a class="button" href={supportUrl}>Buy Me a Coffee</a>
+    </div>
+    <small>Made by Saschl and contributors.</small>
+  </section>
+</BaseLayout>
+
