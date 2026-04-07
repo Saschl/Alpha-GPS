@@ -1,0 +1,21 @@
+<svg aria-labelledby="title desc" height="630" role="img" viewBox="0 0 1200 630" width="1200"
+    xmlns="http://www.w3.org/2000/svg">
+    <title id="title">Alpha GPS for Geotagging</title>
+    <desc id="desc">Open-source geotagging app for Sony cameras on Android and iOS.</desc>
+    <defs>
+        <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0%" stop-color="#0d1117" />
+            <stop offset="100%" stop-color="#1f2937" />
+        </linearGradient>
+    </defs>
+    <rect fill="url(#bg)" height="630" width="1200" />
+    <g fill="#e6edf3" font-family="Inter, Segoe UI, Arial, sans-serif">
+        <text font-size="72" font-weight="700" x="80" y="235">Alpha GPS</text>
+        <text fill="#79c0ff" font-size="50" font-weight="600" x="80" y="305">for Geotagging</text>
+        <text fill="#8b949e" font-size="32" x="80" y="390">Open-source GPS transfer for Sony
+            cameras
+        </text>
+        <text fill="#8b949e" font-size="28" x="80" y="455">github.com/Saschl/alpha-gps</text>
+    </g>
+</svg>
+

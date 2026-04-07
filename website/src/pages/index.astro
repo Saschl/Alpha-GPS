@@ -9,16 +9,40 @@ const issuesUrl = "https://github.com/Saschl/alpha-gps/issues";
 const weblateUrl = "https://hosted.weblate.org/engage/alpha-gps/";
 const privacyUrl = "https://github.com/Saschl/alpha-gps/blob/main/privacy.md";
 const supportUrl = "https://buymeacoffee.com/wj8tism4dq";
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Alpha GPS for Geotagging",
+  applicationCategory: "PhotographyApplication",
+  operatingSystem: "Android, iOS",
+  description:
+    "Open-source Sony camera geotagging app that transmits GPS coordinates from your phone to your camera.",
+  url: "https://alphagps.app/",
+  sameAs: [repoUrl, releasesUrl],
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD"
+  },
+  downloadUrl: [playStoreUrl, appStoreUrl],
+  publisher: {
+    "@type": "Person",
+    name: "Saschl"
+  }
+};
 ---
 
 <BaseLayout
   title="Alpha GPS for Geotagging"
-  description="Open-source app to transmit GPS data from your phone to Sony cameras."
+  description="Open-source geotagging app that transmits GPS coordinates from your phone to Sony cameras on Android and iOS."
+  jsonLd={jsonLd}
 >
   <section class="hero">
     <h1>Alpha GPS for Geotagging</h1>
     <p class="lead">
-      Open-source geotagging for Sony cameras. Setup once and forget.
+      Open-source geotagging for Sony cameras. Pair once and automatically get
+      accurate GPS coordinates for your photos.
     </p>
     <div class="actions">
       <a class="button" href={playStoreUrl}>Get it on Google Play</a>
@@ -58,7 +82,7 @@ const supportUrl = "https://buymeacoffee.com/wj8tism4dq";
     <h2>Open source, community built</h2>
     <p>
       Alpha GPS is fully open source. You can inspect code, open issues, propose
-      improvements, and help localize the app.
+      improvements, and help localize the app. No paywalls, no ads, no data selling.
     </p>
     <div class="actions">
       <a class="button" href={repoUrl}>Source Code</a>
@@ -92,4 +116,5 @@ const supportUrl = "https://buymeacoffee.com/wj8tism4dq";
     <small>Made by Saschl and contributors.</small>
   </section>
 </BaseLayout>
+
 
