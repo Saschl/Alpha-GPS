@@ -86,7 +86,13 @@ fun CameraDeviceManager(
     val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
 
     var associatedDevices by remember {
-        mutableStateOf(deviceManager!!.getAssociatedDevices(adapter!!))
+        mutableStateOf(
+            if (SCREENSHOT_MODE) {
+                mockDevices
+            } else {
+                deviceManager!!.getAssociatedDevices(adapter!!)
+            }
+        )
     }
 
     var isBluetoothEnabled by remember {
@@ -104,6 +110,7 @@ fun CameraDeviceManager(
     var showDonationDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(associatedDevices) {
+        if (SCREENSHOT_MODE) return@LaunchedEffect
         associatedDevices.forEach {
             devicesDao.insertDevice(
                 CameraDevice(
@@ -118,6 +125,7 @@ fun CameraDeviceManager(
 
     // TODO refactor out of composable
     LaunchedEffect(lifecycleState) {
+        if (SCREENSHOT_MODE) return@LaunchedEffect
         if (associatedDevices.isNotEmpty() && PreferencesManager.reviewHintLastShownDaysAgo(
                 context.applicationContext,
                 true
@@ -153,6 +161,7 @@ fun CameraDeviceManager(
     }
 
     LaunchedEffect(lifecycleState, associatedDevices, isReviewFlowActive) {
+        if (SCREENSHOT_MODE) return@LaunchedEffect
         if (!isReviewFlowActive &&
             associatedDevices.isNotEmpty() &&
             PreferencesManager.donationHintLastShownDaysAgo(
@@ -169,6 +178,7 @@ fun CameraDeviceManager(
     }
 
     LaunchedEffect(forceShowDonationDialogOnEnter, lifecycleState, showDonationDialog) {
+        if (SCREENSHOT_MODE) return@LaunchedEffect
         if (!forceShowDonationDialogOnEnter || showDonationDialog) return@LaunchedEffect
         if (lifecycleState == Lifecycle.State.RESUMED) {
             showDonationDialog = true
@@ -195,6 +205,7 @@ fun CameraDeviceManager(
     }
 
     LaunchedEffect(lifecycleState) {
+        if (SCREENSHOT_MODE) return@LaunchedEffect
         when (lifecycleState) {
             Lifecycle.State.RESUMED -> {
                 associatedDevices = deviceManager!!.getAssociatedDevices(adapter!!)
@@ -221,23 +232,27 @@ fun CameraDeviceManager(
                         isLocationEnabled = isLocationEnabled,
                         associatedDevices = associatedDevices,
                         onDeviceAssociated = {
-                            scope.launch {
-                                devicesDao.insertDevice(
-                                    CameraDevice(
-                                        deviceName = it.name,
-                                        mac = it.address.uppercase(),
-                                        alwaysOnEnabled = false,
-                                        deviceEnabled = true,
+                            if (!SCREENSHOT_MODE) {
+                                scope.launch {
+                                    devicesDao.insertDevice(
+                                        CameraDevice(
+                                            deviceName = it.name,
+                                            mac = it.address.uppercase(),
+                                            alwaysOnEnabled = false,
+                                            deviceEnabled = true,
+                                        )
                                     )
-                                )
-                                delay(1000) // give the system a short time to breathe
-                                startDevicePresenceObservation(deviceManager, it)
-                                // Refresh the devices list to update pairing state
-                                associatedDevices = deviceManager.getAssociatedDevices(adapter)
+                                    delay(1000) // give the system a short time to breathe
+                                    startDevicePresenceObservation(deviceManager, it)
+                                    // Refresh the devices list to update pairing state
+                                    associatedDevices = deviceManager.getAssociatedDevices(adapter)
+                                }
                             }
                         },
                         onConnect = { device ->
-                            selectedDevice = device
+                            if (!SCREENSHOT_MODE) {
+                                selectedDevice = device
+                            }
                         },
                         onSettingsClick = onSettingsClick,
                         onHelpClick = onHelpClick,

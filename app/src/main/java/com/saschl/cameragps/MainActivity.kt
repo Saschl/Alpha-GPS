@@ -33,6 +33,7 @@ import com.saschl.cameragps.ui.HelpScreen
 import com.saschl.cameragps.ui.SentryConsentDialog
 import com.saschl.cameragps.ui.WelcomeScreen
 import com.saschl.cameragps.ui.device.CameraDeviceManager
+import com.saschl.cameragps.ui.device.SCREENSHOT_MODE
 import com.saschl.cameragps.ui.settings.SettingsScreen
 import com.saschl.cameragps.utils.PreferencesManager
 import com.saschl.cameragps.utils.SentryInit
@@ -126,7 +127,7 @@ class MainActivity : AppCompatActivity() {
 
         var showSentryDialog by remember {
             mutableStateOf(
-                !PreferencesManager.isSentryConsentDialogDismissed(context)
+                !SCREENSHOT_MODE && !PreferencesManager.isSentryConsentDialogDismissed(context)
             )
         }
         var forceDonationDialogThisLaunch by remember {
@@ -178,7 +179,8 @@ class MainActivity : AppCompatActivity() {
                 AppDestination.Devices -> {
                     NavEntry(AppDestination.Devices) {
                         LaunchedEffect(Unit) {
-                            showSentryDialog =
+                            showSentryDialog = !SCREENSHOT_MODE &&
+                                    !PreferencesManager.isSentryConsentDialogDismissed(context)
                                 !PreferencesManager.isSentryConsentDialogDismissed(context)
                         }
 

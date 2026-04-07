@@ -49,7 +49,6 @@ import com.saschl.cameragps.notification.NotificationsHelper
 import com.saschl.cameragps.utils.PreferencesManager
 import com.saschl.cameragps.utils.SentryInit
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
@@ -122,7 +121,7 @@ class LocationSenderService : LifecycleService() {
 
         val currentLocation = locationResult ?: return
         if (isLocationTooOld(currentLocation)) {
-            Timber.e("Last known location is older than 5 minutes, will try to get a fresh location before transmitting")
+            Timber.i("Last known location is older than 5 minutes, will try to get a fresh location before transmitting")
             locationResult = null
         }
     }
@@ -554,7 +553,7 @@ class LocationSenderService : LifecycleService() {
     @SuppressLint("MissingPermission")
     override fun onDestroy() {
         super.onDestroy()
-        if (isInitialized) {
+        /*if (isInitialized) {
             Timber.e("Service unexpectedly destroyed, attempting to restart")
             val broadcastIntent =
                 Intent(applicationContext, RestartReceiver::class.java)
@@ -566,7 +565,7 @@ class LocationSenderService : LifecycleService() {
                 broadcastIntent.putExtra("had_always_on_devices", hadAlwaysOnDevices)
                 sendBroadcast(broadcastIntent)
             }
-        }
+        }*/
         runCatching {
             if (::bluetoothStateReceiver.isInitialized) unregisterReceiver(bluetoothStateReceiver)
         }.onFailure { e ->
