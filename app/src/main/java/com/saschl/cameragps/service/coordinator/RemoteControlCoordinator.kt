@@ -1,258 +1,87 @@
 package com.saschl.cameragps.service.coordinator
 
-import android.annotation.SuppressLint
-import android.bluetooth.BluetoothGatt
-import android.bluetooth.BluetoothGattCharacteristic
-import android.bluetooth.BluetoothGattDescriptor
-import android.os.Handler
-import android.os.Looper
-import com.sasch.cameragps.sharednew.bluetooth.SonyBluetoothConstants
-import com.saschl.cameragps.service.BluetoothGattUtils
+import com.sasch.cameragps.sharednew.bluetooth.coordinator.BleSessionEvent
 import com.saschl.cameragps.service.CameraConnectionManager
 import com.saschl.cameragps.service.ServiceEvent
 import com.saschl.cameragps.service.ServiceEventBus
-import timber.log.Timber
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import com.sasch.cameragps.sharednew.bluetooth.coordinator.RemoteControlCoordinator as SharedRemoteControlCoordinator
 
+/**
+ * Android-specific thin adapter over the shared [SharedRemoteControlCoordinator].
+ *
+ * Translates Android BluetoothGatt callbacks into the shared coordinator's
+ * platform-agnostic API, and bridges shared [BleSessionEvent]s to Android [ServiceEvent]s.
+ */
 class RemoteControlCoordinator(
-    private val cameraConnectionManager: CameraConnectionManager,
+    cameraConnectionManager: CameraConnectionManager,
     private val eventBus: ServiceEventBus,
+    scope: CoroutineScope,
 ) {
-    private val handler = Handler(Looper.getMainLooper())
-    private val activeProbeRunnables = mutableMapOf<String, Runnable>()
-    private val probeGattRefs = mutableMapOf<String, BluetoothGatt>()
+    internal val port = AndroidBleGattPort(cameraConnectionManager)
+    internal val shared = SharedRemoteControlCoordinator(port, scope)
 
-    companion object {
-        private const val REMOTE_STATUS_PROBE_INTERVAL_MS = 3_000L
-        private const val REMOTE_STATUS_PROBE_INITIAL_DELAY_MS = 500L
-    }
+    init {
+        // Bridge shared events → Android ServiceEventBus
+        scope.launch {
+            shared.events.collect { event ->
+                when (event) {
+                    is BleSessionEvent.RemoteFeatureActivated ->
+                        eventBus.emit(ServiceEvent.RemoteFeatureActivated(event.identifier))
 
-    @SuppressLint("MissingPermission")
-    fun handleRemoteShutterRequest(address: String): Boolean {
-        val normalizedAddress = address.uppercase()
-        val connection = cameraConnectionManager.getConnection(normalizedAddress)
+                    is BleSessionEvent.RemoteFeatureDeactivated ->
+                        eventBus.emit(ServiceEvent.RemoteFeatureDeactivated(event.identifier))
 
-        if (connection == null || connection.state != BluetoothGatt.GATT_SUCCESS) {
-            Timber.w("Remote shutter requested for $normalizedAddress but no active connection is available")
-            return false
-        }
-
-        if (!connection.remoteFeatureActive) {
-            Timber.w("Remote shutter requested for $normalizedAddress but remote mode is inactive on camera")
-            return false
-        }
-
-        val wroteDown = writeRemoteShutterCommand(
-            gatt = connection.gatt,
-            characteristic = connection.remoteControlCharacteristic,
-            command = SonyBluetoothConstants.FULL_SHUTTER_DOWN_COMMAND,
-        )
-
-        if (!wroteDown) {
-            Timber.w("Remote shutter down command failed for $normalizedAddress")
-            return false
-        }
-        return true
-    }
-
-    @SuppressLint("MissingPermission")
-    fun subscribeToRemoteStatusUpdates(
-        gatt: BluetoothGatt,
-        remoteStatusCharacteristic: BluetoothGattCharacteristic?,
-        remoteStatusDescriptor: BluetoothGattDescriptor?,
-    ) {
-        if (remoteStatusCharacteristic == null) {
-            Timber.i("Remote status characteristic not found for ${gatt.device.address}")
-            return
-        }
-
-        val notifyEnabled = gatt.setCharacteristicNotification(remoteStatusCharacteristic, true)
-        if (!notifyEnabled) {
-            Timber.w("Failed to enable local notifications for remote status on ${gatt.device.address}")
-            return
-        }
-
-        if (remoteStatusDescriptor == null) {
-            Timber.w("CCCD descriptor missing for remote status on ${gatt.device.address}")
-            return
-        }
-
-        val subscribed = BluetoothGattUtils.writeDescriptor(
-            gatt,
-            remoteStatusDescriptor,
-            BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE,
-        )
-
-        if (subscribed) {
-            Timber.i("Subscribed to remote status notifications for ${gatt.device.address}")
+                    // Session events are handled by BleSessionCoordinator's own event bridge
+                    is BleSessionEvent.PhaseChanged,
+                    is BleSessionEvent.HandshakeComplete -> {
+                    }
+                }
+            }
         }
     }
 
-    @SuppressLint("MissingPermission")
-    fun triggerRemoteStatusProbe(gatt: BluetoothGatt) {
-        val address = gatt.device.address.uppercase()
-        val connection = cameraConnectionManager.getConnection(address)
+    /*   @SuppressLint("MissingPermission")
+       fun handleRemoteShutterRequest(address: String): Boolean {
+           val success = shared.handleRemoteShutterRequest(address)
+           if (!success) {
+               Timber.w("Remote shutter request failed for ${address.uppercase()}")
+           }
+           return success
+       }*/
 
-        subscribeToRemoteStatusUpdates(
-            gatt = gatt,
-            remoteStatusCharacteristic = connection?.remoteStatusCharacteristic,
-            remoteStatusDescriptor = connection?.remoteStatusDescriptor,
-        )
+    /* @SuppressLint("MissingPermission")
+     fun triggerRemoteStatusProbe(gatt: BluetoothGatt) {
+         val address = gatt.device.address.uppercase()
+         shared.startRemoteStatusMonitoring(address)
+     }
 
-        if (connection?.remoteControlCharacteristic == null) {
-            Timber.i("Skipping remote status probe for $address because no remote control characteristic is available")
-            return
-        }
+     fun handleRemoteStatusCharacteristicChanged(
+         gatt: BluetoothGatt,
+         value: ByteArray,
+     ): Boolean {
+         val address = gatt.device.address.uppercase()
+         return shared.onRemoteStatusChanged(address, value)
+     }
 
-        probeGattRefs[address] = gatt
-        startProbeLoop(address)
-    }
+     @SuppressLint("MissingPermission")
+     fun writeRemoteShutterUpIfSupported(gatt: BluetoothGatt): Boolean {
+         return shared.sendShutterUp(gatt.device.address.uppercase())
+     }
+
+     fun handleRemoteStatusCharacteristicWriteResponse(
+         gatt: BluetoothGatt,
+         success: Boolean,
+     ) {
+         shared.onRemoteControlWriteResponse(gatt.device.address.uppercase(), success)
+     }*/
 
     fun cancelRemoteStatusProbe(address: String) {
-        val normalized = address.uppercase()
-        activeProbeRunnables.remove(normalized)?.let { runnable ->
-            handler.removeCallbacks(runnable)
-            Timber.i("Cancelled remote status probe for $normalized")
-        }
-        probeGattRefs.remove(normalized)
+        shared.cancelProbe(address)
     }
 
     fun cancelAllProbes() {
-        activeProbeRunnables.forEach { (address, runnable) ->
-            handler.removeCallbacks(runnable)
-            Timber.i("Cancelled remote status probe for $address")
-        }
-        activeProbeRunnables.clear()
-        probeGattRefs.clear()
-    }
-
-    fun handleRemoteStatusCharacteristicChanged(
-        gatt: BluetoothGatt,
-        value: ByteArray,
-    ): Boolean {
-        val isActive = isRemoteFeatureActive(value)
-        val address = gatt.device.address.uppercase()
-        cameraConnectionManager.setRemoteFeatureActive(address, isActive)
-        Timber.i(
-            "Remote feature status update for ${gatt.device.address}: active=$isActive value=${
-                value.joinToString(",")
-            }"
-        )
-
-        if (isActive) {
-            // Feature is active on camera — no need to keep probing
-            stopProbeLoop(address)
-        } else {
-            // Feature became inactive — resume probing to detect re-activation
-            startProbeLoop(address)
-        }
-
-        return value.contentEquals(byteArrayOf(0x02, 0xA0.toByte(), 0x00))
-    }
-
-    @SuppressLint("MissingPermission")
-    fun writeRemoteShutterUpIfSupported(gatt: BluetoothGatt): Boolean {
-        val connection =
-            cameraConnectionManager.getConnection(gatt.device.address.uppercase()) ?: return false
-        return writeRemoteShutterCommand(
-            gatt = connection.gatt,
-            characteristic = connection.remoteControlCharacteristic,
-            command = SonyBluetoothConstants.FULL_SHUTTER_UP_COMMAND,
-        )
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun writeRemoteShutterCommand(
-        gatt: BluetoothGatt,
-        characteristic: BluetoothGattCharacteristic?,
-        command: ByteArray,
-    ): Boolean {
-        characteristic?.let {
-            if (BluetoothGattUtils.writeCharacteristic(gatt, it, command)) {
-                return true
-            }
-        }
-        Timber.w("No writable remote control endpoint discovered for ${gatt.device.address}")
-        return false
-    }
-
-    fun handleRemoteStatusCharacteristicWriteResponse(
-        gatt: BluetoothGatt,
-        success: Boolean,
-    ) {
-        if (success) {
-            stopProbeLoop(gatt.device.address.uppercase())
-            eventBus.emit(
-                ServiceEvent.RemoteFeatureActivated(
-                    address = gatt.device.address.uppercase(),
-
-                    )
-            )
-        } else {
-            eventBus.emit(
-                ServiceEvent.RemoteFeatureDeactivated(
-                    address = gatt.device.address.uppercase(),
-                )
-            )
-        }
-
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun startProbeLoop(address: String) {
-        // Already probing — nothing to do
-        if (activeProbeRunnables.containsKey(address)) return
-
-        val gatt = probeGattRefs[address]
-        if (gatt == null) {
-            Timber.w("No stored GATT ref for $address, cannot start probe loop")
-            return
-        }
-
-        val probeRunnable = object : Runnable {
-            override fun run() {
-                val currentConnection = cameraConnectionManager.getConnection(address)
-                if (currentConnection == null || currentConnection.state != BluetoothGatt.GATT_SUCCESS) {
-                    Timber.i("Connection no longer active for $address, stopping remote status probe")
-                    stopProbeLoop(address)
-                    return
-                }
-
-                val characteristic = currentConnection.remoteControlCharacteristic
-                if (characteristic == null) {
-                    Timber.w("Remote control characteristic gone for $address, stopping remote status probe")
-                    stopProbeLoop(address)
-                    return
-                }
-
-                val probeSent = BluetoothGattUtils.writeCharacteristic(
-                    currentConnection.gatt,
-                    characteristic,
-                    SonyBluetoothConstants.PROBE_COMMAND,
-                )
-                if (probeSent) {
-                    Timber.d("Sent remote status probe command for $address")
-                } else {
-                    Timber.w("Failed to send remote status probe command for $address")
-                }
-
-                handler.postDelayed(this, REMOTE_STATUS_PROBE_INTERVAL_MS)
-            }
-        }
-
-        activeProbeRunnables[address] = probeRunnable
-        handler.postDelayed(probeRunnable, REMOTE_STATUS_PROBE_INITIAL_DELAY_MS)
-        Timber.i("Started periodic remote status probe for $address (every ${REMOTE_STATUS_PROBE_INTERVAL_MS}ms)")
-    }
-
-    private fun stopProbeLoop(address: String) {
-        activeProbeRunnables.remove(address)?.let { runnable ->
-            handler.removeCallbacks(runnable)
-            Timber.i("Stopped remote status probe loop for $address")
-        }
-    }
-
-    private fun isRemoteFeatureActive(value: ByteArray): Boolean {
-        if (value.isEmpty()) return false
-        return !value.contentEquals(byteArrayOf(0x02, 0xC3.toByte(), 0x00))
+        shared.cancelAllProbes()
     }
 }

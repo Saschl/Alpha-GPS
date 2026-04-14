@@ -77,10 +77,15 @@ class LocationSenderService : LifecycleService() {
 
     // --- coordinators: created once, no lambdas back to service ---
     private val remoteControlCoordinator by lazy {
-        RemoteControlCoordinator(cameraConnectionManager, eventBus)
+        RemoteControlCoordinator(cameraConnectionManager, eventBus, lifecycleScope)
     }
     private val bleSessionCoordinator by lazy {
-        BleSessionCoordinator(cameraConnectionManager, remoteControlCoordinator, eventBus)
+        BleSessionCoordinator(
+            cameraConnectionManager,
+            remoteControlCoordinator,
+            eventBus,
+            lifecycleScope
+        )
     }
     private val locationTransmissionCoordinator by lazy {
         LocationTransmissionCoordinator(this, cameraConnectionManager, eventBus)
@@ -232,7 +237,10 @@ class LocationSenderService : LifecycleService() {
             }
 
             is ServiceCommand.TriggerRemoteShutter -> {
-                bleSessionCoordinator.handleRemoteShutterRequest(command.address)
+                val success = bleSessionCoordinator.triggerRemoteShutter(command.address)
+                if (!success) {
+                    Timber.w("Remote shutter request failed for ${command.address.uppercase()}")
+                }
             }
 
             is ServiceCommand.Connect -> {

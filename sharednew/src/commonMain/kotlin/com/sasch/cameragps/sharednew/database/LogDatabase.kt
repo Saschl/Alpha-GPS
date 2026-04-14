@@ -68,7 +68,6 @@ abstract class LogDatabase : RoomDatabase() {
     }
 }
 
-@Suppress("KotlinNoActualForExpect")
 expect object LogDatabaseConstructor : RoomDatabaseConstructor<LogDatabase> {
     override fun initialize(): LogDatabase
 }

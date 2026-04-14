@@ -9,6 +9,7 @@ import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import androidx.annotation.RequiresPermission
+import com.sasch.cameragps.sharednew.bluetooth.coordinator.LocationDataConfig
 import timber.log.Timber
 import java.util.Collections
 

@@ -19,7 +19,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
@@ -42,7 +41,6 @@ import cameragps.sharednew.generated.resources.Res
 import cameragps.sharednew.generated.resources.app_disabled_message
 import cameragps.sharednew.generated.resources.app_disabled_title
 import cameragps.sharednew.generated.resources.app_settings
-import cameragps.sharednew.generated.resources.camera_24px
 import cameragps.sharednew.generated.resources.cancel
 import cameragps.sharednew.generated.resources.connected
 import cameragps.sharednew.generated.resources.delete
@@ -71,7 +69,6 @@ import cameragps.sharednew.generated.resources.scanning_paused_title
 import cameragps.sharednew.generated.resources.tap_to_connect
 import cameragps.sharednew.generated.resources.transmission_active
 import cameragps.sharednew.generated.resources.transmission_inactive
-import cameragps.sharednew.generated.resources.trigger_shutter
 import com.sasch.cameragps.sharednew.bluetooth.BluetoothDeviceInfo
 import com.sasch.cameragps.sharednew.ui.TransmissionDot
 import org.jetbrains.compose.resources.painterResource
@@ -339,12 +336,15 @@ private fun SwipeToDeleteDeviceCard(
     onTriggerRemoteShutter: () -> Unit,
     onDeleteRequest: () -> Unit,
 ) {
+
     val dismissState = rememberSwipeToDismissBoxState()
 
     LaunchedEffect(dismissState.currentValue) {
         if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
             onDeleteRequest()
+
             dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+            //delay(60)
         }
     }
 
@@ -396,7 +396,7 @@ private fun DeviceCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        onClick = onConnect,
+        onClick = onTriggerRemoteShutter,
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -413,17 +413,14 @@ private fun DeviceCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    val isShutterEnabled = device.isConnected && device.isRemoteFeatureActive
+                    /* val isShutterEnabled = device.isConnected && device.isRemoteFeatureActive
+                     if (device.isConnected) {
+                         Button(onClick = onTriggerRemoteShutter, enabled = isShutterEnabled) {
+                             Text(stringResource(Res.string.trigger_shutter))
+                         }
+                     }*/
                     if (device.isConnected) {
-                        IconButton(onClick = onTriggerRemoteShutter, enabled = isShutterEnabled) {
-                            Icon(
-                                painter = painterResource(Res.drawable.camera_24px),
-                                contentDescription = stringResource(Res.string.trigger_shutter),
-                            )
-                        }
-                    }
-                    if (device.isConnected) {
-                        Text(
+                        /*Text(
                             text = if (device.isRemoteFeatureActive) {
                                 stringResource(Res.string.remote_feature_active)
                             } else {
@@ -435,11 +432,12 @@ private fun DeviceCard(
                             } else {
                                 MaterialTheme.colorScheme.onSurfaceVariant
                             },
-                        )
+                        )*/
                     }
                     val isTransmissionActive = device.isTransmissionActive
                     val transmissionStatusDescription = if (isTransmissionActive) {
                         stringResource(Res.string.transmission_active)
+
                     } else {
                         stringResource(Res.string.transmission_inactive)
                     }
@@ -454,6 +452,11 @@ private fun DeviceCard(
             Text(
                 text = if (device.isConnected) {
                     stringResource(Res.string.connected)
+                    if (device.isRemoteFeatureActive) {
+                        stringResource(Res.string.remote_feature_active)
+                    } else {
+                        stringResource(Res.string.remote_feature_inactive)
+                    }
                 } else {
                     stringResource(Res.string.tap_to_connect)
                 },
