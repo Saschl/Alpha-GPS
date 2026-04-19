@@ -165,7 +165,7 @@ class LocationSenderService : LifecycleService() {
     // ==================== Event handler — single place for side effects ====================
 
     @SuppressLint("MissingPermission")
-    private fun handleEvent(event: ServiceEvent) {
+    private suspend fun handleEvent(event: ServiceEvent) {
         when (event) {
             is ServiceEvent.PhaseChanged -> {
                 val normalized = event.address.uppercase()
@@ -180,6 +180,10 @@ class LocationSenderService : LifecycleService() {
                 sessionPhases[normalized] = BleSessionPhase.Transmitting
                 activeTransmissions[normalized] = true
                 locationTransmissionCoordinator.startTransmission()
+                remoteControlCoordinator.setRemoteStatusMonitoringEnabled(
+                    event.address,
+                    deviceDao.isRemoteControlEnabled(event.address.uppercase())
+                )
             }
 
             is ServiceEvent.DeviceCleared -> {

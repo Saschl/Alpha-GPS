@@ -101,7 +101,6 @@ object IosBluetoothController : BluetoothController {
         LogDatabase.getRoomDatabase(getDatabaseBuilder()).cameraDeviceDao()
     }
 
-
     private val _devices = MutableStateFlow<List<BluetoothDeviceInfo>>(emptyList())
     override val devices: StateFlow<List<BluetoothDeviceInfo>> = _devices
 
@@ -121,6 +120,8 @@ object IosBluetoothController : BluetoothController {
     private val disconnectCallbacks = mutableMapOf<String, () -> Unit>()
 
     private var appEnabled = IosAppPreferences.isAppEnabled()
+    private val deviceEnabledOverrides = mutableMapOf<String, Boolean>()
+    private val persistedDevices = mutableMapOf<String, CameraDevice>()
 
     // --- Extracted collaborators ---
     private val autoReconnectStore = IosAutoReconnectStore()
@@ -168,15 +169,25 @@ object IosBluetoothController : BluetoothController {
     )
 
     init {
+        controllerScope.launch {
+            syncPersistedDevices()
+        }
         // Collect shared coordinator events → update UI / session state
         controllerScope.launch {
             bleSessionCoordinator.events.collect { event ->
                 when (event) {
                     is BleSessionEvent.HandshakeComplete -> {
+                        if (!isDeviceEnabled(event.identifier)) {
+                            disconnect(event.identifier)
+                            return@collect
+                        }
                         sessions[event.identifier]?.phase = PeripheralPhase.Ready
                         locationTransmissionManager.updateLocationTracking()
                         refreshDeviceList()
                         locationTransmissionManager.sendImmediateIfCached(event.identifier)
+                        if (deviceDao.isRemoteControlEnabled(event.identifier.uppercase())) {
+                            remoteControlCoordinator.startRemoteStatusMonitoring(event.identifier)
+                        }
                     }
 
                     is BleSessionEvent.PhaseChanged -> {
@@ -447,7 +458,9 @@ object IosBluetoothController : BluetoothController {
                 if (!central.isScanning) {
                     central.scanForPeripheralsWithServices(serviceUUIDs = null, options = null)
                 }
-                reconnectToPersistedPeripherals()
+                controllerScope.launch {
+                    reconnectToPersistedPeripherals()
+                }
             }
         }
 
@@ -460,19 +473,29 @@ object IosBluetoothController : BluetoothController {
             if (appEnabled) {
                 restoredPeripherals.forEach { any ->
                     val peripheral = any as? CBPeripheral ?: return@forEach
-                    val id = peripheral.identifier.UUIDString
-                    discovered[id] = peripheral
-                    peripheral.delegate = peripheralDelegate
-                    if (peripheral.state == CBPeripheralStateConnected) {
-                        connected[id] = peripheral
-                        sessions.getOrPut(id) { PeripheralSession(peripheral) }
-                        peripheral.discoverServices(
-                            listOf(
-                                IosSonyBleConstants.LOCATION_SERVICE_UUID,
-                                IosSonyBleConstants.CONTROL_SERVICE_UUID_STRING,
-                                IosSonyBleConstants.REMOTE_SERVICE_UUID,
+                    controllerScope.launch {
+                        val id = peripheral.identifier.UUIDString
+                        if (!isDeviceEnabled(id)) {
+                            if (central.state == CBManagerStatePoweredOn) {
+                                central.cancelPeripheralConnection(peripheral)
+                            }
+                            return@launch
+                        }
+
+                        discovered[id] = peripheral
+                        peripheral.delegate = peripheralDelegate
+                        if (peripheral.state == CBPeripheralStateConnected) {
+                            connected[id] = peripheral
+                            sessions.getOrPut(id) { PeripheralSession(peripheral) }
+                            peripheral.discoverServices(
+                                listOf(
+                                    IosSonyBleConstants.LOCATION_SERVICE_UUID,
+                                    IosSonyBleConstants.CONTROL_SERVICE_UUID_STRING,
+                                    IosSonyBleConstants.REMOTE_SERVICE_UUID,
+                                )
                             )
-                        )
+                        }
+                        refreshDeviceList()
                     }
                 }
                 refreshDeviceList()
@@ -531,8 +554,10 @@ object IosBluetoothController : BluetoothController {
         ) {
             val id = didFailToConnectPeripheral.identifier.UUIDString
             connectCallbacks.remove(id)?.invoke(false)
-            if (shouldAutoReconnect(id)) {
-                central.connectPeripheral(didFailToConnectPeripheral, options = null)
+            controllerScope.launch {
+                if (shouldAutoReconnect(id)) {
+                    central.connectPeripheral(didFailToConnectPeripheral, options = null)
+                }
             }
         }
 
@@ -549,8 +574,10 @@ object IosBluetoothController : BluetoothController {
             disconnectCallbacks.remove(id)?.invoke()
             bleSessionCoordinator.clearSession(id)
 
-            if (shouldAutoReconnect(id)) {
-                central.connectPeripheral(didDisconnectPeripheral, options = null)
+            controllerScope.launch {
+                if (shouldAutoReconnect(id)) {
+                    central.connectPeripheral(didDisconnectPeripheral, options = null)
+                }
             }
 
             locationTransmissionManager.updateLocationTracking()
@@ -581,19 +608,21 @@ object IosBluetoothController : BluetoothController {
     }
 
     override suspend fun connect(identifier: String): Boolean {
-        val peripheral = discovered[identifier] ?: return false
-        if (connected.containsKey(identifier)) return true
+        val resolvedIdentifier = resolveKnownIdentifier(identifier)
+        val peripheral = discovered[resolvedIdentifier] ?: return false
+        if (connected.containsKey(resolvedIdentifier)) return true
         if (central.state != CBManagerStatePoweredOn) {
             logging.e { "Cannot connect: CBCentralManager is not powered on" }
             return false
         }
+        ensureDeviceRecord(resolvedIdentifier, peripheral.name)
         return suspendCancellableCoroutine { cont ->
-            connectCallbacks[identifier] = { success ->
+            connectCallbacks[resolvedIdentifier] = { success ->
                 if (cont.isActive) cont.resume(success)
             }
             central.connectPeripheral(peripheral, options = null)
             cont.invokeOnCancellation {
-                connectCallbacks.remove(identifier)
+                connectCallbacks.remove(resolvedIdentifier)
                 if (central.state == CBManagerStatePoweredOn) {
                     central.cancelPeripheralConnection(peripheral)
                 }
@@ -602,31 +631,45 @@ object IosBluetoothController : BluetoothController {
     }
 
     override suspend fun disconnect(identifier: String) {
-        autoReconnectStore.remove(identifier)
-        val peripheral = connected[identifier] ?: discovered[identifier] ?: return
+        disconnectInternal(identifier, removeFromAutoReconnect = true)
+    }
+
+    private suspend fun disconnectInternal(identifier: String, removeFromAutoReconnect: Boolean) {
+        val resolvedIdentifier = resolveKnownIdentifier(identifier)
+        if (removeFromAutoReconnect) {
+            autoReconnectStore.remove(identifier)
+            autoReconnectStore.remove(identifier.uppercase())
+        }
+        val peripheral = connected[resolvedIdentifier] ?: discovered[resolvedIdentifier] ?: return
         if (central.state != CBManagerStatePoweredOn) {
-            connected.remove(identifier)
-            sessions.remove(identifier)
-            bleSessionCoordinator.clearSession(identifier)
+            connected.remove(resolvedIdentifier)
+            sessions.remove(resolvedIdentifier)
+            bleSessionCoordinator.clearSession(resolvedIdentifier)
             locationTransmissionManager.updateLocationTracking()
             refreshDeviceList()
             return
         }
         suspendCancellableCoroutine { cont ->
-            disconnectCallbacks[identifier] = {
+            disconnectCallbacks[resolvedIdentifier] = {
                 if (cont.isActive) cont.resume(Unit)
             }
             central.cancelPeripheralConnection(peripheral)
             cont.invokeOnCancellation {
-                disconnectCallbacks.remove(identifier)
+                disconnectCallbacks.remove(resolvedIdentifier)
             }
         }
     }
 
     override suspend fun forgetDevice(identifier: String) {
+        val resolvedIdentifier = resolveKnownIdentifier(identifier)
+        val normalized = resolvedIdentifier.uppercase()
         disconnect(identifier)
-        discovered.remove(identifier)
-        sessions.remove(identifier)
+        discovered.remove(resolvedIdentifier)
+        connected.remove(resolvedIdentifier)
+        sessions.remove(resolvedIdentifier)
+        deviceEnabledOverrides.remove(normalized)
+        persistedDevices.remove(normalized)
+        deviceDao.deleteDevice(CameraDevice(mac = normalized))
         refreshDeviceList()
     }
 
@@ -642,6 +685,28 @@ object IosBluetoothController : BluetoothController {
             remoteControlCoordinator.startRemoteStatusMonitoring(normalized)
         } else {
             remoteControlCoordinator.cancelProbe(normalized)
+        }
+    }
+
+    fun applyDeviceEnabledState(identifier: String, enabled: Boolean) {
+        val normalized = identifier.uppercase()
+        deviceEnabledOverrides[normalized] = enabled
+        persistedDevices[normalized] =
+            persistedDevices[normalized]?.copy(deviceEnabled = enabled)
+                ?: CameraDevice(mac = normalized, deviceEnabled = enabled)
+
+        if (!enabled) {
+            remoteControlCoordinator.cancelProbe(normalized)
+            controllerScope.launch {
+                disconnectInternal(identifier, removeFromAutoReconnect = false)
+            }
+            return
+        }
+
+        if (appEnabled) {
+            controllerScope.launch {
+                reconnectToPersistedPeripherals()
+            }
         }
     }
 
@@ -736,8 +801,9 @@ object IosBluetoothController : BluetoothController {
     // Auto-reconnect
     // ---------------------------------------------------------------------------
 
-    private fun reconnectToPersistedPeripherals() {
+    private suspend fun reconnectToPersistedPeripherals() {
         autoReconnectStore.loadFromDisk()
+        syncPersistedDevices()
         val ids = autoReconnectStore.getAll()
         if (ids.isEmpty()) return
         val nsuuids = ids.map { NSUUID(uUIDString = it) }
@@ -745,6 +811,9 @@ object IosBluetoothController : BluetoothController {
         peripherals.forEach { any ->
             val peripheral = any as? CBPeripheral ?: return@forEach
             val id = peripheral.identifier.UUIDString
+            if (!isDeviceEnabled(id)) {
+                return@forEach
+            }
             discovered[id] = peripheral
             if (!connected.containsKey(id)) {
                 central.connectPeripheral(
@@ -761,14 +830,28 @@ object IosBluetoothController : BluetoothController {
     // ---------------------------------------------------------------------------
 
     private fun refreshDeviceList() {
+        val persistedByNormalized = persistedDevices
+        val discoveredByNormalized = discovered.entries.associateBy { it.key.uppercase() }
+        val connectedByNormalized = connected.keys.associateBy { it.uppercase() }
+        val sessionsByNormalized = sessions.entries.associateBy { it.key.uppercase() }
+        val allIdentifiers = LinkedHashSet<String>()
+        allIdentifiers.addAll(discoveredByNormalized.keys)
+        allIdentifiers.addAll(persistedByNormalized.keys)
+
         _devices.update {
-            discovered.map { (id, peripheral) ->
-                val session = sessions[id]
+            allIdentifiers.map { normalizedId ->
+                val discoveredEntry = discoveredByNormalized[normalizedId]
+                val persistedEntry = persistedByNormalized[normalizedId]
+                val peripheral = discoveredEntry?.value
+                val identifier = discoveredEntry?.key ?: (persistedEntry?.mac ?: normalizedId)
+                val session = sessionsByNormalized[normalizedId]?.value
                 BluetoothDeviceInfo(
-                    identifier = id,
-                    name = peripheral.name ?: "Unknown device",
-                    isConnected = connected.containsKey(id),
-                    isSaved = autoReconnectStore.contains(id),
+                    identifier = identifier,
+                    name = peripheral?.name ?: persistedEntry?.deviceName ?: "Unknown device",
+                    isConnected = connectedByNormalized.containsKey(normalizedId),
+                    isSaved = autoReconnectStore.contains(identifier) ||
+                            autoReconnectStore.contains(normalizedId) ||
+                            persistedEntry != null,
                     isTransmissionActive =
                         session?.phase == PeripheralPhase.Ready &&
                                 locationTransmissionManager.isLocationUpdatesStarted,
@@ -782,8 +865,39 @@ object IosBluetoothController : BluetoothController {
     // Utilities
     // ---------------------------------------------------------------------------
 
-    private fun shouldAutoReconnect(id: String): Boolean {
-        return appEnabled && autoReconnectStore.contains(id) && central.state == CBManagerStatePoweredOn
+    private suspend fun shouldAutoReconnect(id: String): Boolean {
+        return appEnabled &&
+                autoReconnectStore.contains(id) &&
+                central.state == CBManagerStatePoweredOn &&
+                isDeviceEnabled(id)
+    }
+
+    private suspend fun isDeviceEnabled(identifier: String): Boolean {
+        val normalized = identifier.uppercase()
+        deviceEnabledOverrides[normalized]?.let { return it }
+
+        val enabled = deviceDao.isDeviceEnabled(normalized)
+        deviceEnabledOverrides[normalized] = enabled
+        return enabled
+    }
+
+    private fun resolveKnownIdentifier(identifier: String): String {
+        val normalized = identifier.uppercase()
+        return connected.keys.firstOrNull { it.uppercase() == normalized }
+            ?: discovered.keys.firstOrNull { it.uppercase() == normalized }
+            ?: sessions.keys.firstOrNull { it.uppercase() == normalized }
+            ?: identifier
+    }
+
+    private suspend fun syncPersistedDevices() {
+        val devicesFromDb = deviceDao.getAllCameraDevices()
+        persistedDevices.clear()
+        devicesFromDb.forEach { device ->
+            val normalized = device.mac.uppercase()
+            persistedDevices[normalized] = device.copy(mac = normalized)
+            deviceEnabledOverrides[normalized] = device.deviceEnabled
+        }
+        refreshDeviceList()
     }
 
     suspend fun ensureDeviceRecord(identifier: String, deviceName: String? = null) {
@@ -801,7 +915,13 @@ object IosBluetoothController : BluetoothController {
                 )
             }?.value?.name
             ?: "N/A"
-        deviceDao.insertDevice(CameraDevice(mac = identifier, deviceName = resolvedName))
+        val normalized = identifier.uppercase()
+        val entry = CameraDevice(mac = normalized, deviceName = resolvedName)
+        deviceDao.insertDevice(entry)
+        persistedDevices[normalized] =
+            persistedDevices[normalized]?.copy(deviceName = resolvedName) ?: entry
+        refreshDeviceList()
+        syncPersistedDevices()
     }
 }
 

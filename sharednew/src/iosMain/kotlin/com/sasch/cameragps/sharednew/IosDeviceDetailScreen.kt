@@ -11,7 +11,6 @@ import cameragps.sharednew.generated.resources.arrow_back_24px
 import cameragps.sharednew.generated.resources.back
 import com.sasch.cameragps.sharednew.bluetooth.BluetoothDeviceInfo
 import com.sasch.cameragps.sharednew.bluetooth.IosBluetoothController
-
 import com.sasch.cameragps.sharednew.bluetooth.IosBluetoothController.ensureDeviceRecord
 import com.sasch.cameragps.sharednew.ui.device.DeviceDetailContent
 import com.sasch.cameragps.sharednew.ui.device.DeviceDetailDataSource
@@ -82,6 +81,9 @@ internal fun IosDeviceDetailScreen(
             deviceId = device.identifier,
             deviceName = device.name,
             modifier = Modifier.padding(paddingValues),
+            onDeviceEnabledChanged = { enabled ->
+                IosBluetoothController.applyDeviceEnabledState(device.identifier, enabled)
+            },
         )
     }
 }
