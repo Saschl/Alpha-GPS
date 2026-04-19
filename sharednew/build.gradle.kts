@@ -94,6 +94,7 @@ kotlin {
                 implementation(libs.androidx.sqlite.bundled)
                 implementation(libs.logging)
                 implementation(libs.kotlinx.datetime)
+                implementation(libs.androidx.lifecycle.viewmodel)
 
             }
         }

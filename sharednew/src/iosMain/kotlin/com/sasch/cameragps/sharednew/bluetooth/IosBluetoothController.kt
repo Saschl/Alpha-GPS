@@ -10,6 +10,9 @@ import com.sasch.cameragps.sharednew.bluetooth.coordinator.BleSessionCoordinator
 import com.sasch.cameragps.sharednew.bluetooth.coordinator.BleSessionEvent
 import com.sasch.cameragps.sharednew.bluetooth.coordinator.LocationDataConfig
 import com.sasch.cameragps.sharednew.bluetooth.coordinator.RemoteControlCoordinator
+import com.sasch.cameragps.sharednew.database.LogDatabase
+import com.sasch.cameragps.sharednew.database.devices.CameraDevice
+import com.sasch.cameragps.sharednew.database.devices.CameraDeviceDAO
 import com.sasch.cameragps.sharednew.database.getDatabaseBuilder
 import com.sasch.cameragps.sharednew.database.logging.DatabaseLogger
 import com.sasch.cameragps.sharednew.database.logging.LogRepository
@@ -93,6 +96,11 @@ object IosBluetoothController : BluetoothController {
     private val logging = logging()
 
     private val controllerScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    val deviceDao: CameraDeviceDAO by lazy {
+        LogDatabase.getRoomDatabase(getDatabaseBuilder()).cameraDeviceDao()
+    }
+
 
     private val _devices = MutableStateFlow<List<BluetoothDeviceInfo>>(emptyList())
     override val devices: StateFlow<List<BluetoothDeviceInfo>> = _devices
@@ -198,9 +206,7 @@ object IosBluetoothController : BluetoothController {
 
                     }
                     is BleSessionEvent.HandshakeComplete -> {
-                        if (getDatabaseBuilder().build().cameraDeviceDao()
-                                .isRemoteControlEnabled(event.identifier)
-                        ) {
+                        if (deviceDao.isRemoteControlEnabled(event.identifier.uppercase())) {
                             remoteControlCoordinator.startRemoteStatusMonitoring(event.identifier)
                         }
                     }
@@ -630,6 +636,15 @@ object IosBluetoothController : BluetoothController {
         return bleSessionCoordinator.triggerRemoteShutter(identifier)
     }
 
+    fun setRemoteStatusMonitoringEnabled(identifier: String, enabled: Boolean) {
+        val normalized = identifier.uppercase()
+        if (enabled) {
+            remoteControlCoordinator.startRemoteStatusMonitoring(normalized)
+        } else {
+            remoteControlCoordinator.cancelProbe(normalized)
+        }
+    }
+
     suspend fun applyAppEnabledState(enabled: Boolean) {
         appEnabled = enabled
         if (enabled) {
@@ -769,6 +784,24 @@ object IosBluetoothController : BluetoothController {
 
     private fun shouldAutoReconnect(id: String): Boolean {
         return appEnabled && autoReconnectStore.contains(id) && central.state == CBManagerStatePoweredOn
+    }
+
+    suspend fun ensureDeviceRecord(identifier: String, deviceName: String? = null) {
+        val resolvedName = deviceName
+            ?: discovered.entries.firstOrNull {
+                it.key.equals(
+                    identifier,
+                    ignoreCase = true
+                )
+            }?.value?.name
+            ?: connected.entries.firstOrNull {
+                it.key.equals(
+                    identifier,
+                    ignoreCase = true
+                )
+            }?.value?.name
+            ?: "N/A"
+        deviceDao.insertDevice(CameraDevice(mac = identifier, deviceName = resolvedName))
     }
 }
 

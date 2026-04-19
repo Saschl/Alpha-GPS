@@ -1,6 +1,7 @@
 package com.sasch.cameragps.sharednew
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -84,6 +85,7 @@ internal fun DeviceListContent(
     onConnect: (BluetoothDeviceInfo) -> Unit,
     onTriggerRemoteShutter: (BluetoothDeviceInfo) -> Unit,
     onDelete: (BluetoothDeviceInfo) -> Unit,
+    onOpenDetails: (BluetoothDeviceInfo) -> Unit,
 ) {
     var deviceToDelete by remember { mutableStateOf<BluetoothDeviceInfo?>(null) }
     var deviceToPair by remember { mutableStateOf<BluetoothDeviceInfo?>(null) }
@@ -239,6 +241,7 @@ internal fun DeviceListContent(
                                 onConnect = { onConnect(device) },
                                 onTriggerRemoteShutter = { onTriggerRemoteShutter(device) },
                                 onDeleteRequest = { deviceToDelete = device },
+                                onOpenDetails = { onOpenDetails(device) },
                             )
                         }
                     }
@@ -261,6 +264,7 @@ internal fun DeviceListContent(
                                 device = device,
                                 onConnect = { deviceToPair = device },
                                 onTriggerRemoteShutter = { onTriggerRemoteShutter(device) },
+                                onOpenDetails = { onOpenDetails(device) },
                             )
                         }
                     }
@@ -335,6 +339,7 @@ private fun SwipeToDeleteDeviceCard(
     onConnect: () -> Unit,
     onTriggerRemoteShutter: () -> Unit,
     onDeleteRequest: () -> Unit,
+    onOpenDetails: () -> Unit,
 ) {
 
     val dismissState = rememberSwipeToDismissBoxState()
@@ -382,6 +387,7 @@ private fun SwipeToDeleteDeviceCard(
             device = device,
             onConnect = onConnect,
             onTriggerRemoteShutter = onTriggerRemoteShutter,
+            onOpenDetails = onOpenDetails,
         )
     }
 }
@@ -392,11 +398,18 @@ private fun DeviceCard(
     device: BluetoothDeviceInfo,
     onConnect: () -> Unit,
     onTriggerRemoteShutter: () -> Unit,
+    onOpenDetails: () -> Unit,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        onClick = onTriggerRemoteShutter,
+        onClick = {
+            if (device.isConnected) {
+                onTriggerRemoteShutter()
+            } else {
+                onConnect()
+            }
+        },
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -419,21 +432,6 @@ private fun DeviceCard(
                              Text(stringResource(Res.string.trigger_shutter))
                          }
                      }*/
-                    if (device.isConnected) {
-                        /*Text(
-                            text = if (device.isRemoteFeatureActive) {
-                                stringResource(Res.string.remote_feature_active)
-                            } else {
-                                stringResource(Res.string.remote_feature_inactive)
-                            },
-                            style = MaterialTheme.typography.labelSmall,
-                            color = if (device.isRemoteFeatureActive) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
-                        )*/
-                    }
                     val isTransmissionActive = device.isTransmissionActive
                     val transmissionStatusDescription = if (isTransmissionActive) {
                         stringResource(Res.string.transmission_active)
@@ -446,6 +444,13 @@ private fun DeviceCard(
                         modifier = Modifier.semantics {
                             contentDescription = transmissionStatusDescription
                         }
+                    )
+                    Text(
+                        text = ">",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.clickable(onClick = onOpenDetails),
                     )
                 }
             }
