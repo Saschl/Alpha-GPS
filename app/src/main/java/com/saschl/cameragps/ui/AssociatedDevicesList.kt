@@ -36,6 +36,7 @@ import cameragps.sharednew.generated.resources.Res
 import cameragps.sharednew.generated.resources.android_12_requires_keep_alive
 import cameragps.sharednew.generated.resources.associated_devices
 import cameragps.sharednew.generated.resources.device_icon
+import cameragps.sharednew.generated.resources.keyboard_arrow_right_24px
 import cameragps.sharednew.generated.resources.no_devices_message
 import cameragps.sharednew.generated.resources.no_devices_title
 import cameragps.sharednew.generated.resources.not_paired_tap_to_pair_again
@@ -50,6 +51,7 @@ import com.saschl.cameragps.R
 import com.saschl.cameragps.service.AssociatedDeviceCompat
 import com.saschl.cameragps.service.LocationSenderService
 import com.saschl.cameragps.ui.device.SCREENSHOT_MODE
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 
@@ -244,7 +246,7 @@ fun AssociatedDevicesList(
                                 )
                             }
                             Icon(
-                                painterResource(R.drawable.keyboard_arrow_right_24px),
+                                painterResource(Res.drawable.keyboard_arrow_right_24px),
                                 contentDescription = stringResource(Res.string.show_details)
                             )
                         }

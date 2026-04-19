@@ -1,7 +1,6 @@
 package com.sasch.cameragps.sharednew
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +19,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
@@ -60,6 +60,7 @@ import cameragps.sharednew.generated.resources.ios_troubleshooting_step_2_pairin
 import cameragps.sharednew.generated.resources.ios_troubleshooting_step_3_location_linking
 import cameragps.sharednew.generated.resources.ios_troubleshooting_step_4_location_permission
 import cameragps.sharednew.generated.resources.ios_troubleshooting_title
+import cameragps.sharednew.generated.resources.keyboard_arrow_right_24px
 import cameragps.sharednew.generated.resources.nearby_cameras
 import cameragps.sharednew.generated.resources.remote_feature_active
 import cameragps.sharednew.generated.resources.remote_feature_inactive
@@ -67,6 +68,7 @@ import cameragps.sharednew.generated.resources.saved_devices
 import cameragps.sharednew.generated.resources.scanning_for_cameras
 import cameragps.sharednew.generated.resources.scanning_paused_message
 import cameragps.sharednew.generated.resources.scanning_paused_title
+import cameragps.sharednew.generated.resources.show_details
 import cameragps.sharednew.generated.resources.tap_to_connect
 import cameragps.sharednew.generated.resources.transmission_active
 import cameragps.sharednew.generated.resources.transmission_inactive
@@ -445,13 +447,14 @@ private fun DeviceCard(
                             contentDescription = transmissionStatusDescription
                         }
                     )
-                    Text(
-                        text = ">",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.clickable(onClick = onOpenDetails),
-                    )
+                    IconButton(
+                        onClick = onOpenDetails,
+                    ) {
+                        Icon(
+                            painterResource(Res.drawable.keyboard_arrow_right_24px),
+                            contentDescription = stringResource(Res.string.show_details)
+                        )
+                    }
                 }
             }
             Text(
