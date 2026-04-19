@@ -243,6 +243,13 @@ class LocationSenderService : LifecycleService() {
                 }
             }
 
+            is ServiceCommand.SetRemoteControlMonitoring -> {
+                remoteControlCoordinator.setRemoteStatusMonitoringEnabled(
+                    command.address,
+                    command.enabled,
+                )
+            }
+
             is ServiceCommand.Connect -> {
                 ensureBluetoothStateReceiver()
                 if (!cameraConnectionManager.isConnected(command.address)) {

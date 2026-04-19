@@ -258,7 +258,8 @@ fun DeviceDetailScreen(
                         onCheckedChange = { enabled ->
                             viewModel.setRemoteControlStatus(
                                 enabled,
-                                device.address
+                                device.address,
+                                context,
                             )
                         }
                     )

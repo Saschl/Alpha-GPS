@@ -10,10 +10,10 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.sasch.cameragps.sharednew.bluetooth.SonyBluetoothConstants
-import com.sasch.cameragps.sharednew.bluetooth.coordinator.RemoteControlCoordinator
 import com.sasch.cameragps.sharednew.database.devices.CameraDeviceDAO
 import com.saschl.cameragps.service.AssociatedDeviceCompat
 import com.saschl.cameragps.service.LocationSenderService
+import com.saschl.cameragps.service.ServiceCommandRouter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -50,13 +50,6 @@ class DeviceDetailViewModel(private val cameraDeviceDAO: CameraDeviceDAO) : View
     private val _uiState = MutableStateFlow(ServiceToggleState())
     val uiState: StateFlow<ServiceToggleState> = _uiState.asStateFlow()
 
-    private val RemoteControlCoordinator = RemoteControlCoordinator(
-        cameraConnectionManager = CameraConnectionManager(),
-        eventBus = ServiceEventBus(),
-        scope = viewModelScope,
-        deviceDAO = cameraDeviceDAO
-    )
-
 
     fun setDeviceEnabled(isEnabled: Boolean, device: String) {
         viewModelScope.launch {
@@ -90,17 +83,26 @@ class DeviceDetailViewModel(private val cameraDeviceDAO: CameraDeviceDAO) : View
             _uiState.update {
                 it.copy(
                     isAlwaysOnEnabled = cameraDeviceDAO.isDeviceAlwaysOnEnabled(address),
-                    isDeviceEnabled = cameraDeviceDAO.isDeviceEnabled(address)
+                    isDeviceEnabled = cameraDeviceDAO.isDeviceEnabled(address),
+                    isRemoteControlEnabled = cameraDeviceDAO.isRemoteControlEnabled(address),
                 )
             }
         }
 
     }
 
-    fun setRemoteControlStatus(enabled: Boolean, device: String) {
+    fun setRemoteControlStatus(enabled: Boolean, device: String, context: Context) {
+        val normalizedDevice = device.uppercase()
         viewModelScope.launch {
-            cameraDeviceDAO.setRemoteControlEnabled(device, enabled)
+            cameraDeviceDAO.setRemoteControlEnabled(normalizedDevice, enabled)
             _uiState.update { it.copy(isRemoteControlEnabled = enabled) }
+
+            val intent = Intent(context, LocationSenderService::class.java).apply {
+                action = SonyBluetoothConstants.ACTION_SET_REMOTE_CONTROL_MONITORING
+                putExtra("address", normalizedDevice)
+                putExtra(ServiceCommandRouter.EXTRA_REMOTE_CONTROL_ENABLED, enabled)
+            }
+            context.startService(intent)
         }
     }
 

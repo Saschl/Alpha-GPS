@@ -28,6 +28,8 @@ object SonyBluetoothConstants {
 
     const val ACTION_REQUEST_SHUTDOWN = "com.saschl.cameragps.ACTION_REQUEST_SHUTDOWN"
     const val ACTION_TRIGGER_REMOTE_SHUTTER = "com.saschl.cameragps.ACTION_TRIGGER_REMOTE_SHUTTER"
+    const val ACTION_SET_REMOTE_CONTROL_MONITORING =
+        "com.saschl.cameragps.ACTION_SET_REMOTE_CONTROL_MONITORING"
 
     // GPS enable command bytes
     val GPS_ENABLE_COMMAND = byteArrayOf(0x01)

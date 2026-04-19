@@ -88,6 +88,15 @@ class RemoteControlCoordinator(
         shared.cancelProbe(address)
     }
 
+    fun setRemoteStatusMonitoringEnabled(address: String, enabled: Boolean) {
+        val normalized = address.uppercase()
+        if (enabled) {
+            shared.startRemoteStatusMonitoring(normalized)
+        } else {
+            shared.cancelProbe(normalized)
+        }
+    }
+
     fun cancelAllProbes() {
         shared.cancelAllProbes()
     }
