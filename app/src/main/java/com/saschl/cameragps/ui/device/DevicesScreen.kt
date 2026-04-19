@@ -58,7 +58,6 @@ fun DevicesScreen(
     associatedDevices: List<AssociatedDeviceCompat>,
     onDeviceAssociated: (AssociatedDeviceCompat) -> Unit,
     onConnect: (AssociatedDeviceCompat) -> Unit,
-    onTriggerRemoteShutter: (AssociatedDeviceCompat) -> Unit,
     onSettingsClick: () -> Unit = {},
     onHelpClick: () -> Unit = {},
     onLogsClick: () -> Unit = {}
@@ -187,8 +186,7 @@ fun DevicesScreen(
 
             AssociatedDevicesList(
                 associatedDevices = associatedDevices,
-                onConnect = onConnect,
-                onTriggerRemoteShutter = onTriggerRemoteShutter,
+                onConnect = onConnect
             )
 
             // Handle pairing for newly associated device

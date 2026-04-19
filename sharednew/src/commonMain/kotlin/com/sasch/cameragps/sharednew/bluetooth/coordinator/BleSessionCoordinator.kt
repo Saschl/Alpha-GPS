@@ -2,7 +2,6 @@ package com.sasch.cameragps.sharednew.bluetooth.coordinator
 
 import com.sasch.cameragps.sharednew.bluetooth.BleSessionPhase
 import com.sasch.cameragps.sharednew.bluetooth.SonyBluetoothConstants
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -22,7 +21,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 class BleSessionCoordinator(
     private val port: BleGattPort,
     private val remoteControlCoordinator: RemoteControlCoordinator,
-    @Suppress("unused") private val scope: CoroutineScope,
 ) {
     private val _events = Channel<BleSessionEvent>(Channel.UNLIMITED)
 
@@ -118,7 +116,11 @@ class BleSessionCoordinator(
         value: ByteArray,
     ): Boolean {
         val id = identifier.uppercase()
-        if (characteristicUuid.lowercase() == SonyBluetoothConstants.REMOTE_STATUS_UUID.lowercase()) {
+        if (characteristicUuid.equals(
+                SonyBluetoothConstants.REMOTE_STATUS_UUID,
+                ignoreCase = true
+            )
+        ) {
             val shouldSendShutterUp = remoteControlCoordinator.onRemoteStatusChanged(id, value)
             if (shouldSendShutterUp) {
                 remoteControlCoordinator.sendShutterUp(id)
@@ -126,20 +128,6 @@ class BleSessionCoordinator(
             return true
         }
         return false
-    }
-
-    /**
-     * Trigger a remote shutter press. Returns `true` if shutter-down was sent.
-     */
-    fun handleRemoteShutterRequest(identifier: String): Boolean {
-        return remoteControlCoordinator.handleRemoteShutterRequest(identifier)
-    }
-
-    /**
-     * Send the shutter-up command.
-     */
-    fun sendShutterUp(identifier: String): Boolean {
-        return remoteControlCoordinator.sendShutterUp(identifier)
     }
 
     /**
@@ -230,7 +218,7 @@ class BleSessionCoordinator(
     private fun markReadyForTransmission(identifier: String) {
         _events.trySend(BleSessionEvent.HandshakeComplete(identifier))
         emitPhase(identifier, BleSessionPhase.Transmitting)
-        remoteControlCoordinator.startRemoteStatusMonitoring(identifier)
+
     }
 
     private fun emitPhase(

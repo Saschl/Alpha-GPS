@@ -1,6 +1,7 @@
 package com.saschl.cameragps.service.coordinator
 
 import com.sasch.cameragps.sharednew.bluetooth.coordinator.BleSessionEvent
+import com.sasch.cameragps.sharednew.database.devices.CameraDeviceDAO
 import com.saschl.cameragps.service.CameraConnectionManager
 import com.saschl.cameragps.service.ServiceEvent
 import com.saschl.cameragps.service.ServiceEventBus
@@ -18,6 +19,7 @@ class RemoteControlCoordinator(
     cameraConnectionManager: CameraConnectionManager,
     private val eventBus: ServiceEventBus,
     scope: CoroutineScope,
+    deviceDAO: CameraDeviceDAO
 ) {
     internal val port = AndroidBleGattPort(cameraConnectionManager)
     internal val shared = SharedRemoteControlCoordinator(port, scope)
@@ -34,8 +36,13 @@ class RemoteControlCoordinator(
                         eventBus.emit(ServiceEvent.RemoteFeatureDeactivated(event.identifier))
 
                     // Session events are handled by BleSessionCoordinator's own event bridge
-                    is BleSessionEvent.PhaseChanged,
+                    is BleSessionEvent.PhaseChanged -> {
+
+                    }
                     is BleSessionEvent.HandshakeComplete -> {
+                        if (deviceDAO.isRemoteControlEnabled(event.identifier)) {
+                            shared.startRemoteStatusMonitoring(event.identifier)
+                        }
                     }
                 }
             }

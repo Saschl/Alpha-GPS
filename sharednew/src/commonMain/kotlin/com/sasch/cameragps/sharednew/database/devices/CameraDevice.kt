@@ -1,5 +1,6 @@
 package com.sasch.cameragps.sharednew.database.devices
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -10,5 +11,7 @@ data class CameraDevice(
     val deviceEnabled: Boolean = true,
     val alwaysOnEnabled: Boolean = false,
     val deviceName: String = "N/A",
+    @ColumnInfo(defaultValue = "0")
+    val remoteControlEnabled: Boolean = false,
 )
 

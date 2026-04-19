@@ -131,7 +131,6 @@ object IosBluetoothController : BluetoothController {
     private val bleSessionCoordinator = BleSessionCoordinator(
         port = gattPort,
         remoteControlCoordinator = remoteControlCoordinator,
-        scope = controllerScope,
     )
 
     private val locationTransmissionManager = IosLocationTransmissionManager(
@@ -195,8 +194,15 @@ object IosBluetoothController : BluetoothController {
                         refreshDeviceList()
                     }
 
-                    is BleSessionEvent.PhaseChanged,
+                    is BleSessionEvent.PhaseChanged -> {
+
+                    }
                     is BleSessionEvent.HandshakeComplete -> {
+                        if (getDatabaseBuilder().build().cameraDeviceDao()
+                                .isRemoteControlEnabled(event.identifier)
+                        ) {
+                            remoteControlCoordinator.startRemoteStatusMonitoring(event.identifier)
+                        }
                     }
                 }
             }

@@ -77,14 +77,14 @@ class LocationSenderService : LifecycleService() {
 
     // --- coordinators: created once, no lambdas back to service ---
     private val remoteControlCoordinator by lazy {
-        RemoteControlCoordinator(cameraConnectionManager, eventBus, lifecycleScope)
+        RemoteControlCoordinator(cameraConnectionManager, eventBus, lifecycleScope, deviceDao)
     }
     private val bleSessionCoordinator by lazy {
         BleSessionCoordinator(
             cameraConnectionManager,
             remoteControlCoordinator,
             eventBus,
-            lifecycleScope
+            lifecycleScope,
         )
     }
     private val locationTransmissionCoordinator by lazy {

@@ -10,6 +10,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.sasch.cameragps.sharednew.bluetooth.SonyBluetoothConstants
+import com.sasch.cameragps.sharednew.bluetooth.coordinator.RemoteControlCoordinator
 import com.sasch.cameragps.sharednew.database.devices.CameraDeviceDAO
 import com.saschl.cameragps.service.AssociatedDeviceCompat
 import com.saschl.cameragps.service.LocationSenderService
@@ -27,6 +28,7 @@ data class ServiceToggleState(
     val buttonEnabled: Boolean = true,
     val isDeviceEnabled: Boolean = true,
     val isAlwaysOnEnabled: Boolean = false,
+    val isRemoteControlEnabled: Boolean = false,
 )
 
 class DeviceDetailViewModel(private val cameraDeviceDAO: CameraDeviceDAO) : ViewModel() {
@@ -47,6 +49,13 @@ class DeviceDetailViewModel(private val cameraDeviceDAO: CameraDeviceDAO) : View
     // Expose screen UI state
     private val _uiState = MutableStateFlow(ServiceToggleState())
     val uiState: StateFlow<ServiceToggleState> = _uiState.asStateFlow()
+
+    private val RemoteControlCoordinator = RemoteControlCoordinator(
+        cameraConnectionManager = CameraConnectionManager(),
+        eventBus = ServiceEventBus(),
+        scope = viewModelScope,
+        deviceDAO = cameraDeviceDAO
+    )
 
 
     fun setDeviceEnabled(isEnabled: Boolean, device: String) {
@@ -86,6 +95,13 @@ class DeviceDetailViewModel(private val cameraDeviceDAO: CameraDeviceDAO) : View
             }
         }
 
+    }
+
+    fun setRemoteControlStatus(enabled: Boolean, device: String) {
+        viewModelScope.launch {
+            cameraDeviceDAO.setRemoteControlEnabled(device, enabled)
+            _uiState.update { it.copy(isRemoteControlEnabled = enabled) }
+        }
     }
 
     fun setAlwaysOnEnabled(

@@ -243,6 +243,26 @@ fun DeviceDetailScreen(
                         }
                     )
                 }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(Res.string.enableConstantly),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Switch(
+                        checked = viewModel.uiState.collectAsState().value.isRemoteControlEnabled,
+                        enabled = viewModel.uiState.collectAsState().value.isDeviceEnabled && viewModel.uiState.collectAsState().value.buttonEnabled,
+                        onCheckedChange = { enabled ->
+                            viewModel.setRemoteControlStatus(
+                                enabled,
+                                device.address
+                            )
+                        }
+                    )
+                }
 
                 Text(
                     text = stringResource(Res.string.always_on_description),

@@ -1,5 +1,6 @@
 package com.saschl.cameragps.ui
 
+import android.content.Intent
 import android.os.Build
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
@@ -41,13 +42,14 @@ import cameragps.sharednew.generated.resources.not_paired_tap_to_pair_again
 import cameragps.sharednew.generated.resources.remote_feature_active
 import cameragps.sharednew.generated.resources.remote_feature_inactive
 import cameragps.sharednew.generated.resources.show_details
-import cameragps.sharednew.generated.resources.trigger_shutter
+import com.sasch.cameragps.sharednew.bluetooth.SonyBluetoothConstants
 import com.sasch.cameragps.sharednew.database.LogDatabase
 import com.sasch.cameragps.sharednew.database.getDatabaseBuilder
 import com.sasch.cameragps.sharednew.ui.TransmissionDot
 import com.saschl.cameragps.R
 import com.saschl.cameragps.service.AssociatedDeviceCompat
 import com.saschl.cameragps.service.LocationSenderService
+import com.saschl.cameragps.ui.device.SCREENSHOT_MODE
 import org.jetbrains.compose.resources.stringResource
 
 
@@ -55,8 +57,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun AssociatedDevicesList(
     associatedDevices: List<AssociatedDeviceCompat>,
-    onConnect: (AssociatedDeviceCompat) -> Unit,
-    onTriggerRemoteShutter: (AssociatedDeviceCompat) -> Unit,
+    onConnect: (AssociatedDeviceCompat) -> Unit
 ) {
     val context = LocalContext.current
     val cameraDeviceDAO = LogDatabase.getRoomDatabase(
@@ -124,7 +125,7 @@ fun AssociatedDevicesList(
                 Row(
                     Modifier
                         .fillMaxWidth()
-                        .padding(top = 24.dp, bottom = 24.dp, end = 16.dp)
+                        .padding(top = 12.dp, bottom = 12.dp, end = 16.dp)
                         .clickable(
                             true,
                             onClick = {
@@ -146,22 +147,49 @@ fun AssociatedDevicesList(
                     Column(
                         Modifier
                             .fillMaxWidth()
-                            .weight(0.2f),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                            .weight(0.8f)
+                            .padding(start = 18.dp),
+                        horizontalAlignment = Alignment.Start,
+                        verticalArrangement = Arrangement.Center,
 
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Icon(
-                                painterResource(R.drawable.baseline_photo_camera_24),
-                                contentDescription = stringResource(Res.string.device_icon)
-                            )
+
                             TransmissionDot(
                                 isRunning = isTransmissionRunning ?: false,
                             )
+                            Text(
+                                fontWeight = FontWeight.Bold,
+                                text = device.name
+                            )
+                        }
+                        Row() {
+                            if (!device.isPaired) {
+                                Text(
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    text = stringResource(Res.string.not_paired_tap_to_pair_again),
+                                )
+                            }
+
+                            if (isTransmissionRunning == true) {
+                                Text(
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (isRemoteFeatureActive) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
+                                    text = if (isRemoteFeatureActive) {
+                                        stringResource(Res.string.remote_feature_active)
+                                    } else {
+                                        stringResource(Res.string.remote_feature_inactive)
+                                    }
+                                )
+                            }
                         }
 
 
@@ -169,36 +197,10 @@ fun AssociatedDevicesList(
                     Column(
                         Modifier
                             .fillMaxWidth()
-                            .weight(1f),
+                            .weight(.2f),
                     ) {
-                        Text(
-                            fontWeight = FontWeight.Bold,
-                            text = device.name
-                        )
 
-                        if (!device.isPaired) {
-                            Text(
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodySmall,
-                                text = stringResource(Res.string.not_paired_tap_to_pair_again),
-                            )
-                        }
 
-                        if (isTransmissionRunning == true) {
-                            Text(
-                                style = MaterialTheme.typography.bodySmall,
-                                color = if (isRemoteFeatureActive) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                },
-                                text = if (isRemoteFeatureActive) {
-                                    stringResource(Res.string.remote_feature_active)
-                                } else {
-                                    stringResource(Res.string.remote_feature_inactive)
-                                }
-                            )
-                        }
 
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S
                             && !isAlwaysOnEnabled
@@ -213,25 +215,39 @@ fun AssociatedDevicesList(
                     Column(
                         Modifier
                             .fillMaxWidth()
-                            .weight(0.2f),
+                            .weight(0.4f),
                         horizontalAlignment = Alignment.End,
                         verticalArrangement = Arrangement.Center,
                     ) {
-                        if (isTransmissionRunning == true) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
                             IconButton(
-                                onClick = { onTriggerRemoteShutter(device) },
                                 enabled = isRemoteFeatureActive,
-                            ) {
+                                onClick = {
+                                    if (!SCREENSHOT_MODE) {
+                                        val shutterIntent = Intent(
+                                            context.applicationContext,
+                                            LocationSenderService::class.java
+                                        ).apply {
+                                            action =
+                                                SonyBluetoothConstants.ACTION_TRIGGER_REMOTE_SHUTTER
+                                            putExtra("address", device.address.uppercase())
+                                        }
+                                        context.startService(shutterIntent)
+                                    }
+                                }) {
                                 Icon(
                                     painterResource(R.drawable.baseline_photo_camera_24),
-                                    contentDescription = stringResource(Res.string.trigger_shutter)
+                                    contentDescription = stringResource(Res.string.device_icon)
                                 )
                             }
+                            Icon(
+                                painterResource(R.drawable.keyboard_arrow_right_24px),
+                                contentDescription = stringResource(Res.string.show_details)
+                            )
                         }
-                        Icon(
-                            painterResource(R.drawable.keyboard_arrow_right_24px),
-                            contentDescription = stringResource(Res.string.show_details)
-                        )
                     }
                 }
 

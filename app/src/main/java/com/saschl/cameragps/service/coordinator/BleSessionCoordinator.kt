@@ -31,7 +31,6 @@ class BleSessionCoordinator(
     private val shared = SharedBleSessionCoordinator(
         remoteControlCoordinator.port,
         remoteControlCoordinator.shared,
-        scope,
     )
 
     init {
